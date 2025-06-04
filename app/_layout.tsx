@@ -1,9 +1,86 @@
+// Do not remove the following comment. It'll be used in the future.
+// import 'expo-dev-client';
 import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect } from "react";
+import { useColorScheme } from "react-native";
+import { PaperProvider, MD3LightTheme, MD3DarkTheme } from "react-native-paper";
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_700Bold,
+  Inter_400Regular_Italic,
+} from "@expo-google-fonts/inter";
+import {
+  Quicksand_400Regular,
+  Quicksand_500Medium,
+  Quicksand_600SemiBold,
+  Quicksand_700Bold,
+} from "@expo-google-fonts/quicksand";
+
+import { Colors } from "@/lib/constants/Colors";
+import { Typo } from "@/lib/constants/Typo";
+import { Layout } from "@/lib/constants/Layout";
+import { Anime } from "@/lib/constants/Anime";
+
+SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  const scheme = useColorScheme();
+  const isDark = scheme === "dark";
+
+  const [loaded, error] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_700Bold,
+    Inter_400Regular_Italic,
+    Quicksand_400Regular,
+    Quicksand_500Medium,
+    Quicksand_600SemiBold,
+    Quicksand_700Bold,
+  });
+
+  useEffect(() => {
+    if (loaded || error) {
+      SplashScreen.hideAsync();
+    }
+  }, [loaded, error]);
+
+  if (!loaded && !error) return null;
+
+  // Choose your color set
+  const colorSet = isDark ? Colors.dark : Colors.light;
+
+  // Create a Paper theme using MD3 and override colors
+  const paperTheme = {
+    ...(isDark ? MD3DarkTheme : MD3LightTheme),
+    roundness: Layout.borderRadius.medium,
+    colors: {
+      ...MD3LightTheme.colors,
+      primary: colorSet.primary,
+      secondary: colorSet.accent,
+      background: colorSet.background,
+      surface: colorSet.card,
+      error: colorSet.error,
+      text: colorSet.text,
+      onSurface: colorSet.text,
+      outline: colorSet.border,
+    },
+    custom: {
+      colors: colorSet,
+      typo: Typo,
+      layout: Layout,
+      anime: Anime,
+      mode: isDark ? "dark" : "light",
+    },
+  };
+
   return (
-    <Stack>
-      <Stack.Screen name="index" options={{ headerShown: false }} />
-    </Stack>
+    <PaperProvider theme={paperTheme}>
+      <Stack>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+      </Stack>
+    </PaperProvider>
   );
 }
