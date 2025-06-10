@@ -24,7 +24,14 @@ import { Typo } from "@/lib/constants/Typo";
 import { Layout } from "@/lib/constants/Layout";
 import { Anime } from "@/lib/constants/Anime";
 
+// Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
+
+// Set the animation options (optional)
+// SplashScreen.setOptions({
+//   duration: 1000,
+//   fade: true,
+// });
 
 export default function RootLayout() {
   const scheme = useColorScheme();
@@ -78,8 +85,13 @@ export default function RootLayout() {
 
   return (
     <PaperProvider theme={paperTheme}>
-      <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="(onboarding-slides)" />
+        <Stack.Screen name="auth" />
+        <Stack.Screen name="(setup)" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="(bluetooth)" />
       </Stack>
     </PaperProvider>
   );

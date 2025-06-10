@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "vitali-T",
-    "slug": "vitali-T",
+    "name": "Vitali-T",
+    "slug": "Vitali-T",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -12,6 +12,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.vitalit.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -52,10 +53,24 @@
         {
           "assets": []
         }
+      ],
+      [
+        "react-native-ble-plx",
+        {
+          "isBackgroundEnabled": true,
+          "modes": ["peripheral", "central"],
+          "bluetoothAlwaysPermission": "Allow Vitali-T to connect to bluetooth devices"
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "bfec62b9-5089-4c3c-9e9f-237d46fe2f47"
+      }
     }
   }
 }
