@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -11,6 +10,7 @@ import {
 } from "react-native";
 import { TextInput, Button } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 export default function SignUpScreen() {
   const [fullName, setFullName] = useState("");
@@ -20,10 +20,11 @@ export default function SignUpScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
+  const { colors, typo, layout } = useTheme();
 
   const handleSignUp = () => {
     if (password === confirmPassword) {
-      //   Perform sign-up logic here
+      // Perform sign-up logic here
       console.log("Sign-up with:", {
         fullName,
         email,
@@ -32,45 +33,122 @@ export default function SignUpScreen() {
       router.push("/profile-setup");
     }
   };
+
   const handleLogin = () => {
     router.push("/auth/login");
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.keyboardAvoid}
+        style={{
+          flex: 1,
+        }}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView
+          contentContainerStyle={{
+            flexGrow: 1,
+            paddingHorizontal: layout.spacing.lg,
+            paddingTop: layout.spacing.xl,
+            paddingBottom: layout.spacing.md,
+          }}
+        >
           {/* Header */}
-          <Text style={styles.appName}>Vitali-T</Text>
-          <Text style={styles.title}>Create Your Account</Text>
+          <Text
+            style={{
+              fontSize: typo.h6.fontSize,
+              fontWeight: "700",
+              color: colors.text,
+              textAlign: "center",
+              marginBottom: layout.spacing.sm,
+              ...typo.h6,
+            }}
+          >
+            Vitali-T
+          </Text>
+          <Text
+            style={{
+              fontSize: typo.h4.fontSize,
+              fontWeight: "600",
+              color: colors.text,
+              textAlign: "center",
+              marginBottom: layout.spacing.xl,
+              ...typo.h4,
+            }}
+          >
+            Create Your Account
+          </Text>
 
           {/* Form */}
-          <View style={styles.formContainer}>
+          <View
+            style={{
+              flex: 1,
+            }}
+          >
             {/* Full Name Input */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Full Name</Text>
+            <View
+              style={{
+                marginBottom: layout.spacing.md,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: typo.body3.fontSize,
+                  color: colors.text,
+                  marginBottom: layout.spacing.sm,
+                  fontWeight: "500",
+                  ...typo.body3,
+                }}
+              >
+                Full Name
+              </Text>
               <TextInput
                 mode="outlined"
                 placeholder="Enter your full name"
                 value={fullName}
                 onChangeText={setFullName}
-                style={styles.textInput}
-                outlineStyle={styles.inputOutline}
+                style={{
+                  backgroundColor: colors.card,
+                  fontSize: typo.body1.fontSize,
+                  ...typo.body1,
+                }}
+                outlineStyle={{
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                  borderRadius: layout.borderRadius.medium,
+                }}
                 theme={{
                   colors: {
-                    outline: "#E5E5E5",
-                    outlineVariant: "#E5E5E5",
+                    outline: colors.border,
+                    outlineVariant: colors.border,
                   },
                 }}
               />
             </View>
 
             {/* Email Input */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Email Address</Text>
+            <View
+              style={{
+                marginBottom: layout.spacing.md,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: typo.body3.fontSize,
+                  color: colors.text,
+                  marginBottom: layout.spacing.sm,
+                  fontWeight: "500",
+                  ...typo.body3,
+                }}
+              >
+                Email Address
+              </Text>
               <TextInput
                 mode="outlined"
                 placeholder="Enter your email address"
@@ -78,20 +156,42 @@ export default function SignUpScreen() {
                 onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
-                style={styles.textInput}
-                outlineStyle={styles.inputOutline}
+                style={{
+                  backgroundColor: colors.card,
+                  fontSize: typo.body1.fontSize,
+                  ...typo.body1,
+                }}
+                outlineStyle={{
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                  borderRadius: layout.borderRadius.medium,
+                }}
                 theme={{
                   colors: {
-                    outline: "#E5E5E5",
-                    outlineVariant: "#E5E5E5",
+                    outline: colors.border,
+                    outlineVariant: colors.border,
                   },
                 }}
               />
             </View>
 
             {/* Password Input */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Password</Text>
+            <View
+              style={{
+                marginBottom: layout.spacing.md,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: typo.body3.fontSize,
+                  color: colors.text,
+                  marginBottom: layout.spacing.sm,
+                  fontWeight: "500",
+                  ...typo.body3,
+                }}
+              >
+                Password
+              </Text>
               <TextInput
                 mode="outlined"
                 placeholder="Create a password"
@@ -104,20 +204,42 @@ export default function SignUpScreen() {
                     onPress={() => setShowPassword(!showPassword)}
                   />
                 }
-                style={styles.textInput}
-                outlineStyle={styles.inputOutline}
+                style={{
+                  backgroundColor: colors.card,
+                  fontSize: typo.body1.fontSize,
+                  ...typo.body1,
+                }}
+                outlineStyle={{
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                  borderRadius: layout.borderRadius.medium,
+                }}
                 theme={{
                   colors: {
-                    outline: "#E5E5E5",
-                    outlineVariant: "#E5E5E5",
+                    outline: colors.border,
+                    outlineVariant: colors.border,
                   },
                 }}
               />
             </View>
 
             {/* Confirm Password Input */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Confirm Password</Text>
+            <View
+              style={{
+                marginBottom: layout.spacing.md,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: typo.body3.fontSize,
+                  color: colors.text,
+                  marginBottom: layout.spacing.sm,
+                  fontWeight: "500",
+                  ...typo.body3,
+                }}
+              >
+                Confirm Password
+              </Text>
               <TextInput
                 mode="outlined"
                 placeholder="Confirm your password"
@@ -130,12 +252,20 @@ export default function SignUpScreen() {
                     onPress={() => setShowConfirmPassword(!showConfirmPassword)}
                   />
                 }
-                style={styles.textInput}
-                outlineStyle={styles.inputOutline}
+                style={{
+                  backgroundColor: colors.card,
+                  fontSize: typo.body1.fontSize,
+                  ...typo.body1,
+                }}
+                outlineStyle={{
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                  borderRadius: layout.borderRadius.medium,
+                }}
                 theme={{
                   colors: {
-                    outline: "#E5E5E5",
-                    outlineVariant: "#E5E5E5",
+                    outline: colors.border,
+                    outlineVariant: colors.border,
                   },
                 }}
               />
@@ -145,18 +275,51 @@ export default function SignUpScreen() {
             <Button
               mode="contained"
               onPress={handleSignUp}
-              style={styles.signUpButton}
-              labelStyle={styles.signUpButtonText}
-              buttonColor="#A67C5A"
+              style={{
+                borderRadius: layout.borderRadius.medium,
+                paddingVertical: layout.spacing.sm,
+                marginTop: layout.spacing.sm,
+                marginBottom: layout.spacing.lg,
+              }}
+              labelStyle={{
+                fontSize: typo.button.fontSize,
+                fontWeight: "600",
+                color: colors.textInverse,
+                ...typo.button,
+              }}
+              buttonColor={colors.primary}
             >
               Sign Up
             </Button>
 
             {/* Login Link */}
-            <View style={styles.loginContainer}>
-              <Text style={styles.loginText}>Already have an account? </Text>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: typo.body3.fontSize,
+                  color: "rgba(17, 12, 9, 0.6)",
+                  ...typo.body3,
+                }}
+              >
+                Already have an account?{" "}
+              </Text>
               <TouchableOpacity onPress={handleLogin}>
-                <Text style={styles.loginLink}>Log In</Text>
+                <Text
+                  style={{
+                    fontSize: typo.body3.fontSize,
+                    color: colors.primary,
+                    fontWeight: "600",
+                    ...typo.body3,
+                  }}
+                >
+                  Log In
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -165,79 +328,3 @@ export default function SignUpScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FAFAFA",
-  },
-  keyboardAvoid: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 32,
-  },
-  appName: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#1A1A1A",
-    textAlign: "center",
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#1A1A1A",
-    textAlign: "center",
-    marginBottom: 40,
-  },
-  formContainer: {
-    flex: 1,
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  inputLabel: {
-    fontSize: 14,
-    color: "#1A1A1A",
-    marginBottom: 8,
-    fontWeight: "500",
-  },
-  textInput: {
-    backgroundColor: "#FFFFFF",
-    fontSize: 16,
-  },
-  inputOutline: {
-    borderColor: "#E5E5E5",
-    borderWidth: 1,
-    borderRadius: 12,
-  },
-  signUpButton: {
-    borderRadius: 12,
-    paddingVertical: 8,
-    marginTop: 12,
-    marginBottom: 24,
-  },
-  signUpButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  loginContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loginText: {
-    fontSize: 14,
-    color: "#666666",
-  },
-  loginLink: {
-    fontSize: 14,
-    color: "#A67C5A",
-    fontWeight: "600",
-  },
-});

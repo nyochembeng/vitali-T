@@ -1,6 +1,7 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
 import Svg, { Path } from "react-native-svg";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface MiniChartProps {
   data: number[];
@@ -15,6 +16,8 @@ const MiniChart: React.FC<MiniChartProps> = ({
   width = 120,
   height = 30,
 }) => {
+  const { colors, layout } = useTheme();
+
   const generatePath = () => {
     if (data.length < 2) return "";
 
@@ -38,7 +41,15 @@ const MiniChart: React.FC<MiniChartProps> = ({
   };
 
   return (
-    <View style={[styles.container, { width, height }]}>
+    <View
+      style={{
+        backgroundColor: colors.card,
+        borderRadius: layout.borderRadius.medium,
+        padding: layout.spacing.xs,
+        width,
+        height,
+      }}
+    >
       <Svg width={width} height={height}>
         <Path
           d={generatePath()}
@@ -52,13 +63,5 @@ const MiniChart: React.FC<MiniChartProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: "#F8F8F8",
-    borderRadius: 8,
-    padding: 4,
-  },
-});
 
 export default MiniChart;

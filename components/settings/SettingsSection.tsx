@@ -1,7 +1,8 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
-import { SettingsItem } from './SettingsItem';
+import React from "react";
+import { View } from "react-native";
+import { Text } from "react-native-paper";
+import { SettingsItem } from "./SettingsItem";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface SettingsItemType {
   id: string;
@@ -18,17 +19,32 @@ interface SettingsSectionType {
   title?: string;
   items: SettingsItemType[];
 }
+
 interface SettingsSectionProps {
   section: SettingsSectionType;
 }
 
-export const SettingsSection: React.FC<SettingsSectionProps> = ({ section }) => {
-  const theme = useTheme();
+export const SettingsSection: React.FC<SettingsSectionProps> = ({
+  section,
+}) => {
+  const { colors, typo, layout } = useTheme();
 
   return (
-    <View style={styles.container}>
+    <View
+      style={{
+        marginBottom: layout.spacing.lg,
+        padding: layout.spacing.md,
+      }}
+    >
       {section.title && (
-        <Text variant="labelLarge" style={[styles.sectionTitle, { color: theme.colors.onSurfaceVariant }]}>
+        <Text
+          style={{
+            ...typo.h5,
+            color: colors.text,
+            marginHorizontal: layout.spacing.md,
+            marginBottom: layout.spacing.sm,
+          }}
+        >
           {section.title}
         </Text>
       )}
@@ -38,16 +54,3 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({ section }) => 
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    marginHorizontal: 32,
-    marginBottom: 8,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-});

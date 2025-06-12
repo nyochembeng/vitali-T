@@ -1,7 +1,8 @@
 import React from "react";
-import { View, StyleSheet, Pressable } from "react-native";
-import { Text, useTheme } from "react-native-paper";
+import { View, Pressable } from "react-native";
+import { Text } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface SettingsItemType {
   id: string;
@@ -18,42 +19,64 @@ interface SettingsItemProps {
 }
 
 export const SettingsItem: React.FC<SettingsItemProps> = ({ item }) => {
-  const theme = useTheme();
+  const { colors, typo, layout } = useTheme();
 
   return (
     <Pressable
-      style={[styles.container, { backgroundColor: theme.colors.surface }]}
+      style={{
+        marginHorizontal: layout.spacing.sm,
+        marginVertical: layout.spacing.xs,
+        borderRadius: layout.borderRadius.large,
+        overflow: "hidden",
+        backgroundColor: colors.card,
+        padding: layout.spacing.md,
+      }}
       onPress={item.onPress}
-      android_ripple={{ color: theme.colors.onSurface + "20" }}
+      android_ripple={{ color: colors.primary + "20" }} // Adjusted to use primary with 20% opacity
     >
-      <View style={styles.content}>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          padding: layout.spacing.sm,
+        }}
+      >
         <View
-          style={[
-            styles.iconContainer,
-            { backgroundColor: item.iconColor + "20" },
-          ]}
+          style={{
+            width: layout.spacing.xl,
+            height: layout.spacing.xl,
+            borderRadius: layout.borderRadius.xl,
+            justifyContent: "center",
+            alignItems: "center",
+            marginRight: layout.spacing.sm,
+            backgroundColor: item.iconColor + "20", // Keeping iconColor as per your design
+          }}
         >
           <MaterialCommunityIcons
             name={item.icon as any}
             size={20}
-            color={item.iconColor}
+            color={item.iconColor} // Keeping iconColor as per your design
           />
         </View>
 
-        <View style={styles.textContainer}>
+        <View style={{ flex: 1 }}>
           <Text
-            variant="bodyLarge"
-            style={[styles.title, { color: theme.colors.onSurface }]}
+            style={{
+              ...typo.body1,
+              color: colors.text,
+              fontWeight: "500",
+            }}
           >
             {item.title}
           </Text>
           {item.subtitle && (
             <Text
-              variant="bodySmall"
-              style={[
-                styles.subtitle,
-                { color: theme.colors.onSurfaceVariant },
-              ]}
+              style={{
+                ...typo.body2,
+                color: colors.text,
+                marginTop: layout.spacing.xs,
+                opacity: 0.7,
+              }}
             >
               {item.subtitle}
             </Text>
@@ -64,42 +87,10 @@ export const SettingsItem: React.FC<SettingsItemProps> = ({ item }) => {
           <MaterialCommunityIcons
             name="chevron-right"
             size={20}
-            color={theme.colors.onSurfaceVariant}
+            color={colors.text}
           />
         )}
       </View>
     </Pressable>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    marginHorizontal: 16,
-    marginVertical: 4,
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  content: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 16,
-  },
-  textContainer: {
-    flex: 1,
-  },
-  title: {
-    fontWeight: "500",
-  },
-  subtitle: {
-    marginTop: 2,
-    opacity: 0.7,
-  },
-});

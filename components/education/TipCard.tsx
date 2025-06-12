@@ -1,7 +1,8 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
 import { Surface, Text } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface Tip {
   id: string;
@@ -31,67 +32,62 @@ const getCategoryIcon = (category: string): string => {
   }
 };
 
-const getCategoryColor = (category: string): string => {
-  switch (category) {
-    case "development":
-      return "#8B5A2B";
-    case "nutrition":
-      return "#D4A574";
-    case "exercise":
-      return "#B8860B";
-    case "wellness":
-      return "#CD853F";
-    default:
-      return "#6B7280";
-  }
-};
-
 export const TipCard: React.FC<TipCardProps> = ({ tip }) => {
+  const { colors, typo, layout } = useTheme();
   const iconName = getCategoryIcon(tip.category);
-  const iconColor = getCategoryColor(tip.category);
+  const iconColor = colors.primary;
 
   return (
-    <Surface style={styles.card} elevation={1}>
-      <View style={styles.header}>
-        <Text variant="labelMedium" style={styles.weekLabel}>
+    <Surface
+      style={{
+        backgroundColor: colors.card,
+        borderRadius: layout.borderRadius.medium,
+        padding: layout.spacing.md,
+        marginBottom: layout.spacing.sm,
+        elevation: layout.elevation,
+      }}
+    >
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: layout.spacing.xs,
+        }}
+      >
+        <Text
+          variant="labelMedium"
+          style={{
+            color: colors.text,
+            fontWeight: "500",
+            ...typo.caption,
+          }}
+        >
           Week {tip.week}
         </Text>
         <MaterialIcons name={iconName as any} size={20} color={iconColor} />
       </View>
-      <Text variant="titleLarge" style={styles.title}>
+      <Text
+        variant="titleLarge"
+        style={{
+          fontWeight: "600",
+          color: colors.text,
+          marginBottom: layout.spacing.sm,
+          ...typo.h5,
+        }}
+      >
         {tip.title}
       </Text>
-      <Text variant="bodyMedium" style={styles.description}>
+      <Text
+        variant="bodyMedium"
+        style={{
+          color: colors.text,
+          lineHeight: typo.body1.lineHeight,
+          ...typo.body1,
+        }}
+      >
         {tip.description}
       </Text>
     </Surface>
   );
 };
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  weekLabel: {
-    color: "#6B7280",
-    fontWeight: "500",
-  },
-  title: {
-    fontWeight: "600",
-    color: "#1F2937",
-    marginBottom: 8,
-  },
-  description: {
-    color: "#6B7280",
-    lineHeight: 20,
-  },
-});

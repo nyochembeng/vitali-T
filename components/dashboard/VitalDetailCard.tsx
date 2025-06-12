@@ -1,8 +1,9 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
 import { Card, Text } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import DetailChart from "./DetailChart";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface VitalReading {
   id: string;
@@ -21,16 +22,18 @@ interface VitalDetailCardProps {
 }
 
 const VitalDetailCard: React.FC<VitalDetailCardProps> = ({ vital }) => {
+  const { colors, typo, layout } = useTheme();
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "normal":
-        return "#4CAF50";
+        return colors.success;
       case "warning":
-        return "#FF9800";
+        return colors.warning;
       case "critical":
-        return "#F44336";
+        return colors.error;
       default:
-        return "#666";
+        return colors.text;
     }
   };
 
@@ -50,43 +53,87 @@ const VitalDetailCard: React.FC<VitalDetailCardProps> = ({ vital }) => {
   const getTrendColor = (trend?: string) => {
     switch (trend) {
       case "up":
-        return "#FF9800";
+        return colors.warning;
       case "down":
-        return "#4CAF50";
+        return colors.success;
       case "stable":
-        return "#4CAF50";
+        return colors.success;
       default:
-        return "#666";
+        return colors.text;
     }
   };
 
   return (
-    <Card style={styles.card} mode="contained">
-      <Card.Content style={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.title}>{vital.name}</Text>
-          <View style={styles.statusContainer}>
+    <Card
+      style={{
+        marginVertical: layout.spacing.sm,
+        backgroundColor: colors.card,
+        elevation: layout.elevation,
+      }}
+      mode="contained"
+    >
+      <Card.Content
+        style={{
+          padding: layout.spacing.sm,
+        }}
+      >
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            marginBottom: layout.spacing.sm,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: typo.body1.fontSize,
+              color: colors.text,
+              flex: 1,
+              ...typo.body1,
+            }}
+          >
+            {vital.name}
+          </Text>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+            }}
+          >
             {vital.trend && getTrendIcon(vital.trend) && (
               <MaterialCommunityIcons
                 name={getTrendIcon(vital.trend) as any}
                 size={16}
                 color={getTrendColor(vital.trend)}
-                style={styles.trendIcon}
+                style={{
+                  marginRight: layout.spacing.sm,
+                }}
               />
             )}
             {vital.status !== "normal" && (
-              <View style={styles.statusIndicator}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                }}
+              >
                 <View
-                  style={[
-                    styles.statusDot,
-                    { backgroundColor: getStatusColor(vital.status) },
-                  ]}
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: 4,
+                    marginRight: layout.spacing.xs,
+                    backgroundColor: getStatusColor(vital.status),
+                  }}
                 />
                 <Text
-                  style={[
-                    styles.statusText,
-                    { color: getStatusColor(vital.status) },
-                  ]}
+                  style={{
+                    fontSize: typo.body3.fontSize,
+                    fontWeight: "500",
+                    color: getStatusColor(vital.status),
+                    ...typo.body3,
+                  }}
                 >
                   {vital.status.charAt(0).toUpperCase() + vital.status.slice(1)}
                 </Text>
@@ -95,9 +142,33 @@ const VitalDetailCard: React.FC<VitalDetailCardProps> = ({ vital }) => {
           </View>
         </View>
 
-        <View style={styles.valueContainer}>
-          <Text style={styles.value}>{vital.value}</Text>
-          <Text style={styles.unit}>{vital.unit}</Text>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "baseline",
+            marginBottom: layout.spacing.sm,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: typo.h3.fontSize,
+              fontWeight: "600",
+              color: colors.text,
+              ...typo.h3,
+            }}
+          >
+            {vital.value}
+          </Text>
+          <Text
+            style={{
+              fontSize: typo.body1.fontSize,
+              color: colors.text,
+              marginLeft: layout.spacing.sm,
+              ...typo.body1,
+            }}
+          >
+            {vital.unit}
+          </Text>
         </View>
 
         {vital.hasChart && vital.chartData && (
@@ -111,63 +182,5 @@ const VitalDetailCard: React.FC<VitalDetailCardProps> = ({ vital }) => {
     </Card>
   );
 };
-
-const styles = StyleSheet.create({
-  card: {
-    marginVertical: 8,
-    backgroundColor: "#FFF",
-    elevation: 1,
-  },
-  content: {
-    padding: 16,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 12,
-  },
-  title: {
-    fontSize: 16,
-    color: "#333",
-    flex: 1,
-  },
-  statusContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  trendIcon: {
-    marginRight: 8,
-  },
-  statusIndicator: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 6,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: "500",
-  },
-  valueContainer: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    marginBottom: 16,
-  },
-  value: {
-    fontSize: 32,
-    fontWeight: "600",
-    color: "#000",
-  },
-  unit: {
-    fontSize: 16,
-    color: "#666",
-    marginLeft: 8,
-  },
-});
 
 export default VitalDetailCard;

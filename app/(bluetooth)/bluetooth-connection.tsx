@@ -1,11 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
-  TouchableOpacity,
-} from "react-native";
+import { View, SafeAreaView, ScrollView, TouchableOpacity } from "react-native";
 import { Text, Button } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import ScanningAnimation from "@/components/bluetooth/ScanningAnimation";
@@ -13,6 +7,7 @@ import BluetoothIcon from "@/components/bluetooth/BluetoothIcon";
 import DeviceListItem from "@/components/bluetooth/DeviceListItem";
 import { useRouter } from "expo-router";
 import CustomAppBar from "@/components/utils/CustomAppBar";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface BluetoothDevice {
   id: string;
@@ -38,6 +33,7 @@ export default function BluetoothConnectionScreen() {
     useState<BluetoothDevice | null>(null);
   const [isScanning, setIsScanning] = useState(true);
   const router = useRouter();
+  const { colors, typo, layout } = useTheme();
 
   // Mock devices for demo
   const mockDevices: BluetoothDevice[] = [
@@ -64,7 +60,7 @@ export default function BluetoothConnectionScreen() {
     }, 3000);
 
     return () => clearTimeout(scanTimer);
-  });
+  }, []);
 
   const handleConnect = async (device: BluetoothDevice) => {
     setConnectionState("connecting");
@@ -88,7 +84,7 @@ export default function BluetoothConnectionScreen() {
   };
 
   const handleRetryConnection = () => {
-    setConnectionState("scanning");
+    setConnectionState("connecting");
     setIsScanning(true);
 
     setTimeout(() => {
@@ -142,16 +138,35 @@ export default function BluetoothConnectionScreen() {
   };
 
   const renderScanningState = () => (
-    <View style={styles.centerContent}>
+    <View
+      style={{
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: layout.spacing.lg,
+      }}
+    >
       <ScanningAnimation isScanning={isScanning}>
         <BluetoothIcon state="scanning" />
       </ScanningAnimation>
-      <Text style={styles.statusText}>
+      <Text
+        style={{
+          fontSize: typo.body1.fontSize,
+          color: colors.text,
+          marginTop: layout.spacing.lg,
+          textAlign: "center",
+          ...typo.body1,
+        }}
+      >
         {isScanning ? "Scanning for nearby devices..." : "Scan complete"}
       </Text>
 
       {devices.length > 0 && !isScanning && (
-        <View style={styles.devicesList}>
+        <View
+          style={{
+            width: "100%",
+            marginTop: layout.spacing.lg,
+          }}
+        >
           {devices.map((device) => (
             <DeviceListItem
               key={device.id}
@@ -165,49 +180,156 @@ export default function BluetoothConnectionScreen() {
   );
 
   const renderConnectingState = () => (
-    <View style={styles.centerContent}>
+    <View
+      style={{
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: layout.spacing.lg,
+      }}
+    >
       <ScanningAnimation isScanning={isScanning}>
         <BluetoothIcon state="scanning" />
       </ScanningAnimation>
-      <Text style={styles.statusText}>
+      <Text
+        style={{
+          fontSize: typo.body1.fontSize,
+          color: colors.text,
+          marginTop: layout.spacing.lg,
+          textAlign: "center",
+          ...typo.body1,
+        }}
+      >
         Connecting to {connectingDevice?.name}...
       </Text>
     </View>
   );
 
   const renderNoDevicesState = () => (
-    <View style={styles.centerContent}>
+    <View
+      style={{
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: layout.spacing.lg,
+      }}
+    >
       <BluetoothIcon state="no-devices" />
-      <Text style={styles.titleText}>No devices found</Text>
-      <Text style={styles.subtitleText}>
+      <Text
+        style={{
+          fontSize: typo.h5.fontSize,
+          fontWeight: "600",
+          color: colors.text,
+          marginTop: layout.spacing.lg,
+          textAlign: "center",
+          ...typo.h5,
+        }}
+      >
+        No devices found
+      </Text>
+      <Text
+        style={{
+          fontSize: typo.body1.fontSize,
+          color: colors.text,
+          marginTop: layout.spacing.sm,
+          textAlign: "center",
+          lineHeight: typo.body1.lineHeight,
+          ...typo.body1,
+        }}
+      >
         Please ensure Bluetooth is enabled
       </Text>
 
-      <TouchableOpacity style={styles.refreshButton} onPress={handleRefresh}>
-        <MaterialCommunityIcons name="refresh" size={20} color="#8B5A3C" />
-        <Text style={styles.refreshText}>Refresh</Text>
+      <TouchableOpacity
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          marginTop: layout.spacing.lg,
+          paddingVertical: layout.spacing.sm,
+          paddingHorizontal: layout.spacing.md,
+        }}
+        onPress={handleRefresh}
+      >
+        <MaterialCommunityIcons
+          name="refresh"
+          size={20}
+          color={colors.primary}
+        />
+        <Text
+          style={{
+            fontSize: typo.body1.fontSize,
+            color: colors.primary,
+            marginLeft: layout.spacing.sm,
+            fontWeight: "500",
+            ...typo.body1,
+          }}
+        >
+          Refresh
+        </Text>
       </TouchableOpacity>
 
-      <Text style={styles.helpText}>
+      <Text
+        style={{
+          fontSize: typo.body2.fontSize,
+          color: colors.text,
+          textAlign: "center",
+          marginTop: layout.spacing.xl,
+          lineHeight: typo.body2.lineHeight,
+          ...typo.body2,
+        }}
+      >
         Make sure your Vitali-T device is nearby and powered on
       </Text>
     </View>
   );
 
   const renderConnectionFailedState = () => (
-    <View style={styles.centerContent}>
+    <View
+      style={{
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: layout.spacing.lg,
+      }}
+    >
       <BluetoothIcon state="failed" />
-      <Text style={styles.titleText}>Connection Failed</Text>
-      <Text style={styles.subtitleText}>
+      <Text
+        style={{
+          fontSize: typo.h5.fontSize,
+          fontWeight: "600",
+          color: colors.text,
+          marginTop: layout.spacing.lg,
+          textAlign: "center",
+          ...typo.h5,
+        }}
+      >
+        Connection Failed
+      </Text>
+      <Text
+        style={{
+          fontSize: typo.body1.fontSize,
+          color: colors.text,
+          marginTop: layout.spacing.sm,
+          textAlign: "center",
+          lineHeight: typo.body1.lineHeight,
+          ...typo.body1,
+        }}
+      >
         Please check your Bluetooth settings and try again.
       </Text>
 
-      <View style={styles.buttonContainer}>
+      <View
+        style={{
+          width: "100%",
+          marginTop: layout.spacing.lg,
+          gap: layout.spacing.sm,
+        }}
+      >
         <Button
           mode="contained"
           onPress={handleRetryConnection}
-          style={styles.primaryButton}
-          buttonColor="#8B5A3C"
+          style={{
+            borderRadius: layout.borderRadius.medium,
+            paddingVertical: layout.spacing.xs,
+          }}
+          buttonColor={colors.primary}
           icon="refresh"
         >
           Retry Connection
@@ -216,8 +338,11 @@ export default function BluetoothConnectionScreen() {
         <Button
           mode="outlined"
           onPress={handleScanAgain}
-          style={styles.secondaryButton}
-          textColor="#8B5A3C"
+          style={{
+            borderRadius: layout.borderRadius.medium,
+            paddingVertical: layout.spacing.xs,
+          }}
+          textColor={colors.primary}
           icon="magnify"
         >
           Scan Again
@@ -227,25 +352,70 @@ export default function BluetoothConnectionScreen() {
   );
 
   const renderConnectedState = () => (
-    <View style={styles.centerContent}>
+    <View
+      style={{
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: layout.spacing.lg,
+      }}
+    >
       <BluetoothIcon state="connected" />
-      <Text style={styles.titleText}>Device Connected!</Text>
-      <Text style={styles.subtitleText}>
+      <Text
+        style={{
+          fontSize: typo.h5.fontSize,
+          fontWeight: "600",
+          color: colors.text,
+          marginTop: layout.spacing.lg,
+          textAlign: "center",
+          ...typo.h5,
+        }}
+      >
+        Device Connected!
+      </Text>
+      <Text
+        style={{
+          fontSize: typo.body1.fontSize,
+          color: colors.text,
+          marginTop: layout.spacing.sm,
+          textAlign: "center",
+          lineHeight: typo.body1.lineHeight,
+          ...typo.body1,
+        }}
+      >
         Vitali-T Monitor {connectedDevice?.id}
       </Text>
 
-      <View style={styles.buttonContainer}>
+      <View
+        style={{
+          width: "100%",
+          marginTop: layout.spacing.lg,
+          gap: layout.spacing.sm,
+        }}
+      >
         <Button
           mode="contained"
           onPress={handleStartMonitoring}
-          style={styles.primaryButton}
-          buttonColor="#8B5A3C"
+          style={{
+            borderRadius: layout.borderRadius.medium,
+            paddingVertical: layout.spacing.xs,
+          }}
+          buttonColor={colors.primary}
         >
           Start Monitoring
         </Button>
 
         <TouchableOpacity onPress={handleChangeDevice}>
-          <Text style={styles.changeDeviceText}>Change Device</Text>
+          <Text
+            style={{
+              fontSize: typo.body1.fontSize,
+              color: colors.primary,
+              textAlign: "center",
+              marginTop: layout.spacing.sm,
+              ...typo.body1,
+            }}
+          >
+            Change Device
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -269,139 +439,66 @@ export default function BluetoothConnectionScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
       <CustomAppBar
-        title="Bluetooth Connection"
+        title="Connect to Vitali-T"
         rightAction="info"
-        onInfoPress={() => {}}
+        onInfoPress={() => {
+          router.push("/getting-started");
+        }}
       />
 
       <ScrollView
-        style={styles.content}
-        contentContainerStyle={styles.scrollContent}
+        style={{
+          flex: 1,
+        }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: "center",
+          paddingHorizontal: layout.spacing.lg,
+        }}
         showsVerticalScrollIndicator={false}
       >
         {renderContent()}
       </ScrollView>
 
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.helpButton} onPress={handleNeedHelp}>
+      <View
+        style={{
+          paddingBottom: layout.spacing.lg,
+          alignItems: "center",
+        }}
+      >
+        <TouchableOpacity
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            paddingVertical: layout.spacing.sm,
+            paddingHorizontal: layout.spacing.md,
+          }}
+          onPress={handleNeedHelp}
+        >
           <MaterialCommunityIcons
             name="help-circle-outline"
             size={20}
-            color="#8B5A3C"
+            color={colors.primary}
           />
-          <Text style={styles.helpButtonText}>Need Help?</Text>
+          <Text
+            style={{
+              fontSize: typo.body1.fontSize,
+              color: colors.primary,
+              marginLeft: layout.spacing.sm,
+              ...typo.body1,
+            }}
+          >
+            Need Help?
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F8F9FA",
-  },
-  header: {
-    backgroundColor: "#FFF",
-    elevation: 0,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#000",
-  },
-  content: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: "center",
-    paddingHorizontal: 24,
-  },
-  centerContent: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 40,
-  },
-  statusText: {
-    fontSize: 16,
-    color: "#666",
-    marginTop: 32,
-    textAlign: "center",
-  },
-  titleText: {
-    fontSize: 24,
-    fontWeight: "600",
-    color: "#000",
-    marginTop: 32,
-    textAlign: "center",
-  },
-  subtitleText: {
-    fontSize: 16,
-    color: "#666",
-    marginTop: 8,
-    textAlign: "center",
-    lineHeight: 24,
-  },
-  devicesList: {
-    width: "100%",
-    marginTop: 32,
-  },
-  refreshButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 32,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-  },
-  refreshText: {
-    fontSize: 16,
-    color: "#8B5A3C",
-    marginLeft: 8,
-    fontWeight: "500",
-  },
-  helpText: {
-    fontSize: 14,
-    color: "#999",
-    textAlign: "center",
-    marginTop: 40,
-    lineHeight: 20,
-  },
-  buttonContainer: {
-    width: "100%",
-    marginTop: 40,
-    gap: 16,
-  },
-  primaryButton: {
-    borderRadius: 12,
-    paddingVertical: 4,
-  },
-  secondaryButton: {
-    borderRadius: 12,
-    borderColor: "#8B5A3C",
-    paddingVertical: 4,
-  },
-  changeDeviceText: {
-    fontSize: 16,
-    color: "#8B5A3C",
-    textAlign: "center",
-    marginTop: 8,
-  },
-  footer: {
-    paddingBottom: 20,
-    alignItems: "center",
-  },
-  helpButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-  },
-  helpButtonText: {
-    fontSize: 16,
-    color: "#8B5A3C",
-    marginLeft: 8,
-  },
-});

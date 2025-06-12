@@ -2,9 +2,10 @@ import { NotificationCard } from "@/components/notifications/NotificationCard";
 import CustomAppBar from "@/components/utils/CustomAppBar";
 import { useRouter } from "expo-router";
 import React, { useState, useEffect } from "react";
-import { View, ScrollView, StyleSheet, StatusBar } from "react-native";
-import { Text, useTheme, Chip, Divider } from "react-native-paper";
+import { View, ScrollView, StatusBar } from "react-native";
+import { Text, Chip, Divider } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface NotificationItem {
   id: string;
@@ -17,12 +18,11 @@ interface NotificationItem {
 }
 
 export default function NotificationsScreen() {
-  const theme = useTheme();
+  const { colors, typo, layout, mode } = useTheme();
   const router = useRouter();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [filter, setFilter] = useState<"all" | "unread">("all");
 
-  // Sample data - replace with actual data source
   useEffect(() => {
     const sampleNotifications: NotificationItem[] = [
       {
@@ -107,11 +107,14 @@ export default function NotificationsScreen() {
 
   return (
     <SafeAreaView
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
     >
       <StatusBar
-        barStyle="dark-content"
-        backgroundColor={theme.colors.background}
+        barStyle={mode === "dark" ? "light-content" : "dark-content"}
+        backgroundColor={colors.background}
       />
 
       <CustomAppBar
@@ -140,37 +143,78 @@ export default function NotificationsScreen() {
         ]}
       />
 
-      <View style={styles.filterContainer}>
+      <View
+        style={{
+          flexDirection: "row",
+          padding: layout.spacing.lg,
+          gap: layout.spacing.sm,
+        }}
+      >
         <Chip
           selected={filter === "all"}
           onPress={() => setFilter("all")}
-          style={styles.filterChip}
+          style={{
+            marginRight: layout.spacing.sm,
+          }}
         >
-          All ({notifications.length})
+          <Text
+            style={{
+              ...typo.button,
+              color: filter === "all" ? colors.textInverse : colors.text,
+            }}
+          >
+            All ({notifications.length})
+          </Text>
         </Chip>
         <Chip
           selected={filter === "unread"}
           onPress={() => setFilter("unread")}
-          style={styles.filterChip}
+          style={{
+            marginRight: layout.spacing.sm,
+          }}
         >
-          Unread ({unreadCount})
+          <Text
+            style={{
+              ...typo.button,
+              color: filter === "unread" ? colors.textInverse : colors.text,
+            }}
+          >
+            Unread ({unreadCount})
+          </Text>
         </Chip>
       </View>
 
-      <Divider style={styles.divider} />
+      <Divider
+        style={{
+          marginHorizontal: layout.spacing.sm,
+          backgroundColor: colors.border,
+        }}
+      />
 
       <ScrollView
-        style={styles.scrollView}
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingTop: layout.spacing.sm,
+          paddingBottom: layout.spacing.xl,
+        }}
         showsVerticalScrollIndicator={false}
       >
         {filteredNotifications.length === 0 ? (
-          <View style={styles.emptyContainer}>
+          <View
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
+              paddingTop: layout.spacing.xl * 2.5, // Approx 100px
+            }}
+          >
             <Text
-              variant="bodyLarge"
-              style={[
-                styles.emptyText,
-                { color: theme.colors.onSurfaceVariant },
-              ]}
+              style={{
+                ...typo.body1,
+                color: colors.text,
+                textAlign: "center",
+                opacity: 0.6,
+              }}
             >
               {filter === "unread"
                 ? "No unread notifications"
@@ -191,39 +235,3 @@ export default function NotificationsScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  filterContainer: {
-    flexDirection: "row",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
-  },
-  filterChip: {
-    marginRight: 8,
-  },
-  divider: {
-    marginHorizontal: 16,
-  },
-  scrollView: {
-    flex: 1,
-    paddingTop: 8,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingTop: 100,
-  },
-  emptyText: {
-    textAlign: "center",
-    opacity: 0.6,
-  },
-});

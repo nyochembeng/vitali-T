@@ -1,6 +1,7 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
 import { Text, IconButton } from "react-native-paper";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface FeatureCardProps {
   icon: string;
@@ -8,38 +9,38 @@ interface FeatureCardProps {
 }
 
 const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title }) => {
+  const { colors, typo, layout } = useTheme();
+
   return (
-    <View style={styles.container}>
+    <View
+      style={{
+        alignItems: "center",
+        flex: 1,
+        maxWidth: 100,
+      }}
+    >
       <IconButton
         icon={icon}
         size={32}
-        iconColor="#666666"
-        style={styles.iconButton}
+        iconColor={colors.primary}
+        style={{
+          backgroundColor: colors.surface,
+          margin: 0,
+          marginBottom: layout.spacing.sm,
+        }}
       />
-      <Text variant="bodyMedium" style={styles.title}>
+      <Text
+        variant="bodyMedium"
+        style={{
+          color: colors.text,
+          textAlign: "center",
+          ...typo.body3,
+        }}
+      >
         {title}
       </Text>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    alignItems: "center",
-    flex: 1,
-    maxWidth: 100,
-  },
-  iconButton: {
-    backgroundColor: "transparent",
-    margin: 0,
-    marginBottom: 8,
-  },
-  title: {
-    color: "#666666",
-    textAlign: "center",
-    fontSize: 12,
-    lineHeight: 16,
-  },
-});
 
 export default FeatureCard;

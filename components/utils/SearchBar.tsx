@@ -1,6 +1,6 @@
 import React from "react";
-import { StyleSheet } from "react-native";
 import { Searchbar } from "react-native-paper";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface SearchBarProps {
   value: string;
@@ -13,27 +13,25 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   onChangeText,
   placeholder = "Search a vital sign...",
 }) => {
+  const { colors, typo, layout } = useTheme();
+
   return (
     <Searchbar
       placeholder={placeholder}
       value={value}
       onChangeText={onChangeText}
-      style={styles.searchbar}
-      inputStyle={styles.searchInput}
-      iconColor="#9CA3AF"
+      style={{
+        backgroundColor: colors.card,
+        borderRadius: layout.borderRadius.large,
+        elevation: layout.elevation,
+        marginHorizontal: layout.spacing.sm,
+        marginVertical: layout.spacing.sm,
+      }}
+      inputStyle={{
+        ...typo.body1,
+        color: colors.text,
+      }}
+      iconColor={colors.text + "99"} // 60% opacity
     />
   );
 };
-
-const styles = StyleSheet.create({
-  searchbar: {
-    backgroundColor: "#F9FAFB",
-    borderRadius: 12,
-    elevation: 0,
-    marginHorizontal: 16,
-    marginVertical: 16,
-  },
-  searchInput: {
-    color: "#374151",
-  },
-});

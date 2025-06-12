@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { Tabs, useRouter } from "expo-router";
 import { MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
+import { View, TouchableOpacity } from "react-native";
 import { FAB, Portal, Provider as PaperProvider } from "react-native-paper";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface TabIconProps {
   name: string;
@@ -11,7 +12,8 @@ interface TabIconProps {
 }
 
 const TabIcon: React.FC<TabIconProps> = ({ name, focused, size = 24 }) => {
-  const iconColor = focused ? "#6366F1" : "#9CA3AF";
+  const { colors } = useTheme();
+  const iconColor = focused ? colors.primary : "rgba(17, 12, 9, 0.6)";
 
   const renderIcon = () => {
     switch (name) {
@@ -44,10 +46,36 @@ const TabIcon: React.FC<TabIconProps> = ({ name, focused, size = 24 }) => {
 };
 
 const CenterLogButton: React.FC<{ onPress: () => void }> = ({ onPress }) => {
+  const { colors } = useTheme();
+
   return (
-    <TouchableOpacity style={styles.centerButtonContainer} onPress={onPress}>
-      <View style={styles.centerButton}>
-        <MaterialIcons name="add" size={28} color="#FFFFFF" />
+    <TouchableOpacity
+      style={{
+        top: -15,
+        justifyContent: "center",
+        alignItems: "center",
+        flex: 1,
+      }}
+      onPress={onPress}
+    >
+      <View
+        style={{
+          backgroundColor: colors.primary,
+          width: 50,
+          height: 50,
+          borderRadius: 25,
+          justifyContent: "center",
+          alignItems: "center",
+          elevation: 5,
+          shadowColor: colors.border,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.25,
+          shadowRadius: 3.84,
+          borderWidth: 3,
+          borderColor: colors.background,
+        }}
+      >
+        <MaterialIcons name="add" size={28} color={colors.textInverse} />
       </View>
     </TouchableOpacity>
   );
@@ -56,6 +84,7 @@ const CenterLogButton: React.FC<{ onPress: () => void }> = ({ onPress }) => {
 function TabsContent() {
   const [fabOpen, setFabOpen] = useState(false);
   const router = useRouter();
+  const { colors, layout, typo } = useTheme();
 
   const onStateChange = ({ open }: { open: boolean }) => setFabOpen(open);
 
@@ -66,7 +95,7 @@ function TabsContent() {
   const fabActions = [
     {
       icon: "heart-pulse",
-      label: "Contractions",
+      label: "Uterine Contractions",
       onPress: () => router.push("/log-contractions"),
       small: false,
     },
@@ -101,11 +130,26 @@ function TabsContent() {
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarStyle: styles.tabBar,
-          tabBarActiveTintColor: "#6366F1",
-          tabBarInactiveTintColor: "#9CA3AF",
-          tabBarLabelStyle: styles.tabLabel,
-          tabBarItemStyle: styles.tabItem,
+          tabBarStyle: {
+            backgroundColor: colors.background,
+            borderTopWidth: 1,
+            borderTopColor: colors.border,
+            height: 80,
+            paddingBottom: layout.spacing.sm,
+            paddingTop: layout.spacing.xs,
+            position: "relative",
+          },
+          tabBarActiveTintColor: colors.primary,
+          tabBarInactiveTintColor: "rgba(17, 12, 9, 0.6)",
+          tabBarLabelStyle: {
+            fontSize: typo.body3.fontSize,
+            fontWeight: "500",
+            marginTop: layout.spacing.xs,
+            ...typo.body3,
+          },
+          tabBarItemStyle: {
+            paddingTop: layout.spacing.sm,
+          },
         }}
       >
         {/* Visible Tabs */}
@@ -221,11 +265,11 @@ function TabsContent() {
               setFabOpen(false);
             }
           }}
-          fabStyle={[styles.fab, { display: "none" }]} // Hide the default FAB since we're using custom button
+          fabStyle={{ display: "none" }} // Hide the default FAB since we're using custom button
           theme={{
             colors: {
-              primary: "#6366F1",
-              accent: "#6366F1",
+              primary: colors.primary,
+              accent: colors.primary,
             },
           }}
         />
@@ -241,50 +285,3 @@ export default function TabsLayout() {
     </PaperProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  tabBar: {
-    backgroundColor: "#FFFFFF",
-    borderTopWidth: 1,
-    borderTopColor: "#E5E7EB",
-    height: 80,
-    paddingBottom: 20,
-    paddingTop: 10,
-    position: "relative",
-  },
-  tabLabel: {
-    fontSize: 12,
-    fontWeight: "500",
-    marginTop: 4,
-  },
-  tabItem: {
-    paddingTop: 8,
-  },
-  centerButtonContainer: {
-    top: -15,
-    justifyContent: "center",
-    alignItems: "center",
-    flex: 1,
-  },
-  centerButton: {
-    backgroundColor: "#6366F1",
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    borderWidth: 3,
-    borderColor: "#FFFFFF",
-  },
-  fab: {
-    backgroundColor: "#6366F1",
-  },
-});

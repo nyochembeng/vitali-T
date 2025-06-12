@@ -2,9 +2,9 @@ import { SettingsSection } from "@/components/settings/SettingsSection";
 import CustomAppBar from "@/components/utils/CustomAppBar";
 import { useRouter } from "expo-router";
 import React from "react";
-import { ScrollView, StyleSheet, StatusBar } from "react-native";
-import { useTheme } from "react-native-paper";
+import { ScrollView, StatusBar } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface SettingsItemType {
   id: string;
@@ -23,8 +23,9 @@ interface SettingsSectionType {
 }
 
 export default function SettingsScreen() {
-  const theme = useTheme();
+  const { colors, layout, mode } = useTheme();
   const router = useRouter();
+  const iconColor = colors.accent;
 
   const sections: SettingsSectionType[] = [
     {
@@ -36,15 +37,15 @@ export default function SettingsScreen() {
           title: "Notification Settings",
           subtitle: "Manage your alerts and reminders",
           icon: "bell-outline",
-          iconColor: "#4A90E2",
-          onPress: () => router.push("/notifications"),
+          iconColor: iconColor,
+          onPress: () => router.push("/notifications-settings"),
         },
         {
           id: "theme",
           title: "Theme Settings",
           subtitle: "Customize app appearance",
           icon: "palette-outline",
-          iconColor: "#9B59B6",
+          iconColor: iconColor,
           onPress: () => router.push("/theme-settings"),
         },
         {
@@ -52,7 +53,7 @@ export default function SettingsScreen() {
           title: "Privacy Policy",
           subtitle: "Your data protection details",
           icon: "shield-check-outline",
-          iconColor: "#27AE60",
+          iconColor: iconColor,
           onPress: () => router.push("/privacy-policy"),
         },
       ],
@@ -66,7 +67,7 @@ export default function SettingsScreen() {
           title: "Generate Report",
           subtitle: "Create summary from your stats",
           icon: "file-chart-outline",
-          iconColor: "#3498DB",
+          iconColor: iconColor,
           onPress: () => router.push("/generate-report"),
         },
         {
@@ -74,7 +75,7 @@ export default function SettingsScreen() {
           title: "Emergency Guidelines",
           subtitle: "Quick access to emergency info",
           icon: "medical-bag",
-          iconColor: "#E74C3C",
+          iconColor: iconColor,
           onPress: () => router.push("/emergency-guidelines"),
         },
         {
@@ -82,7 +83,7 @@ export default function SettingsScreen() {
           title: "Pregnancy Tips",
           subtitle: "Helpful pregnancy guidance",
           icon: "baby-face-outline",
-          iconColor: "#FF69B4",
+          iconColor: iconColor,
           onPress: () => router.push("/pregnancy-tips"),
         },
         {
@@ -90,7 +91,7 @@ export default function SettingsScreen() {
           title: "Vital Sign Education",
           subtitle: "Learn about health metrics",
           icon: "heart-pulse",
-          iconColor: "#FF6B6B",
+          iconColor: iconColor,
           onPress: () => router.push("/vital-signs-education"),
         },
       ],
@@ -104,7 +105,7 @@ export default function SettingsScreen() {
           title: "Contact Support",
           subtitle: "Get help and assistance",
           icon: "help-circle-outline",
-          iconColor: "#F39C12",
+          iconColor: iconColor,
           onPress: () => router.push("/help"),
         },
       ],
@@ -126,17 +127,24 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
     >
       <StatusBar
-        barStyle="dark-content"
-        backgroundColor={theme.colors.background}
+        barStyle={mode === "dark" ? "light-content" : "dark-content"}
+        backgroundColor={colors.background}
       />
 
       <CustomAppBar title="Settings" rightAction="notifications" />
 
       <ScrollView
-        style={styles.scrollView}
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingTop: layout.spacing.sm,
+          paddingBottom: layout.spacing.xl,
+        }}
         showsVerticalScrollIndicator={false}
       >
         {sections.map((section) => (
@@ -146,17 +154,3 @@ export default function SettingsScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  scrollView: {
-    flex: 1,
-    paddingTop: 16,
-  },
-});

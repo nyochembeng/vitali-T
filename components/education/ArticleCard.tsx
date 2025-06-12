@@ -1,6 +1,7 @@
 import React from "react";
-import { View, StyleSheet, Image, TouchableOpacity } from "react-native";
+import { View, TouchableOpacity, Image } from "react-native";
 import { Text, Surface } from "react-native-paper";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface Article {
   id: string;
@@ -19,22 +20,58 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   article,
   onPress,
 }) => {
+  const { colors, typo, layout } = useTheme();
+
   return (
     <TouchableOpacity onPress={onPress}>
-      <Surface style={styles.container} elevation={1}>
+      <Surface
+        style={{
+          flexDirection: "row",
+          marginBottom: layout.spacing.sm,
+          borderRadius: layout.borderRadius.medium,
+          overflow: "hidden",
+          elevation: layout.elevation,
+        }}
+      >
         {/* <Image source={{ uri: article.image }} style={styles.image} /> */}
-        <View style={styles.content}>
-          <Text variant="titleMedium" style={styles.title} numberOfLines={2}>
+        <View
+          style={{
+            flex: 1,
+            padding: layout.spacing.sm,
+            justifyContent: "space-between",
+          }}
+        >
+          <Text
+            variant="titleMedium"
+            style={{
+              fontWeight: "600",
+              marginBottom: layout.spacing.xs,
+              color: colors.text,
+              ...typo.h6,
+            }}
+            numberOfLines={2}
+          >
             {article.title}
           </Text>
           <Text
             variant="bodyMedium"
-            style={styles.description}
+            style={{
+              color: "rgba(17, 12, 9, 0.6)",
+              marginBottom: layout.spacing.sm,
+              lineHeight: typo.body1.lineHeight,
+              ...typo.body1,
+            }}
             numberOfLines={2}
           >
             {article.description}
           </Text>
-          <Text variant="bodySmall" style={styles.readTime}>
+          <Text
+            variant="bodySmall"
+            style={{
+              color: colors.text,
+              ...typo.body3,
+            }}
+          >
             {article.readTime}
           </Text>
         </View>
@@ -42,34 +79,3 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
     </TouchableOpacity>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    marginBottom: 16,
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  image: {
-    width: 80,
-    height: 80,
-    resizeMode: "cover",
-  },
-  content: {
-    flex: 1,
-    padding: 12,
-    justifyContent: "space-between",
-  },
-  title: {
-    fontWeight: "600",
-    marginBottom: 4,
-  },
-  description: {
-    color: "#666",
-    marginBottom: 8,
-    lineHeight: 20,
-  },
-  readTime: {
-    color: "#999",
-  },
-});

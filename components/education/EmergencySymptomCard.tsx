@@ -1,7 +1,8 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
 import { Surface, Text } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface EmergencySymptom {
   id: string;
@@ -15,67 +16,71 @@ interface EmergencySymptomCardProps {
   symptom: EmergencySymptom;
 }
 
-const getIconColor = (severity: string) => {
+const getIconColor = (severity: string, colors: any) => {
   switch (severity) {
     case "high":
-      return "#EF4444";
+      return colors.error;
     case "medium":
-      return "#F59E0B";
+      return colors.warning;
     default:
-      return "#8B5A2B";
+      return colors.primary;
   }
 };
 
 export const EmergencySymptomCard: React.FC<EmergencySymptomCardProps> = ({
   symptom,
 }) => {
-  const iconColor = getIconColor(symptom.severity);
+  const { colors, typo, layout } = useTheme();
+  const iconColor = getIconColor(symptom.severity, colors);
 
   return (
-    <Surface style={styles.card} elevation={1}>
-      <View style={styles.iconContainer}>
+    <Surface
+      style={{
+        backgroundColor: colors.card,
+        borderRadius: layout.borderRadius.medium,
+        padding: layout.spacing.md,
+        marginBottom: layout.spacing.sm,
+        flexDirection: "row",
+        alignItems: "flex-start",
+        elevation: layout.elevation,
+      }}
+    >
+      <View
+        style={{
+          width: layout.spacing.xl,
+          height: layout.spacing.xl,
+          borderRadius: layout.borderRadius.full,
+          backgroundColor: colors.surface,
+          justifyContent: "center",
+          alignItems: "center",
+          marginRight: layout.spacing.sm,
+        }}
+      >
         <MaterialIcons name={symptom.icon as any} size={24} color={iconColor} />
       </View>
-      <View style={styles.content}>
-        <Text variant="titleMedium" style={styles.title}>
+      <View style={{ flex: 1 }}>
+        <Text
+          variant="titleMedium"
+          style={{
+            fontWeight: "600",
+            color: colors.text,
+            marginBottom: layout.spacing.xs,
+            ...typo.h6,
+          }}
+        >
           {symptom.title}
         </Text>
-        <Text variant="bodyMedium" style={styles.description}>
+        <Text
+          variant="bodyMedium"
+          style={{
+            color: "rgba(17, 12, 9, 0.6)",
+            lineHeight: typo.body1.lineHeight,
+            ...typo.body1,
+          }}
+        >
           {symptom.description}
         </Text>
       </View>
     </Surface>
   );
 };
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    flexDirection: "row",
-    alignItems: "flex-start",
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#FEF3F2",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 16,
-  },
-  content: {
-    flex: 1,
-  },
-  title: {
-    fontWeight: "600",
-    color: "#111827",
-    marginBottom: 4,
-  },
-  description: {
-    color: "#6B7280",
-    lineHeight: 20,
-  },
-});

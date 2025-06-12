@@ -1,7 +1,8 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
 import { Text, Card } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface VitalReading {
   label: string;
@@ -32,6 +33,8 @@ interface VitalHistoryCardProps {
 }
 
 const VitalHistoryCard: React.FC<VitalHistoryCardProps> = ({ entry }) => {
+  const { colors, typo, layout } = useTheme();
+
   const getTrendIcon = (trend?: "up" | "down" | "neutral") => {
     if (!trend || trend === "neutral") return null;
 
@@ -39,8 +42,8 @@ const VitalHistoryCard: React.FC<VitalHistoryCardProps> = ({ entry }) => {
       <MaterialIcons
         name={trend === "up" ? "trending-up" : "trending-down"}
         size={16}
-        color={trend === "up" ? "#4CAF50" : "#F44336"}
-        style={styles.trendIcon}
+        color={trend === "up" ? colors.success : colors.error}
+        style={{ marginRight: layout.spacing.xs }}
       />
     );
   };
@@ -49,10 +52,10 @@ const VitalHistoryCard: React.FC<VitalHistoryCardProps> = ({ entry }) => {
     isNormal?: boolean,
     trend?: "up" | "down" | "neutral"
   ) => {
-    if (isNormal === false) return "#F44336";
-    if (trend === "up") return "#4CAF50";
-    if (trend === "down") return "#F44336";
-    return "#333";
+    if (isNormal === false) return colors.error;
+    if (trend === "up") return colors.success;
+    if (trend === "down") return colors.error;
+    return colors.text;
   };
 
   const renderVitalRow = (
@@ -61,14 +64,38 @@ const VitalHistoryCard: React.FC<VitalHistoryCardProps> = ({ entry }) => {
     leftLabel: string,
     rightLabel: string
   ) => (
-    <View style={styles.vitalRow}>
-      <View style={styles.vitalItem}>
-        <Text style={styles.vitalLabel}>{leftLabel}</Text>
-        <View style={styles.vitalValueContainer}>
+    <View
+      style={{
+        flexDirection: "row",
+        justifyContent: "space-between",
+      }}
+    >
+      <View style={{ flex: 1, marginHorizontal: layout.spacing.xs }}>
+        <Text
+          style={{
+            fontSize: typo.caption.fontSize,
+            color: colors.text,
+            marginBottom: layout.spacing.xs,
+            fontWeight: "500",
+            ...typo.caption,
+          }}
+        >
+          {leftLabel}
+        </Text>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+        >
           {getTrendIcon(leftReading.trend)}
           <Text
             style={[
-              styles.vitalValue,
+              {
+                fontSize: typo.body1.fontSize,
+                fontWeight: "600",
+                ...typo.body1,
+              },
               { color: getValueColor(leftReading.isNormal, leftReading.trend) },
             ]}
           >
@@ -77,13 +104,32 @@ const VitalHistoryCard: React.FC<VitalHistoryCardProps> = ({ entry }) => {
         </View>
       </View>
 
-      <View style={styles.vitalItem}>
-        <Text style={styles.vitalLabel}>{rightLabel}</Text>
-        <View style={styles.vitalValueContainer}>
+      <View style={{ flex: 1, marginHorizontal: layout.spacing.xs }}>
+        <Text
+          style={{
+            fontSize: typo.caption.fontSize,
+            color: colors.text,
+            marginBottom: layout.spacing.xs,
+            fontWeight: "500",
+            ...typo.caption,
+          }}
+        >
+          {rightLabel}
+        </Text>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+        >
           {getTrendIcon(rightReading.trend)}
           <Text
             style={[
-              styles.vitalValue,
+              {
+                fontSize: typo.body1.fontSize,
+                fontWeight: "600",
+                ...typo.body1,
+              },
               {
                 color: getValueColor(rightReading.isNormal, rightReading.trend),
               },
@@ -97,18 +143,42 @@ const VitalHistoryCard: React.FC<VitalHistoryCardProps> = ({ entry }) => {
   );
 
   return (
-    <Card style={styles.card}>
+    <Card
+      style={{
+        marginHorizontal: layout.spacing.sm,
+        marginVertical: layout.spacing.xs,
+        backgroundColor: colors.card,
+        elevation: layout.elevation,
+        borderRadius: layout.borderRadius.medium,
+      }}
+    >
       <Card.Content>
-        {/* Date and Time Header */}
-        <View style={styles.header}>
-          <MaterialIcons name="schedule" size={16} color="#666" />
-          <Text style={styles.dateTime}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: layout.spacing.sm,
+          }}
+        >
+          <MaterialIcons name="schedule" size={16} color={colors.text} />
+          <Text
+            style={{
+              fontSize: typo.body2.fontSize,
+              color: colors.text,
+              marginLeft: layout.spacing.xs,
+              fontWeight: "500",
+              ...typo.body2,
+            }}
+          >
             {entry.date} - {entry.time}
           </Text>
         </View>
 
-        {/* Vital Signs */}
-        <View style={styles.vitalsContainer}>
+        <View
+          style={{
+            gap: layout.spacing.sm,
+          }}
+        >
           {renderVitalRow(entry.readings.fhr, entry.readings.mhr, "FHR", "MHR")}
           {renderVitalRow(entry.readings.bp, entry.readings.spo2, "BP", "SpO2")}
           {renderVitalRow(entry.readings.temp, entry.readings.rr, "Temp", "RR")}
@@ -123,54 +193,5 @@ const VitalHistoryCard: React.FC<VitalHistoryCardProps> = ({ entry }) => {
     </Card>
   );
 };
-
-const styles = StyleSheet.create({
-  card: {
-    marginHorizontal: 16,
-    marginVertical: 8,
-    backgroundColor: "#fff",
-    elevation: 2,
-    borderRadius: 12,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  dateTime: {
-    fontSize: 14,
-    color: "#333",
-    marginLeft: 8,
-    fontWeight: "500",
-  },
-  vitalsContainer: {
-    gap: 12,
-  },
-  vitalRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  vitalItem: {
-    flex: 1,
-    marginHorizontal: 8,
-  },
-  vitalLabel: {
-    fontSize: 12,
-    color: "#666",
-    marginBottom: 4,
-    fontWeight: "500",
-  },
-  vitalValueContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  vitalValue: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  trendIcon: {
-    marginRight: 4,
-  },
-});
 
 export default VitalHistoryCard;

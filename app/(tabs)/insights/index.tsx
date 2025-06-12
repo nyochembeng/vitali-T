@@ -1,9 +1,10 @@
 import React from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
+import { View, ScrollView } from "react-native";
 import { Text, Card, Button, Chip, ProgressBar } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
 import CustomAppBar from "@/components/utils/CustomAppBar";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface TrendCardProps {
   title: string;
@@ -42,119 +43,323 @@ const TrendCard: React.FC<TrendCardProps> = ({
   duration,
   lastUpdated,
   icon,
-}) => (
-  <Card style={styles.trendCard}>
-    <Card.Content style={styles.trendContent}>
-      <View style={styles.trendHeader}>
-        <Text variant="titleMedium" style={styles.trendTitle}>
-          {title}
+}) => {
+  const { colors, typo, layout } = useTheme();
+  return (
+    <Card
+      style={{
+        width: layout.spacing.xxl * 4.5, // 180px approximation
+        marginRight: layout.spacing.sm,
+        backgroundColor: colors.card,
+        borderRadius: layout.borderRadius.medium,
+      }}
+    >
+      <Card.Content
+        style={{
+          paddingVertical: layout.spacing.sm,
+        }}
+      >
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: layout.spacing.xs,
+          }}
+        >
+          <Text
+            style={{
+              ...typo.subtitle3,
+              color: colors.text,
+              fontWeight: "600",
+              flex: 1,
+            }}
+          >
+            {title}
+          </Text>
+          <MaterialIcons name={icon} size={24} color={colors.primary} />
+        </View>
+        <Text
+          style={{
+            ...typo.body2,
+            color: colors.text,
+            marginBottom: layout.spacing.md,
+          }}
+        >
+          {duration}
         </Text>
-        <MaterialIcons name={icon} size={24} color="#6366F1" />
-      </View>
-      <Text variant="bodyMedium" style={styles.duration}>
-        {duration}
-      </Text>
-      <View style={styles.lastUpdated}>
-        <MaterialIcons name="schedule" size={14} color="#9CA3AF" />
-        <Text variant="bodySmall" style={styles.lastUpdatedText}>
-          {lastUpdated}
-        </Text>
-      </View>
-    </Card.Content>
-  </Card>
-);
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+        >
+          <MaterialIcons name="schedule" size={14} color={colors.text + "99"} />
+          <Text
+            style={{
+              ...typo.caption,
+              color: colors.text + "99",
+              marginLeft: layout.spacing.xs,
+            }}
+          >
+            {lastUpdated}
+          </Text>
+        </View>
+      </Card.Content>
+    </Card>
+  );
+};
 
 const PatternCard: React.FC<PatternCardProps> = ({
   title,
   description,
   confidence,
   icon,
-}) => (
-  <Card style={styles.patternCard}>
-    <Card.Content>
-      <View style={styles.patternHeader}>
-        <Text variant="titleMedium" style={styles.patternTitle}>
-          {title}
+}) => {
+  const { colors, typo, layout } = useTheme();
+  return (
+    <Card
+      style={{
+        backgroundColor: colors.card,
+        marginBottom: layout.spacing.sm,
+        borderRadius: layout.borderRadius.medium,
+      }}
+    >
+      <Card.Content>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: layout.spacing.xs,
+          }}
+        >
+          <Text
+            style={{
+              ...typo.subtitle2,
+              color: colors.text,
+              fontWeight: "600",
+              flex: 1,
+            }}
+          >
+            {title}
+          </Text>
+          <MaterialIcons name={icon} size={20} color={colors.primary} />
+        </View>
+        <Text
+          style={{
+            ...typo.body2,
+            color: colors.text,
+            marginBottom: layout.spacing.md,
+            lineHeight: typo.body2.lineHeight,
+          }}
+        >
+          {description}
         </Text>
-        <MaterialIcons name={icon} size={20} color="#6366F1" />
-      </View>
-      <Text variant="bodyMedium" style={styles.patternDescription}>
-        {description}
-      </Text>
-      <View style={styles.confidenceContainer}>
-        <ProgressBar
-          progress={confidence / 100}
-          color="#10B981"
-          style={styles.progressBar}
-        />
-        <Text variant="bodySmall" style={styles.confidenceText}>
-          {confidence}% confidence
-        </Text>
-      </View>
-    </Card.Content>
-  </Card>
-);
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            width: "100%", // Ensure container takes full width
+          }}
+        >
+          <View
+            style={{
+              flex: 1,
+              marginRight: layout.spacing.sm,
+            }}
+          >
+            <ProgressBar
+              progress={confidence / 100}
+              color={colors.accent}
+              style={{
+                height: layout.spacing.sm,
+                borderRadius: layout.borderRadius.small,
+                backgroundColor: colors.primaryLight,
+              }}
+            />
+          </View>
+          <Text
+            style={{
+              ...typo.caption,
+              color: colors.accent,
+              fontWeight: "500",
+              minWidth: 80, // Prevent text from wrapping and affecting layout
+            }}
+          >
+            {confidence}% confidence
+          </Text>
+        </View>
+      </Card.Content>
+    </Card>
+  );
+};
 
 const PredictionCard: React.FC<PredictionCardProps> = ({
   title,
   description,
   confidence,
   icon,
-}) => (
-  <Card style={styles.predictionCard}>
-    <Card.Content>
-      <View style={styles.predictionHeader}>
-        <MaterialIcons name={icon} size={24} color="#6366F1" />
-        <Text variant="titleMedium" style={styles.predictionTitle}>
-          {title}
-        </Text>
-      </View>
-      <Text variant="bodyMedium" style={styles.predictionDescription}>
-        {description}
-      </Text>
-      <Chip
-        mode="outlined"
-        style={styles.confidenceChip}
-        textStyle={styles.confidenceChipText}
-      >
-        {confidence} Confidence
-      </Chip>
-    </Card.Content>
-  </Card>
-);
-
-const WeeklySummaryRow: React.FC<WeeklySummaryItem> = ({ label, value }) => (
-  <View style={styles.summaryRow}>
-    <Text variant="bodyMedium" style={styles.summaryLabel}>
-      {label}
-    </Text>
-    <Text variant="titleMedium" style={styles.summaryValue}>
-      {value}
-    </Text>
-  </View>
-);
-
-const NextStepCard: React.FC<NextStepItem> = ({ title, description, icon }) => (
-  <Card style={styles.nextStepCard}>
-    <Card.Content style={styles.nextStepContent}>
-      <View style={styles.nextStepIcon}>
-        {/* <MaterialCommunityIcons  - This is what was there earlier */}
-        <MaterialIcons name={icon} size={20} color="#6366F1" />
-      </View>
-      <View style={styles.nextStepText}>
-        <Text variant="titleSmall" style={styles.nextStepTitle}>
-          {title}
-        </Text>
-        <Text variant="bodySmall" style={styles.nextStepDescription}>
+}) => {
+  const { colors, typo, layout } = useTheme();
+  return (
+    <Card
+      style={{
+        backgroundColor: colors.card,
+        marginBottom: layout.spacing.sm,
+        borderRadius: layout.borderRadius.medium,
+      }}
+    >
+      <Card.Content>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "flex-start",
+            marginBottom: layout.spacing.xs,
+          }}
+        >
+          <MaterialIcons name={icon} size={24} color={colors.primary} />
+          <Text
+            style={{
+              ...typo.subtitle2,
+              color: colors.text,
+              marginLeft: layout.spacing.sm,
+              flex: 1,
+              lineHeight: typo.subtitle2.lineHeight,
+            }}
+          >
+            {title}
+          </Text>
+        </View>
+        <Text
+          style={{
+            ...typo.body2,
+            color: colors.text,
+            marginLeft: layout.spacing.xl,
+            marginBottom: layout.spacing.sm,
+          }}
+        >
           {description}
         </Text>
-      </View>
-      <MaterialIcons name="chevron-right" size={20} color="#9CA3AF" />
-    </Card.Content>
-  </Card>
-);
+        <Chip
+          mode="outlined"
+          style={{
+            alignSelf: "flex-start",
+            marginLeft: layout.spacing.xl,
+            backgroundColor: "transparent",
+            borderColor: colors.border,
+          }}
+          textStyle={{
+            ...typo.caption,
+            color: colors.primary,
+          }}
+        >
+          {confidence} Confidence
+        </Chip>
+      </Card.Content>
+    </Card>
+  );
+};
+
+const WeeklySummaryRow: React.FC<WeeklySummaryItem> = ({ label, value }) => {
+  const { colors, typo, layout } = useTheme();
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingVertical: layout.spacing.md,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
+      }}
+    >
+      <Text
+        style={{
+          ...typo.body2,
+          color: colors.text,
+        }}
+      >
+        {label}
+      </Text>
+      <Text
+        style={{
+          ...typo.subtitle2,
+          color: colors.text,
+          fontWeight: "600",
+        }}
+      >
+        {value}
+      </Text>
+    </View>
+  );
+};
+
+const NextStepCard: React.FC<NextStepItem> = ({ title, description, icon }) => {
+  const { colors, typo, layout } = useTheme();
+  return (
+    <Card
+      style={{
+        backgroundColor: colors.card,
+        marginBottom: layout.spacing.sm,
+        borderRadius: layout.borderRadius.medium,
+        padding: layout.spacing.md,
+      }}
+    >
+      <Card.Content
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          paddingVertical: layout.spacing.xs,
+        }}
+      >
+        <View
+          style={{
+            width: layout.spacing.md,
+            height: layout.spacing.md,
+            borderRadius: layout.borderRadius.xl,
+            backgroundColor: colors.primaryLight,
+            justifyContent: "center",
+            alignItems: "center",
+            marginRight: layout.spacing.sm,
+          }}
+        >
+          <MaterialIcons name={icon} size={20} color={colors.primary} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text
+            style={{
+              ...typo.body1,
+              color: colors.text,
+              fontWeight: "500",
+              lineHeight: typo.body1.lineHeight,
+            }}
+          >
+            {title}
+          </Text>
+          <Text
+            style={{
+              ...typo.caption,
+              color: colors.text,
+              marginTop: layout.spacing.xs,
+              lineHeight: typo.caption.lineHeight,
+            }}
+          >
+            {description}
+          </Text>
+        </View>
+        <MaterialIcons
+          name="chevron-right"
+          size={20}
+          color={colors.text + "99"}
+        />
+      </Card.Content>
+    </Card>
+  );
+};
 
 export default function AIInsightsScreen() {
+  const { colors, typo, layout } = useTheme();
   const trendData = [
     {
       title: "Blood Pressure Stable",
@@ -222,36 +427,76 @@ export default function AIInsightsScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
       <CustomAppBar
         title="Insights & Predictions"
         rightAction="notifications"
       />
 
       <ScrollView
-        style={styles.scrollView}
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingHorizontal: layout.spacing.lg,
+          paddingTop: layout.spacing.md,
+          paddingBottom: layout.spacing.xl,
+        }}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <View style={styles.header}>
-          <Text variant="headlineMedium" style={styles.title}>
+        <View
+          style={{
+            paddingVertical: layout.spacing.md,
+          }}
+        >
+          <Text
+            style={{
+              ...typo.h3,
+              color: colors.text,
+              textAlign: "center",
+              marginBottom: layout.spacing.xs,
+              fontWeight: "700",
+            }}
+          >
             AI Insights
           </Text>
-          <Text variant="bodyMedium" style={styles.subtitle}>
+          <Text
+            style={{
+              ...typo.body2,
+              color: colors.text,
+              textAlign: "center",
+              lineHeight: typo.body2.lineHeight,
+            }}
+          >
             These trends, predictions, and insights are generated based on your
             health history.
           </Text>
         </View>
 
         {/* Recent Trends */}
-        <View style={styles.section}>
-          <Text variant="titleLarge" style={styles.sectionTitle}>
+        <View
+          style={{
+            marginBottom: layout.spacing.lg,
+          }}
+        >
+          <Text
+            style={{
+              ...typo.subtitle1,
+              color: colors.text,
+              fontWeight: "600",
+              marginBottom: layout.spacing.sm,
+            }}
+          >
             Recent Trends
           </Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.trendsContainer}
+            contentContainerStyle={{ paddingRight: layout.spacing.sm }}
           >
             {trendData.map((trend, index) => (
               <TrendCard key={index} {...trend} />
@@ -260,8 +505,19 @@ export default function AIInsightsScreen() {
         </View>
 
         {/* Pattern Recognition */}
-        <View style={styles.section}>
-          <Text variant="titleLarge" style={styles.sectionTitle}>
+        <View
+          style={{
+            marginBottom: layout.spacing.lg,
+          }}
+        >
+          <Text
+            style={{
+              ...typo.subtitle1,
+              color: colors.text,
+              fontWeight: "600",
+              marginBottom: layout.spacing.sm,
+            }}
+          >
             Pattern Recognition
           </Text>
           {patternData.map((pattern, index) => (
@@ -270,8 +526,19 @@ export default function AIInsightsScreen() {
         </View>
 
         {/* What to Expect */}
-        <View style={styles.section}>
-          <Text variant="titleLarge" style={styles.sectionTitle}>
+        <View
+          style={{
+            marginBottom: layout.spacing.lg,
+          }}
+        >
+          <Text
+            style={{
+              ...typo.subtitle1,
+              color: colors.text,
+              fontWeight: "600",
+              marginBottom: layout.spacing.sm,
+            }}
+          >
             What to Expect
           </Text>
           {predictions.map((prediction, index) => (
@@ -280,21 +547,38 @@ export default function AIInsightsScreen() {
         </View>
 
         {/* This Week's Summary */}
-        <View style={styles.section}>
+        <View
+          style={{
+            marginBottom: layout.spacing.lg,
+          }}
+        >
           <Text
-            variant="titleLarge"
-            style={styles.sectionTitle}
-          >{`This Week's Summary`}</Text>
-          <Card style={styles.summaryCard}>
+            style={{
+              ...typo.subtitle1,
+              color: colors.text,
+              fontWeight: "600",
+              marginBottom: layout.spacing.sm,
+            }}
+          >
+            {`This Week's Summary`}
+          </Text>
+          <Card
+            style={{
+              backgroundColor: colors.card,
+              borderRadius: layout.borderRadius.medium,
+            }}
+          >
             <Card.Content>
               {weeklySummary.map((item, index) => (
                 <WeeklySummaryRow key={index} {...item} />
               ))}
               <Button
                 mode="outlined"
-                style={styles.viewReportButton}
-                buttonColor="transparent"
-                textColor="#6366F1"
+                style={{
+                  marginTop: layout.spacing.sm,
+                  borderColor: colors.primary,
+                }}
+                textColor={colors.primary}
               >
                 View Full Weekly Report
               </Button>
@@ -303,8 +587,19 @@ export default function AIInsightsScreen() {
         </View>
 
         {/* Next Best Steps */}
-        <View style={styles.section}>
-          <Text variant="titleLarge" style={styles.sectionTitle}>
+        <View
+          style={{
+            marginBottom: layout.spacing.lg,
+          }}
+        >
+          <Text
+            style={{
+              ...typo.subtitle1,
+              color: colors.text,
+              fontWeight: "600",
+              marginBottom: layout.spacing.sm,
+            }}
+          >
             Next Best Steps
           </Text>
           {nextSteps.map((step, index) => (
@@ -313,20 +608,28 @@ export default function AIInsightsScreen() {
         </View>
 
         {/* Action Buttons */}
-        <View style={styles.actionButtons}>
+        <View
+          style={{
+            flexDirection: "row",
+            gap: layout.spacing.sm,
+            marginBottom: layout.spacing.lg,
+          }}
+        >
           <Button
             mode="outlined"
-            style={styles.exportButton}
-            buttonColor="transparent"
-            textColor="#6366F1"
+            style={{
+              flex: 1,
+              borderColor: colors.primary,
+            }}
+            textColor={colors.primary}
             icon="download"
           >
             Export Insights
           </Button>
           <Button
             mode="contained"
-            style={styles.shareButton}
-            buttonColor="#6366F1"
+            style={{ flex: 1 }}
+            buttonColor={colors.primary}
             icon="share"
           >
             Share with Doctor
@@ -336,203 +639,3 @@ export default function AIInsightsScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F9FAFB",
-  },
-  scrollView: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  header: {
-    paddingVertical: 20,
-  },
-  title: {
-    fontWeight: "700",
-    color: "#1F2937",
-    marginBottom: 8,
-  },
-  subtitle: {
-    color: "#6B7280",
-    lineHeight: 20,
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontWeight: "600",
-    color: "#1F2937",
-    marginBottom: 16,
-  },
-  trendsContainer: {
-    paddingRight: 16,
-  },
-  trendCard: {
-    width: 180,
-    marginRight: 12,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-  },
-  trendContent: {
-    paddingVertical: 16,
-  },
-  trendHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  trendTitle: {
-    fontWeight: "600",
-    color: "#1F2937",
-    flex: 1,
-  },
-  duration: {
-    color: "#6B7280",
-    marginBottom: 12,
-  },
-  lastUpdated: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  lastUpdatedText: {
-    color: "#9CA3AF",
-    marginLeft: 4,
-  },
-  patternCard: {
-    backgroundColor: "#FFFFFF",
-    marginBottom: 12,
-    borderRadius: 12,
-  },
-  patternHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  patternTitle: {
-    fontWeight: "600",
-    color: "#1F2937",
-    flex: 1,
-  },
-  patternDescription: {
-    color: "#6B7280",
-    marginBottom: 16,
-    lineHeight: 20,
-  },
-  confidenceContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  progressBar: {
-    flex: 1,
-    height: 4,
-    borderRadius: 2,
-    marginRight: 12,
-  },
-  confidenceText: {
-    color: "#10B981",
-    fontWeight: "500",
-  },
-  predictionCard: {
-    backgroundColor: "#FFFFFF",
-    marginBottom: 12,
-    borderRadius: 12,
-  },
-  predictionHeader: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 8,
-  },
-  predictionTitle: {
-    fontWeight: "500",
-    color: "#1F2937",
-    marginLeft: 12,
-    flex: 1,
-    lineHeight: 20,
-  },
-  predictionDescription: {
-    color: "#6B7280",
-    marginLeft: 36,
-    marginBottom: 12,
-  },
-  confidenceChip: {
-    alignSelf: "flex-start",
-    marginLeft: 36,
-    backgroundColor: "transparent",
-    borderColor: "#D1D5DB",
-  },
-  confidenceChipText: {
-    color: "#6B7280",
-    fontSize: 12,
-  },
-  summaryCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-  },
-  summaryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
-  },
-  summaryLabel: {
-    color: "#6B7280",
-  },
-  summaryValue: {
-    fontWeight: "600",
-    color: "#1F2937",
-  },
-  viewReportButton: {
-    marginTop: 16,
-    borderColor: "#6366F1",
-  },
-  nextStepCard: {
-    backgroundColor: "#FFFFFF",
-    marginBottom: 8,
-    borderRadius: 12,
-  },
-  nextStepContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 8,
-  },
-  nextStepIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#EEF2FF",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-  nextStepText: {
-    flex: 1,
-  },
-  nextStepTitle: {
-    fontWeight: "500",
-    color: "#1F2937",
-    lineHeight: 18,
-  },
-  nextStepDescription: {
-    color: "#6B7280",
-    marginTop: 2,
-    lineHeight: 16,
-  },
-  actionButtons: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 32,
-  },
-  exportButton: {
-    flex: 1,
-    borderColor: "#6366F1",
-  },
-  shareButton: {
-    flex: 1,
-  },
-});

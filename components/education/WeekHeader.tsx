@@ -1,6 +1,7 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
 import { Text, ProgressBar } from "react-native-paper";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface WeekHeaderProps {
   week: number;
@@ -13,41 +14,48 @@ export const WeekHeader: React.FC<WeekHeaderProps> = ({
   trimester,
   progress,
 }) => {
+  const { colors, typo, layout } = useTheme();
+
   return (
-    <View style={styles.container}>
-      <Text variant="displaySmall" style={styles.weekText}>
+    <View
+      style={{
+        backgroundColor: colors.accentLight,
+        padding: layout.spacing.md,
+        paddingTop: layout.spacing.md,
+        borderRadius: layout.borderRadius.medium,
+        marginBottom: layout.spacing.md,
+      }}
+    >
+      <Text
+        variant="displaySmall"
+        style={{
+          fontWeight: "700",
+          color: colors.text,
+          marginBottom: layout.spacing.sm,
+          ...typo.h3,
+        }}
+      >
         Week {week}
       </Text>
       <ProgressBar
         progress={progress}
-        color="#D4A574"
-        style={styles.progressBar}
+        color={colors.primary}
+        style={{
+          height: layout.spacing.sm,
+          borderRadius: layout.borderRadius.small,
+          backgroundColor: colors.background,
+          marginBottom: layout.spacing.sm,
+        }}
       />
-      <Text variant="bodyLarge" style={styles.trimesterText}>
+      <Text
+        variant="bodyLarge"
+        style={{
+          color: colors.text,
+          ...typo.body1,
+        }}
+      >
         {trimester}
       </Text>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: "#F3F0ED",
-    padding: 20,
-    paddingTop: 32,
-  },
-  weekText: {
-    fontWeight: "700",
-    color: "#1F2937",
-    marginBottom: 12,
-  },
-  progressBar: {
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#E5E7EB",
-    marginBottom: 8,
-  },
-  trimesterText: {
-    color: "#6B7280",
-  },
-});

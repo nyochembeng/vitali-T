@@ -1,22 +1,27 @@
-import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, Image, Dimensions } from "react-native";
-import { Text, Button, Checkbox } from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { StatusBar } from "expo-status-bar";
-import { MaterialIcons } from "@expo/vector-icons";
 import SetupStep from "@/components/setup/SetupStep";
-import PageIndicator from "@/components/utils/PageIndicator";
+import { useTheme } from "@/lib/hooks/useTheme";
+import { MaterialIcons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import React, { useEffect, useRef, useState } from "react";
+import { Dimensions, ScrollView, View } from "react-native";
+import PagerView from "react-native-pager-view";
+import { Button, Checkbox, Text } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const { width } = Dimensions.get("window");
 
 export default function GettingStartedScreen() {
   const [dontShowAgain, setDontShowAgain] = useState(false);
+  const [currentSuccessPage, setCurrentSuccessPage] = useState(0);
   const router = useRouter();
+  const { colors, typo, layout, mode } = useTheme();
+  const pagerRef = useRef<PagerView>(null);
 
   const handleComplete = () => {
     if (dontShowAgain) {
-      //   Save preference to not show this screen again
+      // Save preference to not show this screen again
       console.log("User opted to not show this screen again");
     }
     router.push("/dashboard");
@@ -28,7 +33,7 @@ export default function GettingStartedScreen() {
       title: "Open Your Dashboard",
       description:
         'After creating your account, you\'ll land on your dashboard. Tap the "Start Recording" button to begin.',
-      // image: require("../assets/images/dashboard-setup.jpg"),
+      image: require("@/assets/images/dashboard-setup.png"),
     },
     {
       stepNumber: 2,
@@ -38,7 +43,7 @@ export default function GettingStartedScreen() {
         "Power on the Vitali-T device",
         "Search for and select the device in the app",
       ],
-      // image: require("../assets/images/device-connection.jpg"),
+      image: require("@/assets/images/device-connection.jpg"),
     },
     {
       stepNumber: 3,
@@ -47,24 +52,183 @@ export default function GettingStartedScreen() {
         "Attach the ECG sensor cathodes on your chest as shown",
         "Once connected, MHR data streams live to your phone",
       ],
-      // image: require("../assets/images/ecg-sensor.jpg"),
+      image: require("@/assets/images/ecg-sensor.jpg"),
     },
   ];
 
+  const successCards = [
+    {
+      icon: "check",
+      title: "You're All Set!",
+      description:
+        "You're ready to start tracking your vitals regularly. Visit the dashboard anytime to begin new recordings.",
+      image: require("@/assets/images/success-woman.jpg"),
+    },
+    {
+      icon: "favorite",
+      title: "Monitor Your Health",
+      description:
+        "Track your vital signs consistently for better health insights. Your data helps you and your healthcare provider make informed decisions.",
+      image: require("@/assets/images/success-woman-2.jpg"),
+    },
+    {
+      icon: "timeline",
+      title: "View Your Progress",
+      description:
+        "Access detailed reports and trends of your vital signs. Share your health data with your doctor for comprehensive care.",
+      image: require("@/assets/images/success-woman-3.jpg"),
+    },
+  ];
+
+  // Auto-swipe functionality
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSuccessPage((prev) => {
+        const nextPage = (prev + 1) % successCards.length;
+        pagerRef.current?.setPage(nextPage);
+        return nextPage;
+      });
+    }, 5000); // Auto-swipe every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [successCards.length]);
+
+  const handlePageSelected = (e: any) => {
+    setCurrentSuccessPage(e.nativeEvent.position);
+  };
+
+  const renderSuccessCard = (card: (typeof successCards)[0], index: number) => (
+    <View
+      key={index}
+      style={{
+        alignItems: "center",
+        backgroundColor: colors.card,
+        borderRadius: layout.borderRadius.large,
+        padding: layout.spacing.lg,
+        marginHorizontal: layout.spacing.sm,
+        shadowColor: colors.text,
+        shadowOffset: layout.shadow.light.shadowOffset,
+        shadowOpacity: layout.shadow.light.shadowOpacity,
+        shadowRadius: layout.shadow.light.shadowRadius,
+        elevation: layout.elevation,
+      }}
+    >
+      <View
+        style={{
+          width: 60,
+          height: 60,
+          borderRadius: layout.borderRadius.full,
+          backgroundColor: colors.accent,
+          justifyContent: "center",
+          alignItems: "center",
+          marginBottom: layout.spacing.sm,
+        }}
+      >
+        <MaterialIcons
+          name={card.icon as any}
+          size={32}
+          color={colors.textInverse}
+        />
+      </View>
+
+      <Text
+        variant="titleLarge"
+        style={{
+          color: colors.text,
+          fontWeight: "700",
+          marginBottom: layout.spacing.sm,
+          textAlign: "center",
+          ...typo.h3,
+        }}
+      >
+        {card.title}
+      </Text>
+
+      <Text
+        variant="bodyMedium"
+        style={{
+          color: colors.text,
+          opacity: 0.7,
+          textAlign: "center",
+          lineHeight: typo.body1.lineHeight,
+          marginBottom: layout.spacing.sm,
+          ...typo.body1,
+        }}
+      >
+        {card.description}
+      </Text>
+
+      <View
+        style={{
+          width: width * 0.6,
+          height: 120,
+          borderRadius: layout.borderRadius.medium,
+          overflow: "hidden",
+          backgroundColor: colors.border,
+          shadowColor: colors.text,
+          shadowOffset: layout.shadow.light.shadowOffset,
+          shadowOpacity: layout.shadow.light.shadowOpacity,
+          shadowRadius: layout.shadow.light.shadowRadius,
+          elevation: 2,
+        }}
+      >
+        <Image
+          source={card.image}
+          style={{
+            width: "100%",
+            height: "100%",
+          }}
+          contentFit="cover"
+        />
+      </View>
+    </View>
+  );
+
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="dark" />
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
+      <StatusBar style={mode === "dark" ? "light" : "dark"} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={{
+          paddingHorizontal: layout.spacing.lg,
+          paddingBottom: layout.spacing.md,
+        }}
       >
         {/* Header */}
-        <View style={styles.header}>
-          <Text variant="headlineSmall" style={styles.title}>
+        <View
+          style={{
+            marginTop: layout.spacing.sm,
+            marginBottom: layout.spacing.xl,
+          }}
+        >
+          <Text
+            variant="headlineSmall"
+            style={{
+              fontWeight: "700",
+              color: colors.text,
+              textAlign: "center",
+              marginBottom: layout.spacing.sm,
+              ...typo.h4,
+            }}
+          >
             Getting Started with Vitali-T
           </Text>
-          <Text variant="bodyMedium" style={styles.subtitle}>
+          <Text
+            variant="bodyMedium"
+            style={{
+              color: colors.text,
+              opacity: 0.7,
+              textAlign: "center",
+              lineHeight: typo.body1.lineHeight,
+              ...typo.body1,
+            }}
+          >
             {`Welcome! Let's walk you through how to record and monitor your vital signs using Vitali-T.`}
           </Text>
         </View>
@@ -77,75 +241,174 @@ export default function GettingStartedScreen() {
             title={step.title}
             description={step.description}
             instructions={step.instructions}
-            // image={step.image}
+            image={step.image}
           />
         ))}
 
         {/* Advanced Monitoring Section */}
-        <View style={styles.advancedSection}>
-          <View style={styles.advancedHeader}>
-            <MaterialIcons name="devices" size={24} color="#A67B5B" />
-            <Text variant="titleMedium" style={styles.advancedTitle}>
+        <View
+          style={{
+            marginTop: layout.spacing.xl,
+            marginBottom: layout.spacing.xl,
+          }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: layout.spacing.sm,
+            }}
+          >
+            <MaterialIcons name="devices" size={24} color={colors.primary} />
+            <Text
+              variant="titleMedium"
+              style={{
+                color: colors.text,
+                fontWeight: "600",
+                marginLeft: layout.spacing.sm,
+                ...typo.h6,
+              }}
+            >
               Advanced Monitoring
             </Text>
           </View>
 
-          {/* <Image
-            source={require("../assets/images/advanced-monitoring.jpg")}
-            style={styles.advancedImage}
-            resizeMode="cover"
-          /> */}
+          <View
+            style={{
+              borderRadius: layout.borderRadius.medium,
+              overflow: "hidden",
+              backgroundColor: colors.border,
+              shadowColor: colors.text,
+              shadowOffset: layout.shadow.light.shadowOffset,
+              shadowOpacity: layout.shadow.light.shadowOpacity,
+              shadowRadius: layout.shadow.light.shadowRadius,
+              elevation: layout.elevation,
+              marginBottom: layout.spacing.sm,
+            }}
+          >
+            <Image
+              source={require("@/assets/images/pregnancy.jpg")}
+              style={{
+                width: "100%",
+                height: 120,
+              }}
+              contentFit="cover"
+            />
+          </View>
 
-          <Text variant="bodyMedium" style={styles.advancedDescription}>
+          <Text
+            variant="bodyMedium"
+            style={{
+              color: colors.text,
+              opacity: 0.7,
+              textAlign: "center",
+              lineHeight: typo.body1.lineHeight,
+              ...typo.body1,
+            }}
+          >
             Each vital sign has unique setup steps. View full tutorials for FHR,
             BP, SpO₂, and more.
           </Text>
         </View>
 
-        {/* Success Section */}
-        <View style={styles.successSection}>
-          <View style={styles.successIcon}>
-            <MaterialIcons name="check" size={32} color="#FFFFFF" />
+        {/* Success Section - Swipable Cards */}
+        <View
+          style={{
+            marginTop: layout.spacing.sm,
+            marginBottom: layout.spacing.lg,
+          }}
+        >
+          <PagerView
+            ref={pagerRef}
+            style={{
+              height: 320,
+            }}
+            initialPage={0}
+            onPageSelected={handlePageSelected}
+          >
+            {successCards.map((card, index) => (
+              <View key={index}>{renderSuccessCard(card, index)}</View>
+            ))}
+          </PagerView>
+
+          {/* Success Cards Page Indicator */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "center",
+              alignItems: "center",
+              marginTop: layout.spacing.md,
+            }}
+          >
+            {successCards.map((_, index) => (
+              <View
+                key={index}
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: 4,
+                  backgroundColor:
+                    currentSuccessPage === index
+                      ? colors.primary
+                      : colors.border,
+                  marginHorizontal: 4,
+                }}
+              />
+            ))}
           </View>
-
-          <Text variant="titleLarge" style={styles.successTitle}>
-            {`You're All Set!`}
-          </Text>
-
-          <Text variant="bodyMedium" style={styles.successDescription}>
-            {`You're ready to start tracking your vitals regularly. Visit the dashboard anytime to begin new recordings.`}
-          </Text>
-
-          {/* <Image
-            source={require("../assets/images/success-woman.jpg")}
-            style={styles.successImage}
-            resizeMode="cover"
-          /> */}
         </View>
 
-        {/* Page Indicator */}
-        <PageIndicator currentPage={0} totalPages={3} />
-
         {/* Don't Show Again Checkbox */}
-        <View style={styles.checkboxContainer}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            marginVertical: layout.spacing.sm,
+          }}
+        >
           <Checkbox
             status={dontShowAgain ? "checked" : "unchecked"}
             onPress={() => setDontShowAgain(!dontShowAgain)}
-            color="#A67B5B"
+            color={colors.primary}
           />
-          <Text variant="bodyMedium" style={styles.checkboxLabel}>
+          <Text
+            variant="bodyMedium"
+            style={{
+              color: colors.text,
+              opacity: 0.7,
+              marginLeft: layout.spacing.sm,
+              ...typo.body1,
+            }}
+          >
             {`Don't show this again`}
           </Text>
         </View>
 
         {/* Complete Button */}
-        <View style={styles.buttonContainer}>
+        <View
+          style={{
+            marginTop: layout.spacing.sm,
+          }}
+        >
           <Button
             mode="contained"
             onPress={handleComplete}
-            style={styles.completeButton}
-            contentStyle={styles.buttonContent}
-            labelStyle={styles.buttonLabel}
+            style={{
+              backgroundColor: colors.primary,
+              borderRadius: layout.borderRadius.large,
+              height: 50,
+            }}
+            contentStyle={{
+              height: 50,
+            }}
+            labelStyle={{
+              fontSize: typo.button.fontSize,
+              fontWeight: "600",
+              color: colors.textInverse,
+              ...typo.button,
+            }}
           >
             Got It - Take me to Dashboard
           </Button>
@@ -154,110 +417,3 @@ export default function GettingStartedScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
-  scrollContent: {
-    paddingHorizontal: 24,
-    paddingBottom: 30,
-  },
-  header: {
-    marginTop: 20,
-    marginBottom: 30,
-  },
-  title: {
-    fontWeight: "700",
-    color: "#2C2C2C",
-    marginBottom: 12,
-  },
-  subtitle: {
-    color: "#666666",
-    lineHeight: 20,
-  },
-  advancedSection: {
-    marginTop: 30,
-    marginBottom: 30,
-  },
-  advancedHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  advancedTitle: {
-    color: "#2C2C2C",
-    fontWeight: "600",
-    marginLeft: 8,
-  },
-  advancedImage: {
-    width: "100%",
-    height: 120,
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  advancedDescription: {
-    color: "#666666",
-    lineHeight: 20,
-  },
-  successSection: {
-    alignItems: "center",
-    backgroundColor: "#F8F8F8",
-    borderRadius: 16,
-    padding: 24,
-    marginTop: 20,
-    marginBottom: 30,
-  },
-  successIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#4CAF50",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  successTitle: {
-    color: "#2C2C2C",
-    fontWeight: "700",
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  successDescription: {
-    color: "#666666",
-    textAlign: "center",
-    lineHeight: 20,
-    marginBottom: 20,
-  },
-  successImage: {
-    width: width * 0.6,
-    height: 120,
-    borderRadius: 12,
-  },
-  checkboxContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 20,
-  },
-  checkboxLabel: {
-    color: "#666666",
-    marginLeft: 8,
-  },
-  buttonContainer: {
-    marginTop: 10,
-  },
-  completeButton: {
-    backgroundColor: "#A67B5B",
-    borderRadius: 25,
-    height: 50,
-  },
-  buttonContent: {
-    height: 50,
-  },
-  buttonLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-});

@@ -3,8 +3,9 @@
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
-import { useColorScheme } from "react-native";
+import { useColorScheme, SafeAreaView } from "react-native";
 import { PaperProvider, MD3LightTheme, MD3DarkTheme } from "react-native-paper";
+import { StatusBar } from "expo-status-bar";
 import {
   useFonts,
   Inter_400Regular,
@@ -22,7 +23,6 @@ import {
 import { Colors } from "@/lib/constants/Colors";
 import { Typo } from "@/lib/constants/Typo";
 import { Layout } from "@/lib/constants/Layout";
-import { Anime } from "@/lib/constants/Anime";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -78,21 +78,23 @@ export default function RootLayout() {
       colors: colorSet,
       typo: Typo,
       layout: Layout,
-      anime: Anime,
       mode: isDark ? "dark" : "light",
     },
   };
 
   return (
     <PaperProvider theme={paperTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="(onboarding-slides)" />
-        <Stack.Screen name="auth" />
-        <Stack.Screen name="(setup)" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="(bluetooth)" />
-      </Stack>
+      <SafeAreaView style={{ flex: 1, backgroundColor: colorSet.background }}>
+        <StatusBar style={isDark ? "light" : "dark"} />
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="(onboarding-slides)" />
+          <Stack.Screen name="auth" />
+          <Stack.Screen name="(setup)" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="(bluetooth)" />
+        </Stack>
+      </SafeAreaView>
     </PaperProvider>
   );
 }

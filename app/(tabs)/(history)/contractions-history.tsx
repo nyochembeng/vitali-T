@@ -4,8 +4,9 @@ import CustomAppBar from "@/components/utils/CustomAppBar";
 import FilterTabs from "@/components/utils/FilterTabs";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { FlatList, SafeAreaView, StyleSheet, View } from "react-native";
+import { FlatList, SafeAreaView, View } from "react-native";
 import { Button } from "react-native-paper";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface ContractionOverview {
   averageInterval: string;
@@ -25,10 +26,10 @@ interface ContractionEntry {
 export default function ContractionHistoryScreen() {
   const [selectedFilter, setSelectedFilter] = useState<string>("All Time");
   const router = useRouter();
+  const { colors, typo, layout } = useTheme();
 
   const filterOptions = ["All Time", "Today", "Yesterday", "Last Week"];
 
-  // Sample data - replace with actual data from your API/state
   const todaysOverview: ContractionOverview = {
     averageInterval: "3.5 min",
     totalContractions: 12,
@@ -65,7 +66,6 @@ export default function ContractionHistoryScreen() {
   ];
 
   const handleLogNewContraction = () => {
-    // Navigate to contraction logging screen
     router.push("/log-contractions");
   };
 
@@ -74,90 +74,77 @@ export default function ContractionHistoryScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
       <CustomAppBar title="Contractions History" rightAction="notifications" />
 
-      {/* Today's Overview */}
-      <ContractionOverviewCard overview={todaysOverview} />
+      <View style={{ paddingHorizontal: layout.spacing.md }}>
+        <ContractionOverviewCard overview={todaysOverview} />
 
-      {/* Filter Tabs */}
-      <View style={styles.filterContainer}>
-        <FilterTabs
-          selectedFilter={selectedFilter}
-          onFilterChange={setSelectedFilter}
-          options={filterOptions}
-        />
-      </View>
-
-      {/* Contractions List */}
-      <FlatList
-        data={contractionEntries}
-        renderItem={renderContractionCard}
-        keyExtractor={(item) => item.id}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContainer}
-      />
-
-      {/* Log New Contraction Button */}
-      <View style={styles.buttonContainer}>
-        <Button
-          mode="contained"
-          onPress={handleLogNewContraction}
-          style={styles.logButton}
-          labelStyle={styles.logButtonText}
-          icon="plus"
+        <View
+          style={{
+            backgroundColor: colors.card,
+            paddingBottom: layout.spacing.xs,
+          }}
         >
-          Log New Contraction
-        </Button>
+          <FilterTabs
+            selectedFilter={selectedFilter}
+            onFilterChange={setSelectedFilter}
+            options={filterOptions}
+          />
+        </View>
+
+        <FlatList
+          data={contractionEntries}
+          renderItem={renderContractionCard}
+          keyExtractor={(item) => item.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingBottom: layout.spacing.xxl, // Space for floating button
+            paddingHorizontal: layout.spacing.xs, // Space for floating button
+          }}
+        />
+
+        <View
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            paddingHorizontal: layout.spacing.sm,
+            paddingVertical: layout.spacing.sm,
+            backgroundColor: colors.card,
+            elevation: layout.elevation,
+            shadowColor: colors.text,
+            shadowOffset: layout.shadow.light.shadowOffset,
+            shadowOpacity: layout.shadow.light.shadowOpacity,
+            shadowRadius: layout.shadow.light.shadowRadius,
+          }}
+        >
+          <Button
+            mode="contained"
+            onPress={handleLogNewContraction}
+            style={{
+              backgroundColor: colors.primary,
+              borderRadius: layout.borderRadius.medium,
+              paddingVertical: layout.spacing.xs,
+            }}
+            labelStyle={{
+              fontSize: typo.button.fontSize,
+              fontWeight: "600",
+              color: colors.textInverse,
+              ...typo.button,
+            }}
+            icon="plus"
+          >
+            Log New Contraction
+          </Button>
+        </View>
       </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f8f9fa",
-  },
-  header: {
-    backgroundColor: "#fff",
-    elevation: 0,
-    shadowOpacity: 0,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-  },
-  filterContainer: {
-    backgroundColor: "#fff",
-    paddingBottom: 8,
-  },
-  listContainer: {
-    paddingBottom: 100, // Space for floating button
-  },
-  buttonContainer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: "#fff",
-    elevation: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  logButton: {
-    backgroundColor: "#8B4513",
-    borderRadius: 12,
-    paddingVertical: 4,
-  },
-  logButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#fff",
-  },
-});

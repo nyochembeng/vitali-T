@@ -4,7 +4,7 @@
     "slug": "Vitali-T",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/Vitali-T-logo.jpg",
     "scheme": "vitalit",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -14,28 +14,28 @@
     "android": {
       "package": "com.vitalit.app",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/images/Vitali-T-logo.jpg",
+        "backgroundColor": "#D3C4B1"
       },
       "edgeToEdgeEnabled": true
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/Vitali-T-logo.jpg"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/Vitali-T-logo.jpg",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#D3C4B1",
           "dark": {
-            "image": "./assets/images/splash-icon.png",
-            "backgroundColor": "#000000"
+            "image": "./assets/images/Vitali-T-logo.jpg",
+            "backgroundColor": "#D3C4B1"
           }
         }
       ],

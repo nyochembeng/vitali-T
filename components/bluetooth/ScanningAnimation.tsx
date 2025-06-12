@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { Animated, View, StyleSheet } from "react-native";
+import { Animated } from "react-native";
 
 interface ScanningAnimationProps {
   isScanning: boolean;
@@ -35,21 +35,15 @@ const ScanningAnimation: React.FC<ScanningAnimationProps> = ({
 
   return (
     <Animated.View
-      style={[
-        styles.container,
-        { transform: [{ scale: isScanning ? pulseAnim : 1 }] },
-      ]}
+      style={{
+        alignItems: "center",
+        justifyContent: "center",
+        transform: [{ scale: isScanning ? pulseAnim : 1 }],
+      }}
     >
       {children}
     </Animated.View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
 
 export default ScanningAnimation;

@@ -1,82 +1,171 @@
 import React, { useState } from "react";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
+import { View, TouchableOpacity } from "react-native";
 import { Text, Button, RadioButton } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
 import CustomAppBar from "@/components/utils/CustomAppBar";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 export default function ThemeSettingsScreen() {
+  const { colors, typo, layout } = useTheme();
   const [selectedTheme, setSelectedTheme] = useState<"light" | "dark">("light");
 
   const handleSave = () => {
-    // Logic to save the selected theme
     console.log(`Selected theme: ${selectedTheme}`);
-    // Here you would typically save the theme to a global state or AsyncStorage
+    // Logic to save the selected theme (e.g., to global state or AsyncStorage)
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
       <CustomAppBar title="Theme Settings" rightAction="notifications" />
 
-      <View style={styles.content}>
+      <View
+        style={{
+          flex: 1,
+          paddingHorizontal: layout.spacing.sm,
+        }}
+      >
         {/* Theme Selection */}
-        <View style={styles.themeSection}>
-          <Text style={styles.sectionTitle}>Choose App Theme</Text>
+        <View
+          style={{
+            marginTop: layout.spacing.lg,
+            gap: layout.spacing.sm,
+          }}
+        >
+          <Text
+            style={{
+              ...typo.subtitle2,
+              color: colors.text,
+              marginBottom: layout.spacing.xs,
+            }}
+          >
+            Choose App Theme
+          </Text>
 
           {/* Light Mode Option */}
           <TouchableOpacity
             style={[
-              styles.themeOption,
-              styles.lightThemeOption,
-              selectedTheme === "light" && styles.selectedOption,
+              {
+                flexDirection: "row",
+                alignItems: "center",
+                padding: layout.spacing.sm,
+                borderRadius: layout.borderRadius.medium,
+                borderWidth: 2,
+                borderColor: "transparent",
+              },
+              selectedTheme === "light" && {
+                borderColor: colors.primary,
+              },
             ]}
             onPress={() => setSelectedTheme("light")}
           >
-            <View style={styles.themeIconContainer}>
-              <MaterialIcons name="wb-sunny" size={24} color="#A0826A" />
+            <View
+              style={{
+                width: layout.spacing.xl,
+                height: layout.spacing.xl,
+                borderRadius: layout.borderRadius.small,
+                alignItems: "center",
+                justifyContent: "center",
+                marginRight: layout.spacing.sm,
+              }}
+            >
+              <MaterialIcons name="wb-sunny" size={24} color={colors.primary} />
             </View>
-            <Text style={[styles.themeText, styles.lightThemeText]}>
+            <Text
+              style={{
+                ...typo.body1,
+                flex: 1,
+                color: colors.text,
+              }}
+            >
               Light Mode
             </Text>
             <RadioButton
               value="light"
               status={selectedTheme === "light" ? "checked" : "unchecked"}
               onPress={() => setSelectedTheme("light")}
-              color="#A0826A"
+              color={colors.primary}
             />
           </TouchableOpacity>
 
           {/* Dark Mode Option */}
           <TouchableOpacity
             style={[
-              styles.themeOption,
-              styles.darkThemeOption,
-              selectedTheme === "dark" && styles.selectedDarkOption,
+              {
+                flexDirection: "row",
+                alignItems: "center",
+                padding: layout.spacing.sm,
+                borderRadius: layout.borderRadius.medium,
+                borderWidth: 2,
+                borderColor: "transparent",
+              },
+              selectedTheme === "dark" && {
+                borderColor: colors.primary,
+              },
             ]}
             onPress={() => setSelectedTheme("dark")}
           >
-            <View style={styles.themeIconContainer}>
-              <MaterialIcons name="nights-stay" size={24} color="#D4C4B0" />
+            <View
+              style={{
+                width: layout.spacing.xl,
+                height: layout.spacing.xl,
+                borderRadius: layout.borderRadius.small,
+                alignItems: "center",
+                justifyContent: "center",
+                marginRight: layout.spacing.sm,
+              }}
+            >
+              <MaterialIcons
+                name="nights-stay"
+                size={24}
+                color={colors.accent}
+              />
             </View>
-            <Text style={[styles.themeText, styles.darkThemeText]}>
+            <Text
+              style={{
+                ...typo.body1,
+                flex: 1,
+                color: colors.text,
+              }}
+            >
               Dark Mode
             </Text>
             <RadioButton
               value="dark"
               status={selectedTheme === "dark" ? "checked" : "unchecked"}
               onPress={() => setSelectedTheme("dark")}
-              color="#D4C4B0"
+              color={colors.primary}
             />
           </TouchableOpacity>
         </View>
 
         {/* Save Button */}
-        <View style={styles.buttonContainer}>
+        <View
+          style={{
+            marginTop: layout.spacing.xl,
+          }}
+        >
           <Button
             mode="contained"
             onPress={handleSave}
-            style={styles.saveButton}
-            labelStyle={styles.saveButtonText}
+            style={{
+              borderRadius: layout.borderRadius.large,
+              elevation: layout.elevation,
+            }}
+            contentStyle={{
+              paddingVertical: layout.spacing.xs,
+            }}
+            labelStyle={{
+              ...typo.button,
+              fontWeight: "600",
+              color: colors.textInverse,
+            }}
+            buttonColor={colors.primary}
           >
             Save Settings
           </Button>
@@ -85,91 +174,3 @@ export default function ThemeSettingsScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FAFAFA",
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 16,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-  },
-  placeholder: {
-    width: 48,
-  },
-  themeSection: {
-    marginTop: 32,
-    gap: 16,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#333",
-    marginBottom: 8,
-  },
-  themeOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 20,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: "transparent",
-  },
-  lightThemeOption: {
-    backgroundColor: "#FFF8F0",
-  },
-  darkThemeOption: {
-    backgroundColor: "#4A3B32",
-  },
-  selectedOption: {
-    borderColor: "#A0826A",
-  },
-  selectedDarkOption: {
-    borderColor: "#D4C4B0",
-  },
-  themeIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    backgroundColor: "rgba(255, 255, 255, 0.7)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 16,
-  },
-  themeText: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  lightThemeText: {
-    color: "#333",
-  },
-  darkThemeText: {
-    color: "#F5F0EC",
-  },
-  buttonContainer: {
-    marginTop: 40,
-  },
-  saveButton: {
-    backgroundColor: "#A0826A",
-    borderRadius: 12,
-    paddingVertical: 4,
-  },
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#FFFFFF",
-  },
-});

@@ -1,6 +1,7 @@
 import React from "react";
-import { StyleSheet, ScrollView } from "react-native";
+import { ScrollView } from "react-native";
 import { Chip } from "react-native-paper";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface FilterTabsProps<T extends string> {
   selectedFilter: T;
@@ -13,11 +14,17 @@ const FilterTabs = <T extends string>({
   onFilterChange,
   options,
 }: FilterTabsProps<T>) => {
+  const { colors, typo, layout } = useTheme();
+
   return (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.container}
+      contentContainerStyle={{
+        paddingHorizontal: layout.spacing.sm,
+        paddingVertical: layout.spacing.xs,
+        gap: layout.spacing.sm,
+      }}
     >
       {options.map((filter) => (
         <Chip
@@ -25,14 +32,18 @@ const FilterTabs = <T extends string>({
           mode={selectedFilter === filter ? "flat" : "outlined"}
           selected={selectedFilter === filter}
           onPress={() => onFilterChange(filter)}
-          style={[
-            styles.chip,
-            selectedFilter === filter && styles.selectedChip,
-          ]}
-          textStyle={[
-            styles.chipText,
-            selectedFilter === filter && styles.selectedChipText,
-          ]}
+          style={{
+            marginRight: layout.spacing.sm,
+            backgroundColor:
+              selectedFilter === filter ? colors.primary : colors.surface,
+            borderColor:
+              selectedFilter === filter ? colors.primary : colors.border,
+          }}
+          textStyle={{
+            ...typo.body2,
+            color: selectedFilter === filter ? colors.textInverse : colors.text,
+            fontWeight: selectedFilter === filter ? "600" : "400",
+          }}
         >
           {filter}
         </Chip>
@@ -40,30 +51,5 @@ const FilterTabs = <T extends string>({
     </ScrollView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    gap: 8,
-  },
-  chip: {
-    marginRight: 8,
-    backgroundColor: "#f5f5f5",
-    borderColor: "#e0e0e0",
-  },
-  selectedChip: {
-    backgroundColor: "#8B4513", // Brown color from your design
-    borderColor: "#8B4513",
-  },
-  chipText: {
-    color: "#666",
-    fontSize: 14,
-  },
-  selectedChipText: {
-    color: "#fff",
-    fontWeight: "600",
-  },
-});
 
 export default FilterTabs;

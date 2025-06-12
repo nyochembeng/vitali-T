@@ -1,9 +1,10 @@
 import { EmergencySymptomCard } from "@/components/education/EmergencySymptomCard";
 import CustomAppBar from "@/components/utils/CustomAppBar";
 import React from "react";
-import { View, StyleSheet, ScrollView, StatusBar, Linking } from "react-native";
+import { View, ScrollView, Linking } from "react-native";
 import { Button, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface EmergencySymptom {
   id: string;
@@ -80,45 +81,100 @@ const emergencySymptoms: EmergencySymptom[] = [
 ];
 
 export default function EmergencyGuidelinesScreen() {
+  const { colors, typo, layout } = useTheme();
+
   const handleCallDoctor = () => {
-    // In a real app, you might want to:
-    // 1. Show emergency contacts
-    // 2. Call a specific number
-    // 3. Navigate to emergency contacts screen
     Linking.openURL("tel:911");
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F9FAFB" />
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
       <CustomAppBar title="Emergency Guidelines" rightAction="help" />
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text variant="headlineMedium" style={styles.title}>
+      <ScrollView
+        style={{
+          flex: 1,
+          paddingHorizontal: layout.spacing.lg,
+        }}
+        contentContainerStyle={{
+          paddingBottom: layout.spacing.xxl,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View
+          style={{
+            paddingHorizontal: layout.spacing.sm,
+            paddingTop: layout.spacing.sm,
+            paddingBottom: layout.spacing.md,
+          }}
+        >
+          <Text
+            variant="headlineMedium"
+            style={{
+              fontWeight: "700",
+              color: colors.text,
+              textAlign: "center",
+              marginBottom: layout.spacing.sm,
+              ...typo.h4,
+            }}
+          >
             When to Seek Help
           </Text>
-          <Text variant="bodyLarge" style={styles.subtitle}>
+          <Text
+            variant="bodyLarge"
+            style={{
+              color: colors.text,
+              textAlign: "center",
+              lineHeight: typo.body1.lineHeight,
+              ...typo.body1,
+            }}
+          >
             If you experience any of the following symptoms, contact your
             healthcare provider immediately.
           </Text>
         </View>
 
-        <View style={styles.symptomsList}>
+        <View
+          style={{
+            paddingHorizontal: layout.spacing.sm,
+          }}
+        >
           {emergencySymptoms.map((symptom) => (
             <EmergencySymptomCard key={symptom.id} symptom={symptom} />
           ))}
         </View>
       </ScrollView>
 
-      {/* Call Doctor Button */}
-      <View style={styles.buttonContainer}>
+      <View
+        style={{
+          padding: layout.spacing.sm,
+          paddingBottom: layout.spacing.lg,
+        }}
+      >
         <Button
           mode="contained"
           onPress={handleCallDoctor}
-          style={styles.callButton}
-          labelStyle={styles.callButtonText}
-          icon="phone"
+          style={{
+            backgroundColor: colors.primary,
+            borderRadius: layout.borderRadius.medium,
+            paddingVertical: layout.spacing.sm,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            margin: layout.spacing.sm,
+          }}
+          labelStyle={{
+            color: colors.textInverse,
+            fontWeight: "600",
+            marginLeft: layout.spacing.sm,
+            ...typo.button,
+          }}
+          // icon="phone"
         >
           Call Your Doctor
         </Button>
@@ -126,49 +182,3 @@ export default function EmergencyGuidelinesScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F9FAFB",
-  },
-  content: {
-    flex: 1,
-  },
-  header: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 24,
-  },
-  title: {
-    fontWeight: "700",
-    color: "#111827",
-    marginBottom: 8,
-  },
-  subtitle: {
-    color: "#6B7280",
-    lineHeight: 24,
-  },
-  symptomsList: {
-    paddingHorizontal: 16,
-    paddingBottom: 100,
-  },
-  buttonContainer: {
-    padding: 16,
-    paddingBottom: 32,
-  },
-  callButton: {
-    backgroundColor: "#8B5A2B",
-    borderRadius: 12,
-    padding: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    margin: 16,
-  },
-  callButtonText: {
-    color: "white",
-    fontWeight: "600",
-    marginLeft: 8,
-  },
-});

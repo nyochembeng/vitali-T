@@ -1,7 +1,8 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
-import { List, Text, useTheme } from "react-native-paper";
+import { View } from "react-native";
+import { List, Text } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface PrivacySection {
   id: string;
@@ -21,14 +22,17 @@ export const PrivacySectionItem: React.FC<PrivacySectionItemProps> = ({
   expanded = false,
   onToggle,
 }) => {
-  const theme = useTheme();
+  const { colors, typo, layout } = useTheme();
 
   return (
     <View
-      style={[
-        styles.sectionContainer,
-        { backgroundColor: theme.colors.surfaceVariant },
-      ]}
+      style={{
+        marginVertical: layout.spacing.sm,
+        borderRadius: layout.borderRadius.large,
+        overflow: "hidden",
+        backgroundColor: colors.card,
+        padding: layout.spacing.md,
+      }}
     >
       <List.Accordion
         title={section.title}
@@ -39,29 +43,37 @@ export const PrivacySectionItem: React.FC<PrivacySectionItemProps> = ({
           <MaterialCommunityIcons
             name={section.icon as any}
             size={24}
-            color="#B8860B"
-            style={styles.icon}
+            color={colors.primary}
+            style={{ marginRight: layout.spacing.sm }}
           />
         )}
         right={(props) => (
           <MaterialCommunityIcons
             name={expanded ? "chevron-up" : "chevron-down"}
             size={24}
-            color="#B8860B"
+            color={colors.primary}
           />
         )}
-        titleStyle={[styles.sectionTitle, { color: theme.colors.onSurface }]}
-        descriptionStyle={[
-          styles.sectionDescription,
-          { color: theme.colors.onSurfaceVariant },
-        ]}
-        style={styles.accordion}
+        titleStyle={{
+          ...typo.subtitle2,
+          color: colors.text,
+        }}
+        descriptionStyle={{
+          ...typo.body2,
+          color: colors.text,
+        }}
+        style={{
+          backgroundColor: "transparent",
+          paddingHorizontal: layout.spacing.sm,
+          paddingVertical: layout.spacing.xs,
+        }}
       >
         <Text
-          style={[
-            styles.expandedContent,
-            { color: theme.colors.onSurfaceVariant },
-          ]}
+          style={{
+            ...typo.body2,
+            padding: layout.spacing.sm,
+            color: colors.text,
+          }}
         >
           {section.description}
         </Text>
@@ -69,33 +81,3 @@ export const PrivacySectionItem: React.FC<PrivacySectionItemProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginVertical: 8,
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  accordion: {
-    backgroundColor: "transparent",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  icon: {
-    marginRight: 8,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 4,
-  },
-  sectionDescription: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  expandedContent: {
-    padding: 16,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-});

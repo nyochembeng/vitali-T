@@ -3,9 +3,10 @@ import { WeekHeader } from "@/components/education/WeekHeader";
 import CustomAppBar from "@/components/utils/CustomAppBar";
 import FilterTabs from "@/components/utils/FilterTabs";
 import React, { useState, useMemo } from "react";
-import { View, StyleSheet, ScrollView, StatusBar } from "react-native";
-import { Appbar } from "react-native-paper";
+import { View, ScrollView } from "react-native";
+import { Button } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface Tip {
   id: string;
@@ -57,6 +58,7 @@ const mockTips: Tip[] = [
 
 export default function PregnancyTipsScreen() {
   const [activeCategory, setActiveCategory] = useState<string>("All Tips");
+  const { colors, layout } = useTheme();
 
   const categories = [
     "All Tips",
@@ -74,16 +76,29 @@ export default function PregnancyTipsScreen() {
   }, [activeCategory]);
 
   const handleLoadMore = () => {
-    // Load more tips functionality
     console.log("Load more tips");
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
       <CustomAppBar title="Pregnancy Tips" rightAction="notifications" />
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={{
+          flex: 1,
+          paddingHorizontal: layout.spacing.lg,
+          paddingTop: layout.spacing.sm,
+        }}
+        contentContainerStyle={{
+          paddingBottom: layout.spacing.xxl,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
         <WeekHeader week={24} trimester="Second Trimester" progress={0.6} />
 
         <FilterTabs
@@ -92,47 +107,36 @@ export default function PregnancyTipsScreen() {
           options={categories}
         />
 
-        <View style={styles.tipsList}>
+        <View
+          style={{
+            paddingHorizontal: layout.spacing.sm,
+            paddingBottom: layout.spacing.sm,
+          }}
+        >
           {filteredTips.map((tip) => (
             <TipCard key={tip.id} tip={tip} />
           ))}
         </View>
 
-        {/* Load more button */}
-        <View style={styles.loadMoreContainer}>
-          <Appbar.Action
-            icon="plus"
+        <View
+          style={{
+            padding: layout.spacing.sm,
+            paddingBottom: layout.spacing.lg,
+          }}
+        >
+          <Button
+            mode="contained"
             onPress={handleLoadMore}
-            style={{ margin: 16 }}
-          />
+            style={{
+              margin: layout.spacing.sm,
+              backgroundColor: colors.primary,
+            }}
+            icon="plus"
+          >
+            Load More
+          </Button>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
-  header: {
-    backgroundColor: "#FFFFFF",
-    elevation: 0,
-  },
-  headerTitle: {
-    fontWeight: "600",
-    fontSize: 18,
-  },
-  content: {
-    flex: 1,
-  },
-  tipsList: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  loadMoreContainer: {
-    padding: 16,
-    paddingBottom: 32,
-  },
-});

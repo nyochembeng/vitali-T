@@ -1,17 +1,12 @@
 import React, { useState } from "react";
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  SafeAreaView,
-  Pressable,
-} from "react-native";
+import { View, ScrollView, SafeAreaView, Pressable } from "react-native";
 import { Text, Button, Card, Portal, Dialog } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import VitalCard from "@/components/dashboard/VitalCard";
 import QuickActionButton from "@/components/dashboard/QuickActionButton";
 import { useRouter } from "expo-router";
 import CustomAppBar from "@/components/utils/CustomAppBar";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface VitalMetric {
   id: string;
@@ -35,6 +30,8 @@ export default function DashboardScreen() {
   const [isMonitoring, setIsMonitoring] = useState(false);
   const [showStopDialog, setShowStopDialog] = useState(false);
   const router = useRouter();
+  const { colors, typo, layout } = useTheme();
+  const chartColor = colors.accent;
 
   // Mock data - replace with actual data from your state management
   const vitals: VitalMetric[] = [
@@ -45,7 +42,7 @@ export default function DashboardScreen() {
       unit: "BPM",
       icon: "heart",
       chartData: [138, 140, 142, 144, 141, 143, 142],
-      color: "#FF6B6B",
+      color: chartColor,
     },
     {
       id: "2",
@@ -54,7 +51,7 @@ export default function DashboardScreen() {
       unit: "BPM",
       icon: "heart-pulse",
       chartData: [80, 82, 84, 81, 83, 82, 84],
-      color: "#4ECDC4",
+      color: chartColor,
     },
     {
       id: "3",
@@ -63,7 +60,7 @@ export default function DashboardScreen() {
       unit: "mmHg",
       icon: "water",
       chartData: [118, 120, 122, 119, 121, 120, 123],
-      color: "#45B7D1",
+      color: chartColor,
     },
     {
       id: "4",
@@ -72,7 +69,7 @@ export default function DashboardScreen() {
       unit: "%",
       icon: "lungs",
       chartData: [97, 98, 99, 98, 97, 98, 99],
-      color: "#96CEB4",
+      color: chartColor,
     },
     {
       id: "5",
@@ -81,7 +78,7 @@ export default function DashboardScreen() {
       unit: "°C",
       icon: "thermometer",
       chartData: [36.8, 37.0, 37.2, 37.1, 37.3, 37.2, 37.0],
-      color: "#FFEAA7",
+      color: chartColor,
     },
     {
       id: "6",
@@ -90,7 +87,7 @@ export default function DashboardScreen() {
       unit: "BPM",
       icon: "lungs",
       chartData: [14, 15, 16, 17, 15, 16, 18],
-      color: "#DDA0DD",
+      color: chartColor,
     },
     {
       id: "7",
@@ -99,7 +96,7 @@ export default function DashboardScreen() {
       unit: "ms",
       icon: "chart-line-variant",
       chartData: [62, 64, 65, 67, 64, 66, 65],
-      color: "#FFB347",
+      color: chartColor,
     },
     {
       id: "8",
@@ -108,7 +105,7 @@ export default function DashboardScreen() {
       unit: "SI",
       icon: "chart-timeline-variant",
       chartData: [0.65, 0.67, 0.68, 0.7, 0.66, 0.69, 0.68],
-      color: "#FF9AA2",
+      color: chartColor,
     },
   ];
 
@@ -172,6 +169,11 @@ export default function DashboardScreen() {
     setShowStopDialog(true);
   };
 
+  const handleViewVitalsDetails = () => {
+    console.log("View vitals details pressed");
+    router.push("/vitals-details");
+  };
+
   const confirmStopMonitoring = () => {
     // Logic to stop monitoring goes here
     // For example, disconnect from the device or stop the session
@@ -204,16 +206,52 @@ export default function DashboardScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
       <CustomAppBar title="Dashboard" isHome />
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={{
+          flex: 1,
+          paddingHorizontal: layout.spacing.sm,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Status Banner - Only show when monitoring is active */}
         {isMonitoring && (
-          <View style={styles.statusContainer}>
-            <View style={styles.statusIndicator}>
-              <MaterialCommunityIcons name="circle" size={8} color="#4CAF50" />
-              <Text style={styles.statusText}>Monitoring Active</Text>
+          <View
+            style={{
+              alignItems: "center",
+              marginTop: layout.spacing.sm,
+              marginBottom: layout.spacing.xs,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+              }}
+            >
+              <MaterialCommunityIcons
+                name="circle"
+                size={8}
+                color={colors.success}
+              />
+              <Text
+                style={{
+                  marginLeft: layout.spacing.sm,
+                  fontSize: typo.body3.fontSize,
+                  color: colors.success,
+                  fontWeight: "500",
+                  ...typo.body3,
+                }}
+              >
+                Monitoring Active
+              </Text>
             </View>
           </View>
         )}
@@ -223,49 +261,110 @@ export default function DashboardScreen() {
           <Pressable
             onPress={handleAlertPress}
             style={({ pressed }) => [
-              styles.alertCard,
-              pressed && styles.alertCardPressed,
+              {
+                marginBottom: layout.spacing.sm,
+                paddingVertical: layout.spacing.sm,
+                backgroundColor: colors.warningLight,
+                elevation: 2,
+              },
+              pressed && {
+                opacity: 0.7,
+                transform: [{ scale: 0.98 }],
+              },
             ]}
           >
-            <Card style={styles.alertCardInner} mode="contained">
-              <Card.Content style={styles.alertContent}>
+            <Card
+              style={{
+                backgroundColor: "transparent",
+                elevation: 0,
+              }}
+              mode="contained"
+            >
+              <Card.Content
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingVertical: layout.spacing.xs,
+                }}
+              >
                 <MaterialCommunityIcons
                   name="alert-outline"
                   size={20}
-                  color="#FF9800"
+                  color={colors.warning}
                 />
-                <Text style={styles.alertText}>
+                <Text
+                  style={{
+                    flex: 1,
+                    marginLeft: layout.spacing.sm,
+                    fontSize: typo.body3.fontSize,
+                    color: colors.text,
+                    fontWeight: "500",
+                    ...typo.body3,
+                  }}
+                >
                   All vital signs are within normal range
                 </Text>
                 <MaterialCommunityIcons
                   name="chevron-right"
                   size={20}
-                  color="#666"
-                  style={styles.chevronIcon}
+                  color="rgba(17, 12, 9, 0.6)"
+                  style={{
+                    marginLeft: layout.spacing.sm,
+                  }}
                 />
               </Card.Content>
             </Card>
           </Pressable>
         )}
 
-        {/* Monitoring Control Button */}
+        {/* Monitoring Control Buttons */}
         {isMonitoring ? (
-          <Button
-            mode="contained"
-            style={styles.stopButton}
-            buttonColor="#8B5A3C"
-            contentStyle={styles.buttonContent}
-            onPress={handleStopMonitoring}
-            icon="bluetooth-off"
-          >
-            Stop Monitoring
-          </Button>
+          <View style={{ marginBottom: layout.spacing.lg }}>
+            {/* View Vitals Details Button */}
+            <Button
+              mode="outlined"
+              style={{
+                marginBottom: layout.spacing.sm,
+                borderRadius: layout.borderRadius.medium,
+                borderColor: colors.primary,
+              }}
+              contentStyle={{
+                paddingVertical: layout.spacing.sm,
+              }}
+              onPress={handleViewVitalsDetails}
+              icon="chart-line"
+              textColor={colors.primary}
+            >
+              View Details
+            </Button>
+
+            {/* Stop Monitoring Button */}
+            <Button
+              mode="contained"
+              style={{
+                borderRadius: layout.borderRadius.medium,
+              }}
+              buttonColor={colors.error}
+              contentStyle={{
+                paddingVertical: layout.spacing.sm,
+              }}
+              onPress={handleStopMonitoring}
+              icon="bluetooth-off"
+            >
+              Stop Monitoring
+            </Button>
+          </View>
         ) : (
           <Button
             mode="contained"
-            style={styles.startButton}
-            buttonColor="#8B5A3C"
-            contentStyle={styles.buttonContent}
+            style={{
+              marginBottom: layout.spacing.lg,
+              borderRadius: layout.borderRadius.medium,
+            }}
+            buttonColor={colors.primary}
+            contentStyle={{
+              paddingVertical: layout.spacing.sm,
+            }}
             onPress={handleStartMonitoring}
             icon="bluetooth"
           >
@@ -273,23 +372,68 @@ export default function DashboardScreen() {
           </Button>
         )}
 
-        {/* Vital Signs Grid*/}
-        <View style={styles.vitalsGrid}>
+        {/* Vital Signs Grid */}
+        <View
+          style={{
+            flexDirection: "row",
+            flexWrap: "wrap",
+            marginHorizontal: -layout.spacing.xs,
+          }}
+        >
           {vitals.map((vital, index) => (
-            <View key={vital.id} style={styles.vitalCardContainer}>
+            <View
+              key={vital.id}
+              style={{
+                width: "50%",
+              }}
+            >
               <VitalCard metric={vital} />
             </View>
           ))}
         </View>
 
         {/* Quick Actions */}
-        <View style={styles.quickActionsContainer}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.quickActionsGrid}>
-            {quickActions.map((action) => (
-              <QuickActionButton key={action.id} action={action} />
-            ))}
-          </View>
+        <View
+          style={{
+            marginTop: layout.spacing.lg,
+            marginBottom: layout.spacing.xl,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: typo.body2.fontSize,
+              fontWeight: "600",
+              color: "rgba(17, 12, 9, 0.6)",
+              marginBottom: layout.spacing.sm,
+              ...typo.body2,
+            }}
+          >
+            Quick Actions
+          </Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingHorizontal: layout.spacing.xs,
+            }}
+            style={{
+              backgroundColor: colors.card,
+              borderRadius: layout.borderRadius.medium,
+              elevation: 1,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                gap: layout.spacing.xl,
+                padding: layout.spacing.sm,
+              }}
+            >
+              {quickActions.map((action) => (
+                <QuickActionButton key={action.id} action={action} />
+              ))}
+            </View>
+          </ScrollView>
         </View>
       </ScrollView>
 
@@ -297,26 +441,51 @@ export default function DashboardScreen() {
         <Dialog
           visible={showStopDialog}
           onDismiss={cancelStopMonitoring}
-          style={styles.dialog}
+          style={{
+            backgroundColor: colors.card,
+          }}
         >
-          <Dialog.Title style={styles.dialogTitle}>
+          <Dialog.Title
+            style={{
+              fontSize: typo.h5.fontSize,
+              fontWeight: "600",
+              color: colors.text,
+              ...typo.h5,
+            }}
+          >
             Stop Monitoring?
           </Dialog.Title>
           <Dialog.Content>
-            <Text style={styles.dialogText}>
+            <Text
+              style={{
+                fontSize: typo.body1.fontSize,
+                color: "rgba(17, 12, 9, 0.6)",
+                lineHeight: typo.body1.lineHeight,
+                ...typo.body1,
+              }}
+            >
               Are you sure you want to stop monitoring? This will disconnect
               your device and end the current session.
             </Text>
           </Dialog.Content>
-          <Dialog.Actions style={styles.dialogActions}>
-            <Button onPress={cancelStopMonitoring} textColor="#666">
+          <Dialog.Actions
+            style={{
+              paddingTop: layout.spacing.sm,
+            }}
+          >
+            <Button
+              onPress={cancelStopMonitoring}
+              textColor="rgba(17, 12, 9, 0.6)"
+            >
               Cancel
             </Button>
             <Button
               onPress={confirmStopMonitoring}
-              buttonColor="#8B5A3C"
+              buttonColor={colors.error}
               mode="contained"
-              style={styles.confirmButton}
+              style={{
+                borderRadius: layout.borderRadius.small,
+              }}
             >
               Stop
             </Button>
@@ -326,123 +495,3 @@ export default function DashboardScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F8F9FA",
-  },
-  header: {
-    backgroundColor: "#FFF",
-    elevation: 0,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#000",
-    textAlign: "center",
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  statusContainer: {
-    alignItems: "center",
-    marginTop: 16,
-    marginBottom: 12,
-  },
-  statusIndicator: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  statusText: {
-    marginLeft: 8,
-    fontSize: 14,
-    color: "#4CAF50",
-    fontWeight: "500",
-  },
-  alertCard: {
-    marginBottom: 16,
-    backgroundColor: "#FFF8E1",
-    elevation: 2,
-  },
-  alertContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 4,
-  },
-  alertText: {
-    flex: 1,
-    marginLeft: 12,
-    fontSize: 14,
-    color: "#333",
-    fontWeight: "500",
-  },
-  alertCardPressed: {
-    opacity: 0.7,
-    transform: [{ scale: 0.98 }],
-  },
-  alertCardInner: {
-    backgroundColor: "transparent",
-    elevation: 0,
-  },
-  chevronIcon: {
-    marginLeft: 8,
-  },
-  stopButton: {
-    marginBottom: 24,
-    borderRadius: 12,
-  },
-  startButton: {
-    marginBottom: 24,
-    borderRadius: 12,
-  },
-  buttonContent: {
-    paddingVertical: 8,
-  },
-  vitalsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginHorizontal: -6,
-  },
-  vitalCardContainer: {
-    width: "50%",
-  },
-  quickActionsContainer: {
-    marginTop: 24,
-    marginBottom: 32,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#666",
-    marginBottom: 16,
-  },
-  quickActionsGrid: {
-    flexDirection: "row",
-    // flexWrap: "wrap",
-    backgroundColor: "#FFF",
-    borderRadius: 12,
-    padding: 16,
-    elevation: 1,
-  },
-  dialog: {
-    backgroundColor: "#FFF",
-  },
-  dialogTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#000",
-  },
-  dialogText: {
-    fontSize: 16,
-    color: "#666",
-    lineHeight: 24,
-  },
-  dialogActions: {
-    paddingTop: 16,
-  },
-  confirmButton: {
-    borderRadius: 8,
-  },
-});

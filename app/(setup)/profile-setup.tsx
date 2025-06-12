@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -14,6 +13,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 import { useRouter } from "expo-router";
 import { CountryPicker } from "react-native-country-codes-picker";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface ProfileData {
   dateOfBirth: Date | null;
@@ -40,6 +40,7 @@ export default function ProfileSetupScreen() {
   const [conceivedDate, setConceivedDate] = useState<Date | null>(null);
   const [showConceivedDatePicker, setShowConceivedDatePicker] = useState(false);
   const router = useRouter();
+  const { colors, typo, layout } = useTheme();
 
   const handleContinue = () => {
     const profileData: ProfileData = {
@@ -63,23 +64,75 @@ export default function ProfileSetupScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.keyboardAvoid}
+        style={{
+          flex: 1,
+        }}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView
+          contentContainerStyle={{
+            flexGrow: 1,
+            paddingHorizontal: layout.spacing.lg,
+            paddingTop: layout.spacing.md,
+            paddingBottom: layout.spacing.md,
+          }}
+        >
           {/* Header */}
-          <Text style={styles.title}>Set Up Your Profile</Text>
-          <Text style={styles.subtitle}>
+          <Text
+            style={{
+              fontSize: typo.h6.fontSize,
+              fontWeight: "700",
+              color: colors.text,
+              textAlign: "center",
+              marginBottom: layout.spacing.sm,
+              ...typo.h3,
+            }}
+          >
+            Set Up Your Profile
+          </Text>
+          <Text
+            style={{
+              fontSize: typo.body2.fontSize,
+              color: colors.text,
+              textAlign: "center",
+              marginBottom: layout.spacing.xl,
+              lineHeight: typo.body1.lineHeight,
+              ...typo.body2,
+            }}
+          >
             Tell us about you to personalize your experience.
           </Text>
 
           {/* Form */}
-          <View style={styles.formContainer}>
+          <View
+            style={{
+              flex: 1,
+            }}
+          >
             {/* Date of Birth */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Date of Birth</Text>
+            <View
+              style={{
+                marginBottom: layout.spacing.md,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: typo.body3.fontSize,
+                  color: colors.text,
+                  marginBottom: layout.spacing.sm,
+                  fontWeight: "500",
+                  ...typo.body3,
+                }}
+              >
+                Date of Birth
+              </Text>
               <TextInput
                 mode="outlined"
                 placeholder="Select date"
@@ -87,43 +140,98 @@ export default function ProfileSetupScreen() {
                 onPressIn={() => setShowDatePicker(true)}
                 showSoftInputOnFocus={false}
                 right={<TextInput.Icon icon="calendar" />}
-                style={styles.textInput}
-                outlineStyle={styles.inputOutline}
+                style={{
+                  backgroundColor: colors.card,
+                  fontSize: typo.body1.fontSize,
+                  ...typo.body1,
+                }}
+                outlineStyle={{
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                  borderRadius: layout.borderRadius.medium,
+                }}
                 theme={{
                   colors: {
-                    outline: "#E5E5E5",
-                    outlineVariant: "#E5E5E5",
+                    outline: colors.border,
+                    outlineVariant: colors.border,
                   },
                 }}
               />
             </View>
 
             {/* Height */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>
-                Height <Text style={styles.optional}>(Optional)</Text>
+            <View
+              style={{
+                marginBottom: layout.spacing.md,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: typo.body3.fontSize,
+                  color: colors.text,
+                  marginBottom: layout.spacing.sm,
+                  fontWeight: "500",
+                  ...typo.body3,
+                }}
+              >
+                Height{" "}
+                <Text
+                  style={{
+                    color: colors.primary,
+                    ...typo.body3,
+                  }}
+                >
+                  (Optional)
+                </Text>
               </Text>
-              <View style={styles.inputRow}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: layout.spacing.sm,
+                }}
+              >
                 <TextInput
                   mode="outlined"
                   placeholder="Enter height"
                   value={height}
                   onChangeText={setHeight}
                   keyboardType="numeric"
-                  style={[styles.textInput, styles.flexInput]}
-                  outlineStyle={styles.inputOutline}
+                  style={{
+                    backgroundColor: colors.card,
+                    fontSize: typo.body1.fontSize,
+                    flex: 1,
+                    ...typo.body1,
+                  }}
+                  outlineStyle={{
+                    borderColor: colors.border,
+                    borderWidth: 1,
+                    borderRadius: layout.borderRadius.medium,
+                  }}
                   theme={{
                     colors: {
-                      outline: "#E5E5E5",
-                      outlineVariant: "#E5E5E5",
+                      outline: colors.border,
+                      outlineVariant: colors.border,
                     },
                   }}
                 />
-                <View style={styles.unitPicker}>
+                <View
+                  style={{
+                    backgroundColor: colors.card,
+                    borderRadius: layout.borderRadius.medium,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    minWidth: 80,
+                    height: 56,
+                    justifyContent: "center",
+                  }}
+                >
                   <Picker
                     selectedValue={heightUnit}
                     onValueChange={setHeightUnit}
-                    style={styles.picker}
+                    style={{
+                      height: 56,
+                    }}
                   >
                     <Picker.Item label="cm" value="cm" />
                     <Picker.Item label="ft" value="ft" />
@@ -133,31 +241,78 @@ export default function ProfileSetupScreen() {
             </View>
 
             {/* Weight */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>
-                Weight <Text style={styles.optional}>(Optional)</Text>
+            <View
+              style={{
+                marginBottom: layout.spacing.md,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: typo.body3.fontSize,
+                  color: colors.text,
+                  marginBottom: layout.spacing.sm,
+                  fontWeight: "500",
+                  ...typo.body3,
+                }}
+              >
+                Weight{" "}
+                <Text
+                  style={{
+                    color: colors.primary,
+                    ...typo.body3,
+                  }}
+                >
+                  (Optional)
+                </Text>
               </Text>
-              <View style={styles.inputRow}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: layout.spacing.sm,
+                }}
+              >
                 <TextInput
                   mode="outlined"
                   placeholder="Enter weight"
                   value={weight}
                   onChangeText={setWeight}
                   keyboardType="numeric"
-                  style={[styles.textInput, styles.flexInput]}
-                  outlineStyle={styles.inputOutline}
+                  style={{
+                    backgroundColor: colors.card,
+                    fontSize: typo.body1.fontSize,
+                    flex: 1,
+                    ...typo.body1,
+                  }}
+                  outlineStyle={{
+                    borderColor: colors.border,
+                    borderWidth: 1,
+                    borderRadius: layout.borderRadius.medium,
+                  }}
                   theme={{
                     colors: {
-                      outline: "#E5E5E5",
-                      outlineVariant: "#E5E5E5",
+                      outline: colors.border,
+                      outlineVariant: colors.border,
                     },
                   }}
                 />
-                <View style={styles.unitPicker}>
+                <View
+                  style={{
+                    backgroundColor: colors.card,
+                    borderRadius: layout.borderRadius.medium,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    minWidth: 80,
+                    height: 56,
+                    justifyContent: "center",
+                  }}
+                >
                   <Picker
                     selectedValue={weightUnit}
                     onValueChange={setWeightUnit}
-                    style={styles.picker}
+                    style={{
+                      height: 56,
+                    }}
                   >
                     <Picker.Item label="kg" value="kg" />
                     <Picker.Item label="lbs" value="lbs" />
@@ -167,16 +322,72 @@ export default function ProfileSetupScreen() {
             </View>
 
             {/* Telephone Number */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Telephone Number</Text>
-              <View style={styles.inputRow}>
+            <View
+              style={{
+                marginBottom: layout.spacing.md,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: typo.body3.fontSize,
+                  color: colors.text,
+                  marginBottom: layout.spacing.sm,
+                  fontWeight: "500",
+                  ...typo.body3,
+                }}
+              >
+                Telephone Number
+              </Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: layout.spacing.sm,
+                }}
+              >
                 <TouchableOpacity
-                  style={styles.countryCodeButton}
+                  style={{
+                    backgroundColor: colors.card,
+                    borderRadius: layout.borderRadius.medium,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    height: 56,
+                    paddingHorizontal: layout.spacing.sm,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minWidth: 100,
+                    gap: layout.spacing.xs,
+                  }}
                   onPress={() => setShowCountryPicker(true)}
                 >
-                  <Text style={styles.countryFlag}>{countryFlag}</Text>
-                  <Text style={styles.countryCodeText}>{countryCode}</Text>
-                  <Text style={styles.dropdownIcon}>▼</Text>
+                  <Text
+                    style={{
+                      fontSize: typo.body1.fontSize,
+                      ...typo.body1,
+                    }}
+                  >
+                    {countryFlag}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: typo.body1.fontSize,
+                      color: colors.text,
+                      fontWeight: "500",
+                      ...typo.body1,
+                    }}
+                  >
+                    {countryCode}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: typo.body3.fontSize,
+                      color: "rgba(17, 12, 9, 0.6)",
+                      ...typo.body3,
+                    }}
+                  >
+                    ▼
+                  </Text>
                 </TouchableOpacity>
                 <TextInput
                   mode="outlined"
@@ -185,12 +396,21 @@ export default function ProfileSetupScreen() {
                   onChangeText={setPhoneNumber}
                   keyboardType="phone-pad"
                   left={<TextInput.Icon icon="phone" />}
-                  style={[styles.textInput, styles.flexInput]}
-                  outlineStyle={styles.inputOutline}
+                  style={{
+                    backgroundColor: colors.card,
+                    fontSize: typo.body1.fontSize,
+                    flex: 1,
+                    ...typo.body1,
+                  }}
+                  outlineStyle={{
+                    borderColor: colors.border,
+                    borderWidth: 1,
+                    borderRadius: layout.borderRadius.medium,
+                  }}
                   theme={{
                     colors: {
-                      outline: "#E5E5E5",
-                      outlineVariant: "#E5E5E5",
+                      outline: colors.border,
+                      outlineVariant: colors.border,
                     },
                   }}
                 />
@@ -198,8 +418,22 @@ export default function ProfileSetupScreen() {
             </View>
 
             {/* Conceived Date */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Conceived Date</Text>
+            <View
+              style={{
+                marginBottom: layout.spacing.md,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: typo.body3.fontSize,
+                  color: colors.text,
+                  marginBottom: layout.spacing.sm,
+                  fontWeight: "500",
+                  ...typo.body3,
+                }}
+              >
+                Conceived Date
+              </Text>
               <TextInput
                 mode="outlined"
                 placeholder="Select date"
@@ -207,12 +441,20 @@ export default function ProfileSetupScreen() {
                 onPressIn={() => setShowConceivedDatePicker(true)}
                 showSoftInputOnFocus={false}
                 right={<TextInput.Icon icon="calendar" />}
-                style={styles.textInput}
-                outlineStyle={styles.inputOutline}
+                style={{
+                  backgroundColor: colors.card,
+                  fontSize: typo.body1.fontSize,
+                  ...typo.body1,
+                }}
+                outlineStyle={{
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                  borderRadius: layout.borderRadius.medium,
+                }}
                 theme={{
                   colors: {
-                    outline: "#E5E5E5",
-                    outlineVariant: "#E5E5E5",
+                    outline: colors.border,
+                    outlineVariant: colors.border,
                   },
                 }}
               />
@@ -222,9 +464,19 @@ export default function ProfileSetupScreen() {
             <Button
               mode="contained"
               onPress={handleContinue}
-              style={styles.continueButton}
-              labelStyle={styles.continueButtonText}
-              buttonColor="#A67C5A"
+              style={{
+                borderRadius: layout.borderRadius.medium,
+                paddingVertical: layout.spacing.sm,
+                marginTop: layout.spacing.xl,
+                marginBottom: layout.spacing.lg,
+              }}
+              labelStyle={{
+                fontSize: typo.button.fontSize,
+                fontWeight: "600",
+                color: colors.textInverse,
+                ...typo.button,
+              }}
+              buttonColor={colors.primary}
             >
               Continue
             </Button>
@@ -271,29 +523,31 @@ export default function ProfileSetupScreen() {
             style={{
               modal: {
                 height: 500,
-                backgroundColor: "#FFFFFF",
+                backgroundColor: colors.card,
               },
               backdrop: {
                 backgroundColor: "rgba(0, 0, 0, 0.5)",
               },
               textInput: {
                 height: 50,
-                borderRadius: 12,
-                backgroundColor: "#F5F5F5",
-                paddingHorizontal: 16,
-                fontSize: 16,
+                borderRadius: layout.borderRadius.medium,
+                backgroundColor: colors.card,
+                paddingHorizontal: layout.spacing.sm,
+                fontSize: typo.body1.fontSize,
                 borderWidth: 1,
-                borderColor: "#E5E5E5",
+                borderColor: colors.border,
+                ...typo.body1,
               },
               countryButtonStyles: {
                 height: 50,
-                backgroundColor: "#FFFFFF",
+                backgroundColor: colors.card,
                 borderBottomWidth: 1,
-                borderBottomColor: "#F0F0F0",
+                borderBottomColor: colors.border,
               },
               searchMessageText: {
-                color: "#666666",
-                fontSize: 16,
+                color: "rgba(17, 12, 9, 0.6)",
+                fontSize: typo.body1.fontSize,
+                ...typo.body1,
               },
             }}
             searchMessage="Search for your country"
@@ -304,111 +558,3 @@ export default function ProfileSetupScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FAFAFA",
-  },
-  keyboardAvoid: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 40,
-    paddingBottom: 32,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#1A1A1A",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#A67C5A",
-    marginBottom: 32,
-    lineHeight: 24,
-  },
-  formContainer: {
-    flex: 1,
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  inputLabel: {
-    fontSize: 14,
-    color: "#1A1A1A",
-    marginBottom: 8,
-    fontWeight: "500",
-  },
-  optional: {
-    color: "#A67C5A",
-  },
-  textInput: {
-    backgroundColor: "#FFFFFF",
-    fontSize: 16,
-  },
-  inputOutline: {
-    borderColor: "#E5E5E5",
-    borderWidth: 1,
-    borderRadius: 12,
-  },
-  inputRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  flexInput: {
-    flex: 1,
-  },
-  unitPicker: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
-    minWidth: 80,
-    height: 56,
-    justifyContent: "center",
-  },
-  countryCodeButton: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
-    height: 56,
-    paddingHorizontal: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    minWidth: 100,
-    gap: 4,
-  },
-  countryFlag: {
-    fontSize: 18,
-  },
-  countryCodeText: {
-    fontSize: 16,
-    color: "#1A1A1A",
-    fontWeight: "500",
-  },
-  dropdownIcon: {
-    fontSize: 10,
-    color: "#666666",
-  },
-  picker: {
-    height: 56,
-  },
-  continueButton: {
-    borderRadius: 12,
-    paddingVertical: 8,
-    marginTop: 32,
-    marginBottom: 24,
-  },
-  continueButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-});

@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { View, ScrollView, StyleSheet, StatusBar } from "react-native";
-import { Button, useTheme } from "react-native-paper";
+import { View, ScrollView } from "react-native";
+import { Button } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { NotificationSettingItem } from "@/components/settings/NotificationSettingItem";
 import CustomAppBar from "@/components/utils/CustomAppBar";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface NotificationSetting {
   id: string;
@@ -15,7 +16,7 @@ interface NotificationSetting {
 }
 
 export default function NotificationSettingsScreen() {
-  const theme = useTheme();
+  const { colors, typo, layout } = useTheme();
   const router = useRouter();
 
   const [settings, setSettings] = useState<NotificationSetting[]>([
@@ -66,21 +67,26 @@ export default function NotificationSettingsScreen() {
 
   return (
     <SafeAreaView
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
     >
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor={theme.colors.background}
-      />
-
       <CustomAppBar title="Notification Settings" rightAction="notifications" />
 
       <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingBottom: layout.spacing.xl,
+          paddingTop: layout.spacing.sm,
+        }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.settingsContainer}>
+        <View
+          style={{
+            paddingBottom: layout.spacing.lg,
+          }}
+        >
           {settings.map((setting) => (
             <NotificationSettingItem
               key={setting.id}
@@ -92,14 +98,33 @@ export default function NotificationSettingsScreen() {
       </ScrollView>
 
       <View
-        style={[styles.footer, { backgroundColor: theme.colors.background }]}
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          padding: layout.spacing.sm,
+          paddingBottom: layout.spacing.lg,
+          backgroundColor: colors.background,
+        }}
       >
         <Button
           mode="contained"
           onPress={handleSave}
-          style={[styles.saveButton, { backgroundColor: "#B8860B" }]}
-          contentStyle={styles.saveButtonContent}
-          labelStyle={styles.saveButtonLabel}
+          style={{
+            borderRadius: layout.borderRadius.large,
+            elevation: layout.elevation,
+          }}
+          contentStyle={{
+            paddingVertical: layout.spacing.xs,
+          }}
+          labelStyle={{
+            fontSize: typo.button.fontSize,
+            fontWeight: "600",
+            color: colors.textInverse,
+            ...typo.button,
+          }}
+          buttonColor={colors.primary}
         >
           Save Settings
         </Button>
@@ -107,46 +132,3 @@ export default function NotificationSettingsScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  headerIcon: {
-    marginRight: 16,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 100,
-    paddingTop: 16,
-  },
-  settingsContainer: {
-    paddingBottom: 24,
-  },
-  footer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 24,
-    paddingBottom: 34,
-  },
-  saveButton: {
-    borderRadius: 25,
-    elevation: 2,
-  },
-  saveButtonContent: {
-    paddingVertical: 8,
-  },
-  saveButtonLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "white",
-  },
-});

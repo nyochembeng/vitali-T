@@ -1,12 +1,13 @@
 import React from "react";
-import { View, StyleSheet, StatusBar } from "react-native";
-import { Text, Button, useTheme } from "react-native-paper";
+import { View, StatusBar } from "react-native";
+import { Text, Button } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 export default function LogoutConfirmationScreen() {
-  const theme = useTheme();
+  const { colors, typo, layout, mode } = useTheme();
   const router = useRouter();
 
   const handleLogout = () => {
@@ -22,54 +23,105 @@ export default function LogoutConfirmationScreen() {
 
   return (
     <SafeAreaView
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+        paddingHorizontal: layout.spacing.lg,
+      }}
     >
       <StatusBar
-        barStyle="dark-content"
-        backgroundColor={theme.colors.background}
+        barStyle={mode === "dark" ? "light-content" : "dark-content"}
       />
 
-      <View style={styles.content}>
-        <View style={styles.iconContainer}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          paddingBottom: layout.spacing.xxl,
+        }}
+      >
+        <View
+          style={{
+            marginBottom: layout.spacing.lg,
+          }}
+        >
           <View
-            style={[
-              styles.iconCircle,
-              { backgroundColor: theme.colors.surfaceVariant },
-            ]}
+            style={{
+              width: 120,
+              height: 120,
+              borderRadius: 60,
+              // backgroundColor: colors.surfaceVariant,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
           >
-            <MaterialCommunityIcons name="logout" size={40} color="#B8860B" />
+            <MaterialCommunityIcons
+              name="logout"
+              size={40}
+              color={colors.primary}
+            />
           </View>
         </View>
 
         <Text
           variant="headlineMedium"
-          style={[styles.title, { color: theme.colors.onBackground }]}
+          style={{
+            fontWeight: "600",
+            marginBottom: layout.spacing.md,
+            textAlign: "center",
+            ...typo.h3,
+          }}
         >
           Log Out
         </Text>
 
         <View
-          style={[
-            styles.messageContainer,
-            { backgroundColor: theme.colors.surfaceVariant },
-          ]}
+          style={{
+            paddingHorizontal: layout.spacing.lg,
+            paddingVertical: layout.spacing.md,
+            borderRadius: layout.borderRadius.large,
+            marginHorizontal: layout.spacing.sm,
+            // backgroundColor: colors.surfaceVariant,
+          }}
         >
           <Text
             variant="bodyMedium"
-            style={[styles.message, { color: theme.colors.onSurfaceVariant }]}
+            style={{
+              textAlign: "center",
+              lineHeight: typo.body1.lineHeight,
+              ...typo.body1,
+            }}
           >
             Are you sure you want to log out from Vitali-T?
           </Text>
         </View>
       </View>
 
-      <View style={styles.buttonsContainer}>
+      <View
+        style={{
+          paddingBottom: layout.spacing.lg,
+          gap: layout.spacing.sm,
+        }}
+      >
         <Button
           mode="contained"
           onPress={handleLogout}
-          style={[styles.logoutButton, { backgroundColor: "#B8860B" }]}
-          contentStyle={styles.buttonContent}
-          labelStyle={styles.logoutButtonLabel}
+          style={{
+            borderRadius: layout.borderRadius.large,
+            paddingVertical: layout.spacing.sm,
+            elevation: 2,
+          }}
+          contentStyle={{
+            paddingVertical: layout.spacing.sm,
+          }}
+          labelStyle={{
+            fontSize: typo.button.fontSize,
+            fontWeight: "600",
+            color: colors.textInverse,
+            ...typo.button,
+          }}
+          buttonColor={colors.primary}
         >
           Log Out
         </Button>
@@ -77,12 +129,20 @@ export default function LogoutConfirmationScreen() {
         <Button
           mode="outlined"
           onPress={handleCancel}
-          style={[styles.cancelButton, { borderColor: theme.colors.outline }]}
-          contentStyle={styles.buttonContent}
-          labelStyle={[
-            styles.cancelButtonLabel,
-            { color: theme.colors.onSurface },
-          ]}
+          style={{
+            borderRadius: layout.borderRadius.large,
+            borderWidth: 1,
+            borderColor: colors.border,
+          }}
+          contentStyle={{
+            paddingVertical: layout.spacing.sm,
+          }}
+          labelStyle={{
+            fontSize: typo.button.fontSize,
+            fontWeight: "500",
+            color: colors.text,
+            ...typo.button,
+          }}
         >
           Cancel
         </Button>
@@ -90,65 +150,3 @@ export default function LogoutConfirmationScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 24,
-  },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingBottom: 100,
-  },
-  iconContainer: {
-    marginBottom: 32,
-  },
-  iconCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  title: {
-    fontWeight: "600",
-    marginBottom: 24,
-    textAlign: "center",
-  },
-  messageContainer: {
-    paddingHorizontal: 24,
-    paddingVertical: 20,
-    borderRadius: 16,
-    marginHorizontal: 16,
-  },
-  message: {
-    textAlign: "center",
-    lineHeight: 22,
-  },
-  buttonsContainer: {
-    paddingBottom: 34,
-    gap: 16,
-  },
-  logoutButton: {
-    borderRadius: 25,
-    elevation: 2,
-  },
-  cancelButton: {
-    borderRadius: 25,
-    borderWidth: 1,
-  },
-  buttonContent: {
-    paddingVertical: 8,
-  },
-  logoutButtonLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "white",
-  },
-  cancelButtonLabel: {
-    fontSize: 16,
-    fontWeight: "500",
-  },
-});

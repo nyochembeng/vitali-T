@@ -1,7 +1,8 @@
 import React from "react";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
+import { View } from "react-native";
 import { Text, Button } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface BluetoothDevice {
   id: string;
@@ -19,76 +20,100 @@ const DeviceListItem: React.FC<DeviceListItemProps> = ({
   device,
   onConnect,
 }) => {
+  const { colors, typo, layout } = useTheme();
+
+  const getStatusText = () => {
+    switch (device.status) {
+      case "ready":
+        return "Ready to pair";
+      case "connecting":
+        return "Connecting...";
+      case "connected":
+        return "Connected";
+      case "disconnected":
+        return "Disconnected";
+      default:
+        return "Unknown";
+    }
+  };
+
   return (
-    <View style={styles.container}>
-      <View style={styles.deviceInfo}>
+    <View
+      style={{
+        backgroundColor: colors.card,
+        borderRadius: layout.borderRadius.medium,
+        padding: layout.spacing.sm,
+        marginVertical: layout.spacing.sm,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        elevation: layout.elevation,
+        shadowColor: colors.text,
+        shadowOffset: layout.shadow.light.shadowOffset,
+        shadowOpacity: layout.shadow.light.shadowOpacity,
+        shadowRadius: layout.shadow.light.shadowRadius,
+      }}
+    >
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          flex: 1,
+        }}
+      >
         <MaterialCommunityIcons
           name="bluetooth"
           size={24}
-          color="#8B5A3C"
-          style={styles.icon}
+          color={colors.primary}
+          style={{
+            marginRight: layout.spacing.sm,
+          }}
         />
-        <View style={styles.textContainer}>
-          <Text style={styles.deviceName}>{device.name}</Text>
-          <Text style={styles.deviceStatus}>Ready to pair</Text>
+        <View
+          style={{
+            flex: 1,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: typo.body1.fontSize,
+              fontWeight: "600",
+              color: colors.text,
+              marginBottom: layout.spacing.xs,
+              ...typo.body1,
+            }}
+          >
+            {device.name}
+          </Text>
+          <Text
+            style={{
+              fontSize: typo.body2.fontSize,
+              color: colors.text,
+              ...typo.body2,
+            }}
+          >
+            {getStatusText()}
+          </Text>
         </View>
       </View>
       <Button
         mode="contained"
         onPress={() => onConnect(device)}
-        buttonColor="#8B5A3C"
-        style={styles.connectButton}
-        labelStyle={styles.connectButtonText}
+        buttonColor={colors.primary}
+        style={{
+          borderRadius: layout.borderRadius.medium,
+          minWidth: layout.spacing.xl * 2,
+          paddingVertical: layout.spacing.xs,
+        }}
+        labelStyle={{
+          fontSize: typo.button.fontSize,
+          ...typo.button,
+        }}
       >
         Connect
       </Button>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: "#FFF",
-    borderRadius: 12,
-    padding: 16,
-    marginVertical: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    elevation: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  deviceInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
-  icon: {
-    marginRight: 12,
-  },
-  textContainer: {
-    flex: 1,
-  },
-  deviceName: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#000",
-    marginBottom: 2,
-  },
-  deviceStatus: {
-    fontSize: 14,
-    color: "#666",
-  },
-  connectButton: {
-    borderRadius: 8,
-    minWidth: 80,
-  },
-  connectButtonText: {
-    fontSize: 14,
-  },
-});
 
 export default DeviceListItem;

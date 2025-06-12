@@ -1,14 +1,9 @@
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-} from "react-native";
+import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { Button, Switch, RadioButton } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface MonitoringPreferences {
   alertSensitivity: "standard" | "sensitive";
@@ -29,6 +24,7 @@ export default function MonitoringPreferencesScreen() {
   const [healthEducationUpdates, setHealthEducationUpdates] = useState(true);
   const [insightsFromDataTrends, setInsightsFromDataTrends] = useState(true);
   const router = useRouter();
+  const { colors, typo, layout } = useTheme();
 
   const handleSaveAndContinue = () => {
     const preferences: MonitoringPreferences = {
@@ -50,17 +46,23 @@ export default function MonitoringPreferencesScreen() {
     onPress: () => void;
   }> = ({ label, value, isSelected, onPress }) => (
     <TouchableOpacity
-      style={[
-        styles.frequencyButton,
-        isSelected && styles.frequencyButtonSelected,
-      ]}
+      style={{
+        flex: 1,
+        backgroundColor: isSelected ? colors.primary : colors.primaryLight,
+        paddingVertical: layout.spacing.sm,
+        paddingHorizontal: layout.spacing.md,
+        borderRadius: layout.borderRadius.medium,
+        alignItems: "center",
+      }}
       onPress={onPress}
     >
       <Text
-        style={[
-          styles.frequencyButtonText,
-          isSelected && styles.frequencyButtonTextSelected,
-        ]}
+        style={{
+          fontSize: typo.body3.fontSize,
+          fontWeight: isSelected ? "600" : "500",
+          color: isSelected ? colors.textInverse : "rgba(17, 12, 9, 0.6)",
+          ...typo.body3,
+        }}
       >
         {label}
       </Text>
@@ -68,17 +70,62 @@ export default function MonitoringPreferencesScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
+      <ScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingHorizontal: layout.spacing.lg,
+          paddingTop: layout.spacing.md,
+          paddingBottom: layout.spacing.md,
+        }}
+      >
         {/* Header */}
-        <Text style={styles.title}>Monitoring Preferences</Text>
+        <Text
+          style={{
+            fontSize: typo.h5.fontSize,
+            fontWeight: "700",
+            color: colors.text,
+            textAlign: "center",
+            marginBottom: layout.spacing.xl,
+            ...typo.h3,
+          }}
+        >
+          Monitoring Preferences
+        </Text>
 
         {/* Alert Sensitivity */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Alert Sensitivity</Text>
-          <View style={styles.radioGroup}>
+        <View
+          style={{
+            marginBottom: layout.spacing.xl,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: typo.body2.fontSize,
+              fontWeight: "500",
+              color: colors.text,
+              marginBottom: layout.spacing.sm,
+              ...typo.body2,
+            }}
+          >
+            Alert Sensitivity
+          </Text>
+          <View
+            style={{
+              flexDirection: "row",
+              gap: layout.spacing.lg,
+            }}
+          >
             <TouchableOpacity
-              style={styles.radioOption}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+              }}
               onPress={() => setAlertSensitivity("standard")}
             >
               <RadioButton
@@ -87,12 +134,24 @@ export default function MonitoringPreferencesScreen() {
                   alertSensitivity === "standard" ? "checked" : "unchecked"
                 }
                 onPress={() => setAlertSensitivity("standard")}
-                color="#A67C5A"
+                color={colors.primary}
               />
-              <Text style={styles.radioLabel}>Standard</Text>
+              <Text
+                style={{
+                  fontSize: typo.body1.fontSize,
+                  color: colors.text,
+                  marginLeft: layout.spacing.sm,
+                  ...typo.body1,
+                }}
+              >
+                Standard
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.radioOption}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+              }}
               onPress={() => setAlertSensitivity("sensitive")}
             >
               <RadioButton
@@ -101,17 +160,45 @@ export default function MonitoringPreferencesScreen() {
                   alertSensitivity === "sensitive" ? "checked" : "unchecked"
                 }
                 onPress={() => setAlertSensitivity("sensitive")}
-                color="#A67C5A"
+                color={colors.primary}
               />
-              <Text style={styles.radioLabel}>Sensitive</Text>
+              <Text
+                style={{
+                  fontSize: typo.body1.fontSize,
+                  color: colors.text,
+                  marginLeft: layout.spacing.sm,
+                  ...typo.body1,
+                }}
+              >
+                Sensitive
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Notification Frequency */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Notification Frequency</Text>
-          <View style={styles.frequencyContainer}>
+        <View
+          style={{
+            marginBottom: layout.spacing.xl,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: typo.body2.fontSize,
+              fontWeight: "500",
+              color: colors.text,
+              marginBottom: layout.spacing.sm,
+              ...typo.body2,
+            }}
+          >
+            Notification Frequency
+          </Text>
+          <View
+            style={{
+              flexDirection: "row",
+              gap: layout.spacing.sm,
+            }}
+          >
             <NotificationFrequencyButton
               label="Daily"
               value="daily"
@@ -134,42 +221,139 @@ export default function MonitoringPreferencesScreen() {
         </View>
 
         {/* Toggle Options */}
-        <View style={styles.section}>
+        <View
+          style={{
+            marginBottom: layout.spacing.xl,
+          }}
+        >
           {/* Reminder Notifications */}
-          <View style={styles.toggleOption}>
-            <View style={styles.toggleContent}>
-              <Text style={styles.toggleTitle}>Reminder Notifications</Text>
-              <Text style={styles.toggleDescription}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              paddingVertical: layout.spacing.sm,
+              borderBottomWidth: 1,
+              borderBottomColor: colors.border,
+            }}
+          >
+            <View
+              style={{
+                flex: 1,
+                marginRight: layout.spacing.sm,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: typo.body2.fontSize,
+                  fontWeight: "500",
+                  color: colors.text,
+                  marginBottom: layout.spacing.xs,
+                  ...typo.body2,
+                }}
+              >
+                Reminder Notifications
+              </Text>
+              <Text
+                style={{
+                  fontSize: typo.body3.fontSize,
+                  color: "rgba(17, 12, 9, 0.6)",
+                  lineHeight: typo.body1.lineHeight,
+                  ...typo.body3,
+                }}
+              >
                 Enable notifications for daily reminders
               </Text>
             </View>
             <Switch
               value={reminderNotifications}
               onValueChange={setReminderNotifications}
-              color="#A67C5A"
+              color={colors.primary}
             />
           </View>
 
           {/* Health Education Updates */}
-          <View style={styles.toggleOption}>
-            <View style={styles.toggleContent}>
-              <Text style={styles.toggleTitle}>Health Education Updates</Text>
-              <Text style={styles.toggleDescription}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              paddingVertical: layout.spacing.sm,
+              borderBottomWidth: 1,
+              borderBottomColor: colors.border,
+            }}
+          >
+            <View
+              style={{
+                flex: 1,
+                marginRight: layout.spacing.sm,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: typo.body2.fontSize,
+                  fontWeight: "500",
+                  color: colors.text,
+                  marginBottom: layout.spacing.xs,
+                  ...typo.body2,
+                }}
+              >
+                Health Education Updates
+              </Text>
+              <Text
+                style={{
+                  fontSize: typo.body3.fontSize,
+                  color: "rgba(17, 12, 9, 0.6)",
+                  lineHeight: typo.body1.lineHeight,
+                  ...typo.body3,
+                }}
+              >
                 Receive regular health tips and articles
               </Text>
             </View>
             <Switch
               value={healthEducationUpdates}
               onValueChange={setHealthEducationUpdates}
-              color="#A67C5A"
+              color={colors.primary}
             />
           </View>
 
           {/* Insights from Data Trends */}
-          <View style={styles.toggleOption}>
-            <View style={styles.toggleContent}>
-              <Text style={styles.toggleTitle}>Insights from Data Trends</Text>
-              <Text style={styles.toggleDescription}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              paddingVertical: layout.spacing.sm,
+              borderBottomWidth: 1,
+              borderBottomColor: colors.border,
+            }}
+          >
+            <View
+              style={{
+                flex: 1,
+                marginRight: layout.spacing.sm,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: typo.body2.fontSize,
+                  fontWeight: "500",
+                  color: colors.text,
+                  marginBottom: layout.spacing.xs,
+                  ...typo.body2,
+                }}
+              >
+                Insights from Data Trends
+              </Text>
+              <Text
+                style={{
+                  fontSize: typo.body3.fontSize,
+                  color: "rgba(17, 12, 9, 0.6)",
+                  lineHeight: typo.body1.lineHeight,
+                  ...typo.body3,
+                }}
+              >
                 Get personalized health trend insights based on your monitoring
                 data
               </Text>
@@ -177,7 +361,7 @@ export default function MonitoringPreferencesScreen() {
             <Switch
               value={insightsFromDataTrends}
               onValueChange={setInsightsFromDataTrends}
-              color="#A67C5A"
+              color={colors.primary}
             />
           </View>
         </View>
@@ -186,9 +370,19 @@ export default function MonitoringPreferencesScreen() {
         <Button
           mode="contained"
           onPress={handleSaveAndContinue}
-          style={styles.saveButton}
-          labelStyle={styles.saveButtonText}
-          buttonColor="#A67C5A"
+          style={{
+            borderRadius: layout.borderRadius.medium,
+            paddingVertical: layout.spacing.sm,
+            marginTop: layout.spacing.sm,
+            marginBottom: layout.spacing.lg,
+          }}
+          labelStyle={{
+            fontSize: typo.button.fontSize,
+            fontWeight: "600",
+            color: colors.textInverse,
+            ...typo.button,
+          }}
+          buttonColor={colors.primary}
         >
           Save and Continue
         </Button>
@@ -196,101 +390,3 @@ export default function MonitoringPreferencesScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FAFAFA",
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 40,
-    paddingBottom: 32,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#1A1A1A",
-    marginBottom: 32,
-  },
-  section: {
-    marginBottom: 32,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#1A1A1A",
-    marginBottom: 16,
-  },
-  radioGroup: {
-    flexDirection: "row",
-    gap: 24,
-  },
-  radioOption: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  radioLabel: {
-    fontSize: 16,
-    color: "#1A1A1A",
-    marginLeft: 8,
-  },
-  frequencyContainer: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  frequencyButton: {
-    flex: 1,
-    backgroundColor: "#F5F5F5",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  frequencyButtonSelected: {
-    backgroundColor: "#A67C5A",
-  },
-  frequencyButtonText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#666666",
-  },
-  frequencyButtonTextSelected: {
-    color: "#FFFFFF",
-  },
-  toggleOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
-  },
-  toggleContent: {
-    flex: 1,
-    marginRight: 12,
-  },
-  toggleTitle: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#1A1A1A",
-    marginBottom: 4,
-  },
-  toggleDescription: {
-    fontSize: 14,
-    color: "#666666",
-    lineHeight: 20,
-  },
-  saveButton: {
-    borderRadius: 12,
-    paddingVertical: 8,
-    marginTop: 16,
-    marginBottom: 24,
-  },
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-});

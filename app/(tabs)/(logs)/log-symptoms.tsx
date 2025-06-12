@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, Alert } from "react-native";
+import { View, ScrollView, Alert } from "react-native";
 import { Text, Button, TextInput, Menu } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
@@ -7,6 +7,7 @@ import Slider from "@react-native-community/slider";
 import * as Haptics from "expo-haptics";
 import CustomAppBar from "@/components/utils/CustomAppBar";
 import { useRouter } from "expo-router";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 // Types
 interface SymptomData {
@@ -36,25 +37,47 @@ const SYMPTOMS = [
 const SEVERITY_EMOJIS = ["😊", "🙂", "😐", "😟", "😣"];
 
 // Components
-const HeroImage: React.FC = () => (
-  <View style={styles.heroContainer}>
-    {/* <Image
-      source={require("./assets/symptom-hero.jpg")} // Replace with your image
-      style={styles.heroImage}
-      contentFit="cover"
-    /> */}
-  </View>
-);
+const HeroImage: React.FC = () => {
+  const { layout } = useTheme();
+  return (
+    <View
+      style={{
+        marginBottom: layout.spacing.lg,
+        borderRadius: layout.borderRadius.medium,
+        overflow: "hidden",
+      }}
+    >
+      {/* <Image
+        source={require("./assets/symptom-hero.jpg")} // Replace with your image
+        style={{ width: "100%", height: layout.spacing.xxl * 9 }}
+        contentFit="cover"
+      /> */}
+    </View>
+  );
+};
 
 const SymptomSelector: React.FC<{
   selectedSymptom: string;
   onSelect: (symptom: string) => void;
 }> = ({ selectedSymptom, onSelect }) => {
+  const { colors, typo, layout } = useTheme();
   const [menuVisible, setMenuVisible] = useState(false);
 
   return (
-    <View style={styles.selectorSection}>
-      <Text style={styles.sectionLabel}>
+    <View
+      style={{
+        marginBottom: layout.spacing.lg,
+      }}
+    >
+      <Text
+        style={{
+          fontSize: typo.body1.fontSize,
+          fontWeight: "500",
+          marginBottom: layout.spacing.sm,
+          color: colors.text,
+          ...typo.body1,
+        }}
+      >
         What symptom are you experiencing?
       </Text>
       <Menu
@@ -64,9 +87,19 @@ const SymptomSelector: React.FC<{
           <Button
             mode="outlined"
             onPress={() => setMenuVisible(true)}
-            style={styles.dropdownButton}
-            contentStyle={styles.dropdownContent}
-            labelStyle={styles.dropdownLabel}
+            style={{
+              borderColor: colors.border,
+              borderRadius: layout.borderRadius.small,
+            }}
+            contentStyle={{
+              justifyContent: "space-between",
+              paddingVertical: layout.spacing.xs,
+            }}
+            labelStyle={{
+              fontSize: typo.body1.fontSize,
+              color: colors.text,
+              ...typo.body1,
+            }}
             icon="chevron-down"
           >
             {selectedSymptom || "Select symptom"}
@@ -81,6 +114,7 @@ const SymptomSelector: React.FC<{
               setMenuVisible(false);
             }}
             title={symptom}
+            titleStyle={{ ...typo.body1 }}
           />
         ))}
       </Menu>
@@ -92,42 +126,100 @@ const SeveritySlider: React.FC<{
   severity: number;
   onSeverityChange: (value: number) => void;
 }> = ({ severity, onSeverityChange }) => {
+  const { colors, typo, layout } = useTheme();
+
   const handleValueChange = (value: number) => {
     onSeverityChange(Math.round(value));
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   return (
-    <View style={styles.severitySection}>
-      <Text style={styles.sectionLabel}>How severe is it?</Text>
+    <View
+      style={{
+        marginBottom: layout.spacing.lg,
+      }}
+    >
+      <Text
+        style={{
+          fontSize: typo.body1.fontSize,
+          fontWeight: "500",
+          marginBottom: layout.spacing.sm,
+          color: colors.text,
+          ...typo.body1,
+        }}
+      >
+        How severe is it?
+      </Text>
 
-      <View style={styles.emojiContainer}>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          marginBottom: layout.spacing.sm,
+          paddingHorizontal: layout.spacing.sm,
+        }}
+      >
         {SEVERITY_EMOJIS.map((emoji, index) => (
           <Text
             key={index}
-            style={[styles.emoji, severity === index && styles.selectedEmoji]}
+            style={[
+              {
+                fontSize: typo.h4.fontSize,
+                opacity: 0.4,
+                ...typo.h4,
+              },
+              severity === index && {
+                opacity: 1,
+                transform: [{ scale: 1.2 }],
+              },
+            ]}
           >
             {emoji}
           </Text>
         ))}
       </View>
 
-      <View style={styles.sliderContainer}>
+      <View
+        style={{
+          paddingHorizontal: layout.spacing.sm,
+        }}
+      >
         <Slider
-          style={styles.slider}
+          style={{ width: "100%", height: layout.spacing.xl }}
           minimumValue={0}
           maximumValue={4}
           value={severity}
           onValueChange={handleValueChange}
           step={1}
-          minimumTrackTintColor="#8B7355"
-          maximumTrackTintColor="#E0E0E0"
-          thumbTintColor="#8B7355"
-          //   thumbStyle={styles.sliderThumb}
+          minimumTrackTintColor={colors.primary}
+          maximumTrackTintColor={colors.border}
+          thumbTintColor={colors.primary}
         />
-        <View style={styles.sliderLabels}>
-          <Text style={styles.sliderLabel}>Mild</Text>
-          <Text style={styles.sliderLabel}>Severe</Text>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            marginTop: layout.spacing.xs,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: typo.body2.fontSize,
+              color: colors.text,
+              ...typo.body2,
+            }}
+          >
+            Mild
+          </Text>
+          <Text
+            style={{
+              fontSize: typo.body2.fontSize,
+              color: colors.text,
+              ...typo.body2,
+            }}
+          >
+            Severe
+          </Text>
         </View>
       </View>
     </View>
@@ -137,24 +229,48 @@ const SeveritySlider: React.FC<{
 const NotesInput: React.FC<{
   notes: string;
   onNotesChange: (text: string) => void;
-}> = ({ notes, onNotesChange }) => (
-  <View style={styles.notesSection}>
-    <Text style={styles.sectionLabel}>Additional Notes (Optional)</Text>
-    <TextInput
-      value={notes}
-      onChangeText={onNotesChange}
-      placeholder="Add any details you'd like to share..."
-      multiline
-      numberOfLines={4}
-      style={styles.notesInput}
-      mode="outlined"
-    />
-  </View>
-);
+}> = ({ notes, onNotesChange }) => {
+  const { colors, typo, layout } = useTheme();
+
+  return (
+    <View
+      style={{
+        marginBottom: layout.spacing.lg,
+      }}
+    >
+      <Text
+        style={{
+          fontSize: typo.body1.fontSize,
+          fontWeight: "500",
+          marginBottom: layout.spacing.sm,
+          color: colors.text,
+          ...typo.body1,
+        }}
+      >
+        Additional Notes (Optional)
+      </Text>
+      <TextInput
+        value={notes}
+        onChangeText={onNotesChange}
+        placeholder="Add any details you'd like to share..."
+        multiline
+        numberOfLines={4}
+        style={{
+          backgroundColor: colors.surface,
+          minHeight: layout.spacing.xl * 5,
+        }}
+        mode="outlined"
+        outlineColor={colors.border}
+        activeOutlineColor={colors.primary}
+      />
+    </View>
+  );
+};
 
 // Main Screen Component
 export default function LogSymptomScreen() {
   const router = useRouter();
+  const { colors, typo, layout } = useTheme();
   const [symptomData, setSymptomData] = useState<SymptomData>({
     symptom: "",
     severity: 2,
@@ -203,7 +319,12 @@ export default function LogSymptomScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
       <CustomAppBar
         title="Log Symptoms"
         rightAction="info"
@@ -213,10 +334,15 @@ export default function LogSymptomScreen() {
       />
 
       <ScrollView
-        style={styles.scrollView}
+        style={{
+          flex: 1,
+        }}
+        contentContainerStyle={{
+          padding: layout.spacing.sm,
+        }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.content}>
+        <View>
           <HeroImage />
 
           <SymptomSelector
@@ -237,8 +363,17 @@ export default function LogSymptomScreen() {
           <Button
             mode="contained"
             onPress={handleSaveSymptom}
-            style={styles.saveButton}
-            labelStyle={styles.saveButtonText}
+            style={{
+              backgroundColor: colors.primary,
+              borderRadius: layout.borderRadius.medium,
+              paddingVertical: layout.spacing.xs,
+            }}
+            labelStyle={{
+              fontSize: typo.button.fontSize,
+              fontWeight: "600",
+              color: colors.textInverse,
+              ...typo.button,
+            }}
             icon="content-save"
           >
             Save Symptom Log
@@ -248,109 +383,3 @@ export default function LogSymptomScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: 20,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "600",
-    textAlign: "center",
-    marginBottom: 24,
-    color: "#333",
-  },
-  heroContainer: {
-    marginBottom: 30,
-    borderRadius: 16,
-    overflow: "hidden",
-  },
-  heroImage: {
-    width: "100%",
-    height: 180,
-    borderRadius: 16,
-  },
-  selectorSection: {
-    marginBottom: 30,
-  },
-  sectionLabel: {
-    fontSize: 16,
-    fontWeight: "500",
-    marginBottom: 12,
-    color: "#333",
-  },
-  dropdownButton: {
-    borderColor: "#E0E0E0",
-    borderRadius: 8,
-  },
-  dropdownContent: {
-    justifyContent: "space-between",
-    paddingVertical: 8,
-  },
-  dropdownLabel: {
-    fontSize: 16,
-    color: "#666",
-  },
-  severitySection: {
-    marginBottom: 30,
-  },
-  emojiContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 20,
-    paddingHorizontal: 10,
-  },
-  emoji: {
-    fontSize: 24,
-    opacity: 0.4,
-  },
-  selectedEmoji: {
-    opacity: 1,
-    transform: [{ scale: 1.2 }],
-  },
-  sliderContainer: {
-    paddingHorizontal: 10,
-  },
-  slider: {
-    width: "100%",
-    height: 40,
-  },
-  sliderThumb: {
-    backgroundColor: "#8B7355",
-    width: 20,
-    height: 20,
-  },
-  sliderLabels: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 8,
-  },
-  sliderLabel: {
-    fontSize: 14,
-    color: "#666",
-  },
-  notesSection: {
-    marginBottom: 30,
-  },
-  notesInput: {
-    backgroundColor: "#fff",
-    minHeight: 80,
-  },
-  saveButton: {
-    backgroundColor: "#8B7355",
-    borderRadius: 12,
-    paddingVertical: 8,
-  },
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#fff",
-  },
-});

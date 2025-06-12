@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, TextInput } from "react-native";
+import { View, ScrollView, TextInput } from "react-native";
 import { Text, Button, Card } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import CustomAppBar from "@/components/utils/CustomAppBar";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface AlertDetailsProps {
   route?: {
@@ -22,6 +23,7 @@ interface AlertDetailsProps {
 const AlertDetailsScreen: React.FC<AlertDetailsProps> = ({ route }) => {
   const [notes, setNotes] = useState("");
   const router = useRouter();
+  const { colors, typo, layout } = useTheme();
 
   // Default data (replace with route params in real implementation)
   const alertData = route?.params || {
@@ -40,13 +42,18 @@ const AlertDetailsScreen: React.FC<AlertDetailsProps> = ({ route }) => {
   };
 
   const handleMarkAsAcknowledged = () => {
-    // Add acknowledgment logic
+    // Add acknowledgment logic with animation
     console.log("Alert marked as acknowledged");
     router.back();
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
       <CustomAppBar
         title="Alert Details"
         rightAction="share"
@@ -54,76 +61,272 @@ const AlertDetailsScreen: React.FC<AlertDetailsProps> = ({ route }) => {
       />
 
       <ScrollView
-        style={styles.content}
+        style={{
+          flex: 1,
+          paddingHorizontal: layout.spacing.lg,
+        }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={{
+          padding: layout.spacing.sm,
+          paddingBottom: layout.spacing.lg,
+        }}
       >
         {/* Alert Icon */}
-        <View style={styles.alertIconContainer}>
-          <View style={styles.alertIcon}>
-            <MaterialIcons name="warning" size={32} color="#FF6B35" />
+        <View
+          style={{
+            alignItems: "center",
+            marginBottom: layout.spacing.lg,
+          }}
+        >
+          <View
+            style={{
+              width: 80,
+              height: 80,
+              borderRadius: layout.borderRadius.large,
+              backgroundColor: colors.errorLight,
+              justifyContent: "center",
+              alignItems: "center",
+              borderWidth: 2,
+              borderColor: colors.errorGradientStart,
+            }}
+          >
+            <MaterialIcons name="warning" size={32} color={colors.error} />
           </View>
         </View>
 
         {/* Alert Title and Value */}
-        <Text style={styles.alertTitle}>{alertData.alertType}</Text>
-        <Text style={styles.alertValue}>{alertData.value}</Text>
-        <Text style={styles.timestamp}>{alertData.timestamp}</Text>
+        <Text
+          style={{
+            fontSize: typo.h5.fontSize,
+            fontWeight: "600",
+            color: colors.text,
+            textAlign: "center",
+            marginBottom: layout.spacing.sm,
+            ...typo.h5,
+          }}
+        >
+          {alertData.alertType}
+        </Text>
+        <Text
+          style={{
+            fontSize: typo.h3.fontSize,
+            fontWeight: "700",
+            color: colors.error,
+            textAlign: "center",
+            marginBottom: layout.spacing.sm,
+            ...typo.h3,
+          }}
+        >
+          {alertData.value}
+        </Text>
+        <Text
+          style={{
+            fontSize: typo.body2.fontSize,
+            color: colors.text,
+            textAlign: "center",
+            marginBottom: layout.spacing.lg,
+            ...typo.body2,
+          }}
+        >
+          {alertData.timestamp}
+        </Text>
 
         {/* Safe Range */}
-        <Card style={styles.infoCard}>
-          <Card.Content style={styles.infoContent}>
-            <MaterialIcons name="check-circle" size={20} color="#4CAF50" />
-            <View style={styles.infoText}>
-              <Text style={styles.infoTitle}>Safe Range</Text>
-              <Text style={styles.infoValue}>{alertData.safeRange}</Text>
+        <Card
+          style={{
+            marginBottom: layout.spacing.sm,
+            backgroundColor: colors.card,
+            elevation: layout.elevation,
+          }}
+        >
+          <Card.Content
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+            }}
+          >
+            <MaterialIcons
+              name="check-circle"
+              size={20}
+              color={colors.success}
+            />
+            <View
+              style={{
+                marginLeft: layout.spacing.sm,
+                flex: 1,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: typo.body2.fontSize,
+                  fontWeight: "600",
+                  color: colors.text,
+                  marginBottom: layout.spacing.xs,
+                  ...typo.body2,
+                }}
+              >
+                Safe Range
+              </Text>
+              <Text
+                style={{
+                  fontSize: typo.body3.fontSize,
+                  color: colors.text,
+                  ...typo.body3,
+                }}
+              >
+                {alertData.safeRange}
+              </Text>
             </View>
           </Card.Content>
         </Card>
 
         {/* Risk Level */}
-        <Card style={styles.infoCard}>
-          <Card.Content style={styles.infoContent}>
-            <MaterialIcons name="assessment" size={20} color="#FF9800" />
-            <View style={styles.infoText}>
-              <Text style={styles.infoTitle}>Risk Level</Text>
-              <Text style={styles.infoValue}>{alertData.riskLevel}</Text>
+        <Card
+          style={{
+            marginBottom: layout.spacing.sm,
+            backgroundColor: colors.card,
+            elevation: layout.elevation,
+          }}
+        >
+          <Card.Content
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+            }}
+          >
+            <MaterialIcons name="assessment" size={20} color={colors.warning} />
+            <View
+              style={{
+                marginLeft: layout.spacing.sm,
+                flex: 1,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: typo.body2.fontSize,
+                  fontWeight: "600",
+                  color: colors.text,
+                  marginBottom: layout.spacing.xs,
+                  ...typo.body2,
+                }}
+              >
+                Risk Level
+              </Text>
+              <Text
+                style={{
+                  fontSize: typo.body3.fontSize,
+                  color: colors.text,
+                  ...typo.body3,
+                }}
+              >
+                {alertData.riskLevel}
+              </Text>
             </View>
           </Card.Content>
         </Card>
 
         {/* Recommended Action */}
-        <Card style={styles.actionCard}>
+        <Card
+          style={{
+            marginVertical: layout.spacing.sm,
+            backgroundColor: colors.card,
+            elevation: layout.elevation,
+          }}
+        >
           <Card.Content>
-            <View style={styles.actionHeader}>
-              <MaterialIcons name="lightbulb" size={20} color="#8B4513" />
-              <Text style={styles.actionTitle}>Recommended Action</Text>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginBottom: layout.spacing.sm,
+              }}
+            >
+              <MaterialIcons name="lightbulb" size={20} color={colors.info} />
+              <Text
+                style={{
+                  fontSize: typo.body2.fontSize,
+                  fontWeight: "600",
+                  color: colors.text,
+                  marginLeft: layout.spacing.sm,
+                  ...typo.body2,
+                }}
+              >
+                Recommended Action
+              </Text>
             </View>
-            <Text style={styles.actionText}>{alertData.recommendedAction}</Text>
+            <Text
+              style={{
+                fontSize: typo.body3.fontSize,
+                color: colors.text,
+                lineHeight: typo.body1.lineHeight,
+                ...typo.body3,
+              }}
+            >
+              {alertData.recommendedAction}
+            </Text>
           </Card.Content>
         </Card>
 
         {/* Additional Notes */}
-        <View style={styles.notesSection}>
-          <Text style={styles.notesTitle}>Additional Notes</Text>
+        <View
+          style={{
+            marginTop: layout.spacing.lg,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: typo.body2.fontSize,
+              fontWeight: "600",
+              color: colors.text,
+              marginBottom: layout.spacing.sm,
+              ...typo.body2,
+            }}
+          >
+            Additional Notes
+          </Text>
           <TextInput
-            style={styles.notesInput}
+            style={{
+              borderWidth: 1,
+              borderColor: colors.border,
+              borderRadius: layout.borderRadius.medium,
+              padding: layout.spacing.sm,
+              fontSize: typo.input.fontSize,
+              color: colors.text,
+              backgroundColor: colors.card,
+              minHeight: 100,
+              textAlignVertical: "top",
+              ...typo.input,
+            }}
             placeholder="Add any relevant notes about this alert..."
+            placeholderTextColor={colors.text}
             value={notes}
             onChangeText={setNotes}
             multiline
             numberOfLines={4}
-            textAlignVertical="top"
           />
         </View>
       </ScrollView>
 
       {/* Mark as Acknowledged Button */}
-      <View style={styles.buttonContainer}>
+      <View
+        style={{
+          padding: layout.spacing.sm,
+          paddingBottom: layout.spacing.lg,
+        }}
+      >
         <Button
           mode="contained"
-          style={styles.acknowledgeButton}
-          labelStyle={styles.acknowledgeButtonText}
+          style={{
+            backgroundColor: colors.primary,
+            borderRadius: layout.borderRadius.large,
+            paddingVertical: layout.spacing.sm,
+          }}
+          labelStyle={{
+            fontSize: typo.button.fontSize,
+            fontWeight: "600",
+            color: colors.textInverse,
+            ...typo.button,
+          }}
           onPress={handleMarkAsAcknowledged}
         >
           Mark as Acknowledged
@@ -132,142 +335,5 @@ const AlertDetailsScreen: React.FC<AlertDetailsProps> = ({ route }) => {
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-  },
-  content: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 32,
-  },
-  alertIconContainer: {
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  alertIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#FFF5F5",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: "#FFE5E5",
-  },
-  alertTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#333",
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  alertValue: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#FF6B35",
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  timestamp: {
-    fontSize: 16,
-    color: "#666",
-    textAlign: "center",
-    marginBottom: 32,
-  },
-  infoCard: {
-    marginBottom: 12,
-    backgroundColor: "#f8f8f8",
-    elevation: 0,
-  },
-  infoContent: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  infoText: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  infoTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 4,
-  },
-  infoValue: {
-    fontSize: 14,
-    color: "#666",
-  },
-  actionCard: {
-    marginVertical: 12,
-    backgroundColor: "#f8f8f8",
-    elevation: 0,
-  },
-  actionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  actionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    marginLeft: 8,
-  },
-  actionText: {
-    fontSize: 14,
-    color: "#666",
-    lineHeight: 20,
-  },
-  notesSection: {
-    marginTop: 24,
-  },
-  notesTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 12,
-  },
-  notesInput: {
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 14,
-    color: "#333",
-    backgroundColor: "#f8f8f8",
-    minHeight: 100,
-  },
-  buttonContainer: {
-    padding: 16,
-    paddingBottom: 32,
-  },
-  acknowledgeButton: {
-    backgroundColor: "#8B4513",
-    borderRadius: 25,
-    paddingVertical: 8,
-  },
-  acknowledgeButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#fff",
-  },
-});
 
 export default AlertDetailsScreen;

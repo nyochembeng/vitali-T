@@ -1,7 +1,8 @@
 import React from "react";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
+import { View, TouchableOpacity } from "react-native";
 import { Text } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface QuickAction {
   id: string;
@@ -15,42 +16,46 @@ interface QuickActionButtonProps {
 }
 
 const QuickActionButton: React.FC<QuickActionButtonProps> = ({ action }) => {
+  const { colors, typo, layout } = useTheme();
+
   return (
-    <TouchableOpacity style={styles.container} onPress={action.onPress}>
-      <View style={styles.iconContainer}>
+    <TouchableOpacity
+      style={{
+        flex: 1,
+        alignItems: "center",
+        paddingVertical: layout.spacing.sm,
+      }}
+      onPress={action.onPress}
+    >
+      <View
+        style={{
+          width: layout.spacing.xl * 1.5,
+          height: layout.spacing.xl * 1.5,
+          borderRadius: layout.borderRadius.full,
+          backgroundColor: colors.background,
+          justifyContent: "center",
+          alignItems: "center",
+          marginBottom: layout.spacing.sm,
+        }}
+      >
         <MaterialCommunityIcons
           name={action.icon as any}
           size={24}
-          color="#8B5A3C"
+          color={colors.primary}
         />
       </View>
-      <Text variant="bodySmall" style={styles.title}>
+      <Text
+        variant="bodySmall"
+        style={{
+          textAlign: "center",
+          color: colors.text,
+          ...typo.body3,
+        }}
+      >
         {action.title}
       </Text>
     </TouchableOpacity>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#F5F5F5",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  title: {
-    textAlign: "center",
-    color: "#666",
-    fontSize: 12,
-  },
-});
 
 export default QuickActionButton;

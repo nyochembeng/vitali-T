@@ -1,10 +1,11 @@
 import React from "react";
-import { View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { View, ScrollView, TouchableOpacity } from "react-native";
 import { Text, Card } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import CustomAppBar from "@/components/utils/CustomAppBar";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface HistoryOption {
   id: string;
@@ -16,6 +17,7 @@ interface HistoryOption {
 
 export default function HistoryScreen() {
   const router = useRouter();
+  const { colors, typo, layout } = useTheme();
 
   const historyOptions: HistoryOption[] = [
     {
@@ -69,14 +71,24 @@ export default function HistoryScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
       {/* Header */}
       <CustomAppBar title="History" rightAction="notifications" />
 
       <ScrollView
-        style={styles.content}
+        style={{
+          flex: 1,
+        }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={{
+          padding: layout.spacing.sm,
+          paddingBottom: layout.spacing.lg,
+        }}
       >
         {historyOptions.map((option) => (
           <TouchableOpacity
@@ -84,18 +96,71 @@ export default function HistoryScreen() {
             onPress={() => handleOptionPress(option)}
             activeOpacity={0.7}
           >
-            <Card style={styles.optionCard}>
-              <Card.Content style={styles.cardContent}>
-                <View style={styles.iconContainer}>
-                  <MaterialIcons name={option.icon} size={28} color="#8B4513" />
+            <Card
+              style={{
+                marginBottom: layout.spacing.sm,
+                backgroundColor: colors.card,
+                elevation: 0,
+              }}
+            >
+              <Card.Content
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingVertical: layout.spacing.sm,
+                }}
+              >
+                <View
+                  style={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: 30,
+                    backgroundColor: colors.background,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    marginRight: layout.spacing.sm,
+                  }}
+                >
+                  <MaterialIcons
+                    name={option.icon}
+                    size={28}
+                    color={colors.primary}
+                  />
                 </View>
 
-                <View style={styles.textContainer}>
-                  <Text style={styles.optionTitle}>{option.title}</Text>
-                  <Text style={styles.optionSubtitle}>{option.subtitle}</Text>
+                <View
+                  style={{
+                    flex: 1,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: typo.body2.fontSize,
+                      fontWeight: "600",
+                      color: colors.text,
+                      marginBottom: layout.spacing.xs,
+                      ...typo.body2,
+                    }}
+                  >
+                    {option.title}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: typo.body3.fontSize,
+                      color: "rgba(17, 12, 9, 0.6)",
+                      lineHeight: typo.body1.lineHeight,
+                      ...typo.body3,
+                    }}
+                  >
+                    {option.subtitle}
+                  </Text>
                 </View>
 
-                <MaterialIcons name="chevron-right" size={24} color="#ccc" />
+                <MaterialIcons
+                  name="chevron-right"
+                  size={24}
+                  color="rgba(17, 12, 9, 0.6)"
+                />
               </Card.Content>
             </Card>
           </TouchableOpacity>
@@ -104,65 +169,3 @@ export default function HistoryScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-  },
-  headerRight: {
-    width: 40, // Same width as IconButton to center title
-  },
-  content: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 32,
-  },
-  optionCard: {
-    marginBottom: 12,
-    backgroundColor: "#f8f8f8",
-    elevation: 0,
-  },
-  cardContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 16,
-  },
-  iconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 16,
-  },
-  textContainer: {
-    flex: 1,
-  },
-  optionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 4,
-  },
-  optionSubtitle: {
-    fontSize: 14,
-    color: "#666",
-    lineHeight: 20,
-  },
-});

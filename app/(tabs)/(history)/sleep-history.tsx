@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { View, ScrollView, TouchableOpacity } from "react-native";
 import { Text, Card, Button } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
 import FilterTabs from "@/components/utils/FilterTabs";
 import CustomAppBar from "@/components/utils/CustomAppBar";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface SleepEntry {
   id: string;
@@ -19,13 +20,15 @@ interface SleepEntry {
 export default function SleepHistoryScreen() {
   const [selectedFilter, setSelectedFilter] = useState<string>("All Time");
   const [sortBy, setSortBy] = useState<string>("Most Recent");
+  const { colors, typo, layout } = useTheme();
 
   const filterOptions = ["All Time", "This Week", "This Month", "Last Month"];
 
+  // Updated sample data to reflect current date (June 10, 2025)
   const sleepEntries: SleepEntry[] = [
     {
       id: "1",
-      date: "Thu, Oct 12",
+      date: "Tue, June 10, 2025",
       duration: "8h 15min",
       bedtime: "10:15 PM – 6:30 AM",
       note: "Slept well",
@@ -34,7 +37,7 @@ export default function SleepHistoryScreen() {
     },
     {
       id: "2",
-      date: "Wed, Oct 11",
+      date: "Mon, June 9, 2025",
       duration: "7h 30min",
       bedtime: "10:45 PM – 6:15 AM",
       note: "Night shift call interrupted sleep",
@@ -43,7 +46,7 @@ export default function SleepHistoryScreen() {
     },
     {
       id: "3",
-      date: "Tue, Oct 10",
+      date: "Sun, June 8, 2025",
       duration: "8h 45min",
       bedtime: "9:30 PM – 6:15 AM",
       note: "Restful sleep",
@@ -52,7 +55,7 @@ export default function SleepHistoryScreen() {
     },
     {
       id: "4",
-      date: "Mon, Oct 9",
+      date: "Sat, June 7, 2025",
       duration: "6h 30min",
       bedtime: "11:00 PM – 5:30 AM",
       note: "Baby woke up frequently",
@@ -66,79 +69,232 @@ export default function SleepHistoryScreen() {
     pattern: "Good Sleep Pattern",
   };
 
-  const getQualityColor = (quality: string) => {
-    switch (quality) {
-      case "good":
-        return "#4CAF50";
-      case "poor":
-        return "#F44336";
-      case "restless":
-        return "#FF9800";
-      default:
-        return "#666";
-    }
-  };
-
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
       <CustomAppBar title="Sleep History" rightAction="notifications" />
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Weekly Summary Card */}
-        <Card style={styles.summaryCard}>
+      <ScrollView
+        style={{
+          flex: 1,
+        }}
+        contentContainerStyle={{
+          paddingHorizontal: layout.spacing.lg,
+          paddingBottom: layout.spacing.xxl,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        <Card
+          style={{
+            marginVertical: layout.spacing.sm,
+            backgroundColor: colors.card,
+            elevation: 0,
+          }}
+        >
           <Card.Content>
-            <Text style={styles.summaryTitle}>{`This Week's Sleep`}</Text>
-            <Text style={styles.averageDuration}>{weeklyAverage.duration}</Text>
-            <Text style={styles.averageLabel}>average</Text>
-            <View style={styles.patternRow}>
-              <Text style={styles.patternIcon}>🌙</Text>
-              <Text style={styles.patternText}>{weeklyAverage.pattern}</Text>
+            <Text
+              style={{
+                fontSize: typo.h6.fontSize,
+                fontWeight: "600",
+                color: colors.text,
+                marginBottom: layout.spacing.sm,
+                ...typo.h6,
+              }}
+            >
+              {`This Week's Sleep`}
+            </Text>
+            <Text
+              style={{
+                fontSize: typo.h4.fontSize,
+                fontWeight: "300",
+                color: colors.primary,
+                marginBottom: layout.spacing.xs,
+                ...typo.h4,
+              }}
+            >
+              {weeklyAverage.duration}
+            </Text>
+            <Text
+              style={{
+                fontSize: typo.body2.fontSize,
+                color: colors.text,
+                marginBottom: layout.spacing.sm,
+                ...typo.body2,
+              }}
+            >
+              average
+            </Text>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: typo.body2.fontSize,
+                  marginRight: layout.spacing.xs,
+                  ...typo.body2,
+                }}
+              >
+                🌙
+              </Text>
+              <Text
+                style={{
+                  fontSize: typo.body1.fontSize,
+                  color: colors.text,
+                  fontWeight: "500",
+                  ...typo.body1,
+                }}
+              >
+                {weeklyAverage.pattern}
+              </Text>
             </View>
           </Card.Content>
         </Card>
 
-        {/* Filter Tabs */}
         <FilterTabs
           selectedFilter={selectedFilter}
           onFilterChange={setSelectedFilter}
           options={filterOptions}
         />
 
-        {/* Sort Dropdown */}
-        <TouchableOpacity style={styles.sortContainer}>
-          <Text style={styles.sortLabel}>Sort by: {sortBy}</Text>
-          <MaterialIcons name="keyboard-arrow-down" size={20} color="#666" />
+        <TouchableOpacity
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            paddingVertical: layout.spacing.sm,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: typo.body1.fontSize,
+              color: colors.text,
+              fontWeight: "500",
+              ...typo.body1,
+            }}
+          >
+            Sort by: {sortBy}
+          </Text>
+          <MaterialIcons
+            name="keyboard-arrow-down"
+            size={20}
+            color={colors.text}
+          />
         </TouchableOpacity>
 
-        {/* Sleep Entries */}
         {sleepEntries.map((entry) => (
           <TouchableOpacity key={entry.id}>
-            <Card style={styles.entryCard}>
-              <Card.Content style={styles.entryContent}>
-                <View style={styles.entryMain}>
-                  <Text style={styles.entryDate}>{entry.date}</Text>
-                  <View style={styles.durationRow}>
-                    <Text style={styles.entryDuration}>{entry.duration}</Text>
-                    <Text style={styles.entryIcon}>{entry.icon}</Text>
+            <Card
+              style={{
+                marginVertical: layout.spacing.xs,
+                backgroundColor: colors.card,
+                elevation: 0,
+              }}
+            >
+              <Card.Content
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      fontSize: typo.h6.fontSize,
+                      fontWeight: "600",
+                      color: colors.text,
+                      marginBottom: layout.spacing.xs,
+                      ...typo.h6,
+                    }}
+                  >
+                    {entry.date}
+                  </Text>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      marginBottom: layout.spacing.xs,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: typo.h4.fontSize,
+                        fontWeight: "300",
+                        color: colors.primary,
+                        marginRight: layout.spacing.sm,
+                        ...typo.h4,
+                      }}
+                    >
+                      {entry.duration}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: typo.body2.fontSize,
+                        ...typo.body2,
+                      }}
+                    >
+                      {entry.icon}
+                    </Text>
                   </View>
-                  <Text style={styles.entryBedtime}>{entry.bedtime}</Text>
-                  <Text style={styles.entryNote}>{entry.note}</Text>
+                  <Text
+                    style={{
+                      fontSize: typo.body2.fontSize,
+                      color: colors.text,
+                      marginBottom: layout.spacing.xs,
+                      ...typo.body2,
+                    }}
+                  >
+                    {entry.bedtime}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: typo.body2.fontSize,
+                      color: colors.text,
+                      ...typo.body2,
+                    }}
+                  >
+                    {entry.note}
+                  </Text>
                 </View>
-                <MaterialIcons name="chevron-right" size={24} color="#ccc" />
+                <MaterialIcons
+                  name="chevron-right"
+                  size={24}
+                  color={colors.text}
+                />
               </Card.Content>
             </Card>
           </TouchableOpacity>
         ))}
       </ScrollView>
 
-      {/* Log New Sleep Button */}
-      <View style={styles.buttonContainer}>
+      <View
+        style={{
+          padding: layout.spacing.sm,
+          paddingBottom: layout.spacing.lg,
+        }}
+      >
         <Button
           mode="contained"
-          style={styles.logButton}
-          labelStyle={styles.logButtonText}
+          style={{
+            backgroundColor: colors.primary,
+            borderRadius: layout.borderRadius.medium,
+            paddingVertical: layout.spacing.xs,
+          }}
+          labelStyle={{
+            fontSize: typo.button.fontSize,
+            fontWeight: "600",
+            color: colors.textInverse,
+            ...typo.button,
+          }}
           onPress={() => {}}
+          icon="plus"
         >
           Log New Sleep
         </Button>
@@ -146,129 +302,3 @@ export default function SleepHistoryScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-  },
-  content: {
-    flex: 1,
-  },
-  summaryCard: {
-    margin: 16,
-    backgroundColor: "#f8f8f8",
-    elevation: 0,
-  },
-  summaryTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
-  },
-  averageDuration: {
-    fontSize: 24,
-    fontWeight: "300",
-    color: "#8B4513",
-    marginBottom: 4,
-  },
-  averageLabel: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 12,
-  },
-  patternRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  patternIcon: {
-    fontSize: 16,
-    marginRight: 8,
-  },
-  patternText: {
-    fontSize: 14,
-    color: "#333",
-    fontWeight: "500",
-  },
-  sortContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  sortLabel: {
-    fontSize: 16,
-    color: "#333",
-    fontWeight: "500",
-  },
-  entryCard: {
-    marginHorizontal: 16,
-    marginVertical: 6,
-    backgroundColor: "#f8f8f8",
-    elevation: 0,
-  },
-  entryContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  entryMain: {
-    flex: 1,
-  },
-  entryDate: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 4,
-  },
-  durationRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  entryDuration: {
-    fontSize: 18,
-    fontWeight: "300",
-    color: "#8B4513",
-    marginRight: 8,
-  },
-  entryIcon: {
-    fontSize: 16,
-  },
-  entryBedtime: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 4,
-  },
-  entryNote: {
-    fontSize: 14,
-    color: "#666",
-  },
-  buttonContainer: {
-    padding: 16,
-    paddingBottom: 32,
-  },
-  logButton: {
-    backgroundColor: "#8B4513",
-    borderRadius: 25,
-    paddingVertical: 8,
-  },
-  logButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#fff",
-  },
-});

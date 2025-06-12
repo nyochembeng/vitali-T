@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, ScrollView, Alert, Pressable } from "react-native";
+import { View, ScrollView, Alert, Pressable } from "react-native";
 import { Text, Button, TextInput, Card, IconButton } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import CustomAppBar from "@/components/utils/CustomAppBar";
 import { useRouter } from "expo-router";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 // Types
 interface FetalMovementSession {
@@ -16,88 +17,238 @@ interface FetalMovementSession {
 }
 
 // Components
-const HeroImage: React.FC = () => (
-  <View style={styles.heroContainer}>
-    {/* <Image
-      source={require('./assets/fetal-movement-hero.jpg')} // You'll need to add this image
-      style={styles.heroImage}
-      contentFit="cover"
-    /> */}
-  </View>
-);
+const HeroImage: React.FC = () => {
+  const { layout } = useTheme();
+
+  return (
+    <View
+      style={{
+        marginBottom: layout.spacing.lg,
+        borderRadius: layout.borderRadius.medium,
+        overflow: "hidden",
+      }}
+    >
+      {/* <Image
+        source={require('./assets/fetal-movement-hero.jpg')} // Replace with your image
+        style={{ width: "100%", height: layout.spacing.xxl * 10 }}
+        contentFit="cover"
+      /> */}
+    </View>
+  );
+};
 
 const KickCounter: React.FC<{
   count: number;
   onPress: () => void;
   isActive: boolean;
-}> = ({ count, onPress, isActive }) => (
-  <Pressable
-    onPress={onPress}
-    disabled={!isActive}
-    style={[styles.counterContainer, !isActive && styles.counterDisabled]}
-  >
-    <View style={styles.counterCircle}>
-      <Text style={styles.counterNumber}>{count}</Text>
-      <Text style={styles.counterLabel}>Kicks Counted</Text>
-    </View>
-  </Pressable>
-);
+}> = ({ count, onPress, isActive }) => {
+  const { colors, typo, layout } = useTheme();
+
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={!isActive}
+      style={[
+        {
+          alignItems: "center",
+          marginBottom: layout.spacing.lg,
+        },
+        !isActive && { opacity: 0.6 },
+      ]}
+    >
+      <View
+        style={{
+          width: layout.spacing.xl * 5,
+          height: layout.spacing.xl * 5,
+          borderRadius: layout.borderRadius.full,
+          backgroundColor: colors.primaryLight,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Text
+          style={{
+            fontSize: typo.h1.fontSize,
+            fontWeight: "700",
+            color: colors.text,
+            marginBottom: layout.spacing.xs,
+            ...typo.h1,
+          }}
+        >
+          {count}
+        </Text>
+        <Text
+          style={{
+            fontSize: typo.body2.fontSize,
+            color: colors.text,
+            fontWeight: "500",
+            ...typo.body2,
+          }}
+        >
+          Kicks Counted
+        </Text>
+      </View>
+    </Pressable>
+  );
+};
 
 const SessionStatus: React.FC<{
   isActive: boolean;
   duration: string;
   onToggle: () => void;
-}> = ({ isActive, duration, onToggle }) => (
-  <View style={styles.sessionContainer}>
-    <Button
-      mode="contained"
-      onPress={onToggle}
-      style={styles.sessionButton}
-      labelStyle={styles.sessionButtonText}
-    >
-      {isActive ? "Stop Counting" : "Start Counting"}
-    </Button>
+}> = ({ isActive, duration, onToggle }) => {
+  const { colors, typo, layout } = useTheme();
 
-    <View style={styles.durationContainer}>
-      <IconButton icon="clock-outline" size={16} iconColor="#666" />
-      <Text style={styles.durationText}>Session Duration: {duration}</Text>
+  return (
+    <View
+      style={{
+        alignItems: "center",
+        marginBottom: layout.spacing.lg,
+      }}
+    >
+      <Button
+        mode="contained"
+        onPress={onToggle}
+        style={{
+          backgroundColor: colors.primary,
+          borderRadius: layout.borderRadius.large,
+          paddingHorizontal: layout.spacing.lg,
+          paddingVertical: layout.spacing.xs,
+          marginBottom: layout.spacing.sm,
+        }}
+        labelStyle={{
+          fontSize: typo.button.fontSize,
+          fontWeight: "600",
+          color: colors.textInverse,
+          ...typo.button,
+        }}
+      >
+        {isActive ? "Stop Counting" : "Start Counting"}
+      </Button>
+
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+        }}
+      >
+        <IconButton
+          icon="clock-outline"
+          size={16}
+          iconColor={colors.text}
+        />
+        <Text
+          style={{
+            fontSize: typo.body2.fontSize,
+            color: colors.text,
+            marginLeft: layout.spacing.xs,
+            ...typo.body2,
+          }}
+        >
+          Session Duration: {duration}
+        </Text>
+      </View>
     </View>
-  </View>
-);
+  );
+};
 
 const NotesSection: React.FC<{
   notes: string;
   onChangeNotes: (text: string) => void;
-}> = ({ notes, onChangeNotes }) => (
-  <View style={styles.notesSection}>
-    <Text style={styles.notesLabel}>Add any notes (optional)</Text>
-    <TextInput
-      value={notes}
-      onChangeText={onChangeNotes}
-      placeholder="How are you feeling? Any patterns noticed?"
-      multiline
-      numberOfLines={4}
-      style={styles.notesInput}
-      mode="outlined"
-    />
-  </View>
-);
+}> = ({ notes, onChangeNotes }) => {
+  const { colors, typo, layout } = useTheme();
 
-const TipCard: React.FC = () => (
-  <Card style={styles.tipCard}>
-    <Card.Content style={styles.tipContent}>
-      <IconButton icon="lightbulb-outline" size={20} iconColor="#8B7355" />
-      <Text style={styles.tipText}>
-        <Text style={styles.tipBold}>Tip:</Text> Best time to count is when baby
-        is usually active. Try to count for at least 2 hours.
+  return (
+    <View
+      style={{
+        marginBottom: layout.spacing.lg,
+      }}
+    >
+      <Text
+        style={{
+          fontSize: typo.body1.fontSize,
+          fontWeight: "500",
+          marginBottom: layout.spacing.sm,
+          color: colors.text,
+          ...typo.body1,
+        }}
+      >
+        Add any notes (optional)
       </Text>
-    </Card.Content>
-  </Card>
-);
+      <TextInput
+        value={notes}
+        onChangeText={onChangeNotes}
+        placeholder="How are you feeling? Any patterns noticed?"
+        multiline
+        numberOfLines={4}
+        style={{
+          backgroundColor: colors.surface,
+          minHeight: layout.spacing.xl * 4,
+        }}
+        mode="outlined"
+        outlineColor={colors.border}
+        activeOutlineColor={colors.primary}
+      />
+    </View>
+  );
+};
+
+const TipCard: React.FC = () => {
+  const { colors, typo, layout } = useTheme();
+
+  return (
+    <Card
+      style={{
+        backgroundColor: colors.card,
+        elevation: 0,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: layout.borderRadius.medium,
+      }}
+    >
+      <Card.Content
+        style={{
+          flexDirection: "row",
+          alignItems: "flex-start",
+          paddingVertical: layout.spacing.sm,
+        }}
+      >
+        <IconButton
+          icon="lightbulb-outline"
+          size={20}
+          iconColor={colors.primary}
+        />
+        <Text
+          style={{
+            flex: 1,
+            fontSize: typo.body2.fontSize,
+            color: colors.text,
+            marginLeft: layout.spacing.sm,
+            lineHeight: typo.body2.lineHeight,
+            ...typo.body2,
+          }}
+        >
+          <Text
+            style={{
+              fontWeight: "600",
+              color: colors.primary,
+              ...typo.body2,
+            }}
+          >
+            Tip:
+          </Text>{" "}
+          Best time to count is when baby is usually active. Try to count for at
+          least 2 hours.
+        </Text>
+      </Card.Content>
+    </Card>
+  );
+};
 
 // Main Screen Component
 export default function LogFetalMovementScreen() {
   const router = useRouter();
+  const { colors, typo, layout } = useTheme();
   const [session, setSession] = useState<FetalMovementSession>({
     kickCount: 0,
     sessionDuration: "00:00",
@@ -189,9 +340,14 @@ export default function LogFetalMovementScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
       <CustomAppBar
-        title="Log Activity"
+        title="Log Fetal Movements"
         rightAction="info"
         onInfoPress={() => {
           router.push("/vital-signs-education");
@@ -199,10 +355,15 @@ export default function LogFetalMovementScreen() {
       />
 
       <ScrollView
-        style={styles.scrollView}
+        style={{
+          flex: 1,
+        }}
+        contentContainerStyle={{
+          padding: layout.spacing.lg,
+        }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.content}>
+        <View>
           <HeroImage />
 
           <KickCounter
@@ -222,8 +383,18 @@ export default function LogFetalMovementScreen() {
           <Button
             mode="outlined"
             onPress={handleSaveSession}
-            style={styles.saveButton}
-            labelStyle={styles.saveButtonText}
+            style={{
+              borderColor: colors.primary,
+              borderRadius: layout.borderRadius.medium,
+              paddingVertical: layout.spacing.xs,
+              marginBottom: layout.spacing.lg,
+            }}
+            labelStyle={{
+              fontSize: typo.button.fontSize,
+              fontWeight: "600",
+              color: colors.primary,
+              ...typo.button,
+            }}
             icon="content-save"
           >
             Save Session
@@ -235,131 +406,3 @@ export default function LogFetalMovementScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: 20,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "600",
-    textAlign: "center",
-    marginBottom: 24,
-    color: "#333",
-  },
-  heroContainer: {
-    marginBottom: 30,
-    borderRadius: 16,
-    overflow: "hidden",
-  },
-  heroImage: {
-    width: "100%",
-    height: 200,
-    borderRadius: 16,
-  },
-  counterContainer: {
-    alignItems: "center",
-    marginBottom: 30,
-  },
-  counterCircle: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: "#f5f5f5",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  counterDisabled: {
-    opacity: 0.6,
-  },
-  counterNumber: {
-    fontSize: 48,
-    fontWeight: "700",
-    color: "#333",
-    marginBottom: 4,
-  },
-  counterLabel: {
-    fontSize: 14,
-    color: "#666",
-    fontWeight: "500",
-  },
-  sessionContainer: {
-    alignItems: "center",
-    marginBottom: 30,
-  },
-  sessionButton: {
-    backgroundColor: "#8B7355",
-    borderRadius: 25,
-    paddingHorizontal: 40,
-    paddingVertical: 8,
-    marginBottom: 16,
-  },
-  sessionButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#fff",
-  },
-  durationContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  durationText: {
-    fontSize: 14,
-    color: "#666",
-    marginLeft: 4,
-  },
-  notesSection: {
-    marginBottom: 24,
-  },
-  notesLabel: {
-    fontSize: 16,
-    fontWeight: "500",
-    marginBottom: 8,
-    color: "#333",
-  },
-  notesInput: {
-    backgroundColor: "#fff",
-    minHeight: 80,
-  },
-  saveButton: {
-    borderColor: "#8B7355",
-    borderRadius: 25,
-    paddingVertical: 8,
-    marginBottom: 24,
-  },
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#8B7355",
-  },
-  tipCard: {
-    backgroundColor: "#f8f9fa",
-    elevation: 0,
-    borderWidth: 1,
-    borderColor: "#e9ecef",
-    borderRadius: 12,
-  },
-  tipContent: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    paddingVertical: 12,
-  },
-  tipText: {
-    flex: 1,
-    fontSize: 14,
-    color: "#666",
-    marginLeft: 8,
-    lineHeight: 20,
-  },
-  tipBold: {
-    fontWeight: "600",
-    color: "#8B7355",
-  },
-});

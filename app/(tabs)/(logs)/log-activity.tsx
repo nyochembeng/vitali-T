@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, ScrollView, Alert, Pressable } from "react-native";
+import { View, ScrollView, Alert, Pressable } from "react-native";
 import { Text, Button, TextInput, Menu, Card } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
@@ -7,6 +7,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import * as Haptics from "expo-haptics";
 import CustomAppBar from "@/components/utils/CustomAppBar";
 import { useRouter } from "expo-router";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 // Types
 interface ActivityData {
@@ -55,11 +56,26 @@ const ActivitySelector: React.FC<{
   selectedActivity: string;
   onSelect: (activity: string) => void;
 }> = ({ selectedActivity, onSelect }) => {
+  const { colors, typo, layout } = useTheme();
   const [menuVisible, setMenuVisible] = useState(false);
 
   return (
-    <View style={styles.section}>
-      <Text style={styles.sectionLabel}>Activity Type</Text>
+    <View
+      style={{
+        marginBottom: layout.spacing.lg,
+      }}
+    >
+      <Text
+        style={{
+          fontSize: typo.body1.fontSize,
+          fontWeight: "500",
+          marginBottom: layout.spacing.xs,
+          color: colors.text,
+          ...typo.body1,
+        }}
+      >
+        Activity Type
+      </Text>
       <Menu
         visible={menuVisible}
         onDismiss={() => setMenuVisible(false)}
@@ -67,8 +83,19 @@ const ActivitySelector: React.FC<{
           <Button
             mode="outlined"
             onPress={() => setMenuVisible(true)}
-            style={styles.dropdownButton}
-            contentStyle={styles.dropdownContent}
+            style={{
+              borderColor: colors.border,
+              borderRadius: layout.borderRadius.small,
+            }}
+            contentStyle={{
+              justifyContent: "space-between",
+              paddingVertical: layout.spacing.xs,
+            }}
+            labelStyle={{
+              fontSize: typo.body1.fontSize,
+              color: colors.text,
+              ...typo.body1,
+            }}
             icon="chevron-down"
           >
             {selectedActivity || "Select your activity"}
@@ -83,6 +110,7 @@ const ActivitySelector: React.FC<{
               setMenuVisible(false);
             }}
             title={activity}
+            titleStyle={{ ...typo.body1 }}
           />
         ))}
       </Menu>
@@ -95,13 +123,43 @@ const TimeSelector: React.FC<{
   time: Date | null;
   onTimeChange: (time: Date) => void;
 }> = ({ label, time, onTimeChange }) => {
+  const { colors, typo, layout } = useTheme();
   const [showPicker, setShowPicker] = useState(false);
 
   return (
-    <View style={styles.timeSection}>
-      <Text style={styles.sectionLabel}>{label}</Text>
-      <Pressable onPress={() => setShowPicker(true)} style={styles.timeButton}>
-        <Text style={styles.timeText}>
+    <View
+      style={{
+        flex: 1,
+      }}
+    >
+      <Text
+        style={{
+          fontSize: typo.body1.fontSize,
+          fontWeight: "500",
+          marginBottom: layout.spacing.xs,
+          color: colors.text,
+          ...typo.body1,
+        }}
+      >
+        {label}
+      </Text>
+      <Pressable
+        onPress={() => setShowPicker(true)}
+        style={{
+          borderWidth: 1,
+          borderColor: colors.border,
+          borderRadius: layout.borderRadius.small,
+          padding: layout.spacing.sm,
+          alignItems: "center",
+        }}
+      >
+        <Text
+          style={{
+            fontSize: typo.body1.fontSize,
+            color: colors.text,
+            ...typo.body1,
+          }}
+        >
           {time
             ? time.toLocaleTimeString([], {
                 hour: "2-digit",
@@ -125,66 +183,191 @@ const TimeSelector: React.FC<{
   );
 };
 
-const DurationDisplay: React.FC<{ duration: string }> = ({ duration }) => (
-  <View style={styles.section}>
-    <Text style={styles.sectionLabel}>Duration</Text>
-    <Card style={styles.durationCard}>
-      <Card.Content style={styles.durationContent}>
-        <Text style={styles.durationText}>{duration}</Text>
-      </Card.Content>
-    </Card>
-  </View>
-);
+const DurationDisplay: React.FC<{ duration: string }> = ({ duration }) => {
+  const { colors, typo, layout } = useTheme();
+
+  return (
+    <View
+      style={{
+        marginBottom: layout.spacing.lg,
+      }}
+    >
+      <Text
+        style={{
+          fontSize: typo.body1.fontSize,
+          fontWeight: "500",
+          marginBottom: layout.spacing.xs,
+          color: colors.text,
+          ...typo.body1,
+        }}
+      >
+        Duration
+      </Text>
+      <Card
+        style={{
+          backgroundColor: colors.card,
+          elevation: 0,
+        }}
+      >
+        <Card.Content
+          style={{
+            paddingVertical: layout.spacing.sm,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: typo.body1.fontSize,
+              fontWeight: "500",
+              color: colors.text,
+              ...typo.body1,
+            }}
+          >
+            {duration}
+          </Text>
+        </Card.Content>
+      </Card>
+    </View>
+  );
+};
 
 const FeelingSelector: React.FC<{
   selectedFeeling: string;
   onSelect: (feeling: string) => void;
-}> = ({ selectedFeeling, onSelect }) => (
-  <View style={styles.section}>
-    <Text style={styles.sectionLabel}>How did you feel?</Text>
-    <View style={styles.feelingContainer}>
-      {FEELINGS.map((feeling) => (
-        <Pressable
-          key={feeling.label}
-          onPress={() => {
-            onSelect(feeling.label);
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          }}
-          style={[
-            styles.feelingButton,
-            selectedFeeling === feeling.label && styles.selectedFeeling,
-          ]}
-        >
-          <Text style={styles.feelingEmoji}>{feeling.emoji}</Text>
-          <Text style={styles.feelingLabel}>{feeling.label}</Text>
-        </Pressable>
-      ))}
+}> = ({ selectedFeeling, onSelect }) => {
+  const { colors, typo, layout } = useTheme();
+
+  return (
+    <View
+      style={{
+        marginBottom: layout.spacing.lg,
+      }}
+    >
+      <Text
+        style={{
+          fontSize: typo.body1.fontSize,
+          fontWeight: "500",
+          marginBottom: layout.spacing.xs,
+          color: colors.text,
+          ...typo.body1,
+        }}
+      >
+        How did you feel?
+      </Text>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+        }}
+      >
+        {FEELINGS.map((feeling) => (
+          <Pressable
+            key={feeling.label}
+            onPress={() => {
+              onSelect(feeling.label);
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }}
+            style={[
+              {
+                alignItems: "center",
+                padding: layout.spacing.sm,
+                borderRadius: layout.borderRadius.small,
+              },
+              selectedFeeling === feeling.label && {
+                backgroundColor: colors.surface,
+              },
+            ]}
+          >
+            <Text
+              style={{
+                fontSize: typo.h4.fontSize,
+                marginBottom: layout.spacing.xs,
+                ...typo.h4,
+              }}
+            >
+              {feeling.emoji}
+            </Text>
+            <Text
+              style={{
+                fontSize: typo.caption.fontSize,
+                color: colors.text,
+                ...typo.caption,
+              }}
+            >
+              {feeling.label}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
     </View>
-  </View>
-);
+  );
+};
 
 const QuickSelect: React.FC<{
   onQuickSelect: (activity: string) => void;
-}> = ({ onQuickSelect }) => (
-  <View style={styles.section}>
-    <Text style={styles.sectionLabel}>Quick Select</Text>
-    <View style={styles.quickSelectGrid}>
-      {QUICK_ACTIVITIES.map((activity) => (
-        <Pressable
-          key={activity.label}
-          onPress={() => onQuickSelect(activity.label)}
-          style={styles.quickSelectButton}
-        >
-          <Text style={styles.quickSelectIcon}>{activity.icon}</Text>
-          <Text style={styles.quickSelectLabel}>{activity.label}</Text>
-        </Pressable>
-      ))}
+}> = ({ onQuickSelect }) => {
+  const { colors, typo, layout } = useTheme();
+
+  return (
+    <View>
+      <Text
+        style={{
+          fontSize: typo.body1.fontSize,
+          fontWeight: "500",
+          marginBottom: layout.spacing.xs,
+          color: colors.text,
+          ...typo.body1,
+        }}
+      >
+        Quick Select
+      </Text>
+      <View
+        style={{
+          flexDirection: "row",
+          flexWrap: "wrap",
+          justifyContent: "space-between",
+        }}
+      >
+        {QUICK_ACTIVITIES.map((activity) => (
+          <Pressable
+            key={activity.label}
+            onPress={() => onQuickSelect(activity.label)}
+            style={{
+              width: "30%",
+              alignItems: "center",
+              padding: layout.spacing.sm,
+              backgroundColor: colors.card,
+              borderRadius: layout.borderRadius.small,
+              marginBottom: layout.spacing.sm,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: typo.h5.fontSize,
+                marginBottom: layout.spacing.xs,
+                ...typo.h5,
+              }}
+            >
+              {activity.icon}
+            </Text>
+            <Text
+              style={{
+                fontSize: typo.caption.fontSize,
+                color: colors.text,
+                ...typo.caption,
+              }}
+            >
+              {activity.label}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
     </View>
-  </View>
-);
+  );
+};
 
 export default function LogActivityScreen() {
   const router = useRouter();
+  const { colors, typo, layout } = useTheme();
   const [activityData, setActivityData] = useState<ActivityData>({
     type: "",
     startTime: null,
@@ -246,7 +429,12 @@ export default function LogActivityScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
       <CustomAppBar
         title="Log Activity"
         rightAction="info"
@@ -256,14 +444,25 @@ export default function LogActivityScreen() {
       />
 
       <ScrollView
-        style={styles.scrollView}
+        style={{
+          flex: 1,
+        }}
+        contentContainerStyle={{
+          padding: layout.spacing.lg,
+        }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.content}>
-          <View style={styles.heroContainer}>
+        <View>
+          <View
+            style={{
+              marginBottom: layout.spacing.lg,
+              borderRadius: layout.borderRadius.medium,
+              overflow: "hidden",
+            }}
+          >
             {/* <Image
               source={require("./assets/activity-hero.jpg")}
-              style={styles.heroImage}
+              style={{ width: "100%", height: layout.spacing.xxl * 9 }}
               contentFit="cover"
             /> */}
           </View>
@@ -273,7 +472,14 @@ export default function LogActivityScreen() {
             onSelect={(type) => setActivityData((prev) => ({ ...prev, type }))}
           />
 
-          <View style={styles.timeRow}>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              gap: layout.spacing.sm,
+              marginBottom: layout.spacing.lg,
+            }}
+          >
             <TimeSelector
               label="Start Time"
               time={activityData.startTime}
@@ -292,8 +498,22 @@ export default function LogActivityScreen() {
 
           <DurationDisplay duration={activityData.duration} />
 
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Additional Notes</Text>
+          <View
+            style={{
+              marginBottom: layout.spacing.lg,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: typo.body1.fontSize,
+                fontWeight: "500",
+                marginBottom: layout.spacing.xs,
+                color: colors.text,
+                ...typo.body1,
+              }}
+            >
+              Additional Notes
+            </Text>
             <TextInput
               value={activityData.notes}
               onChangeText={(notes) =>
@@ -302,8 +522,13 @@ export default function LogActivityScreen() {
               placeholder="Add any observations or context (e.g., how you felt)..."
               multiline
               numberOfLines={3}
-              style={styles.notesInput}
+              style={{
+                backgroundColor: colors.surface,
+                minHeight: layout.spacing.xl * 3,
+              }}
               mode="outlined"
+              outlineColor={colors.border}
+              activeOutlineColor={colors.primary}
             />
           </View>
 
@@ -317,8 +542,18 @@ export default function LogActivityScreen() {
           <Button
             mode="contained"
             onPress={handleSave}
-            style={styles.saveButton}
-            labelStyle={styles.saveButtonText}
+            style={{
+              backgroundColor: colors.primary,
+              borderRadius: layout.borderRadius.medium,
+              paddingVertical: layout.spacing.xs,
+              marginBottom: layout.spacing.lg,
+            }}
+            labelStyle={{
+              fontSize: typo.button.fontSize,
+              fontWeight: "600",
+              color: colors.textInverse,
+              ...typo.button,
+            }}
             icon="content-save"
           >
             Save Activity Log
@@ -330,137 +565,3 @@ export default function LogActivityScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: 20,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "600",
-    textAlign: "center",
-    marginBottom: 24,
-    color: "#333",
-  },
-  heroContainer: {
-    marginBottom: 30,
-    borderRadius: 16,
-    overflow: "hidden",
-  },
-  heroImage: {
-    width: "100%",
-    height: 180,
-    borderRadius: 16,
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionLabel: {
-    fontSize: 16,
-    fontWeight: "500",
-    marginBottom: 8,
-    color: "#333",
-  },
-  dropdownButton: {
-    borderColor: "#E0E0E0",
-    borderRadius: 8,
-  },
-  dropdownContent: {
-    justifyContent: "space-between",
-    paddingVertical: 8,
-  },
-  timeRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  timeSection: {
-    flex: 1,
-  },
-  timeButton: {
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-    borderRadius: 8,
-    padding: 16,
-    alignItems: "center",
-  },
-  timeText: {
-    fontSize: 16,
-    color: "#333",
-  },
-  durationCard: {
-    backgroundColor: "#f8f9fa",
-    elevation: 0,
-  },
-  durationContent: {
-    paddingVertical: 12,
-  },
-  durationText: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#333",
-  },
-  notesInput: {
-    backgroundColor: "#fff",
-    minHeight: 60,
-  },
-  feelingContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  feelingButton: {
-    alignItems: "center",
-    padding: 8,
-    borderRadius: 8,
-  },
-  selectedFeeling: {
-    backgroundColor: "#f0f0f0",
-  },
-  feelingEmoji: {
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  feelingLabel: {
-    fontSize: 12,
-    color: "#666",
-  },
-  saveButton: {
-    backgroundColor: "#8B7355",
-    borderRadius: 12,
-    paddingVertical: 8,
-    marginBottom: 30,
-  },
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#fff",
-  },
-  quickSelectGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
-  quickSelectButton: {
-    width: "30%",
-    alignItems: "center",
-    padding: 12,
-    backgroundColor: "#f8f9fa",
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  quickSelectIcon: {
-    fontSize: 20,
-    marginBottom: 4,
-  },
-  quickSelectLabel: {
-    fontSize: 12,
-    color: "#666",
-  },
-});

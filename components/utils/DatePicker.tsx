@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Platform } from "react-native";
+import { View, Platform } from "react-native";
 import { TextInput } from "react-native-paper";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { format } from "date-fns";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface DatePickerProps {
   label: string;
@@ -17,6 +18,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
   onChange,
   style,
 }) => {
+  const { colors } = useTheme();
   const [showPicker, setShowPicker] = useState(false);
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
@@ -30,23 +32,26 @@ const DatePicker: React.FC<DatePickerProps> = ({
   };
 
   return (
-    <View style={[styles.container, style]}>
+    <View style={[{ flex: 1 }, style]}>
       <TextInput
         label={label}
         value={value ? format(value, "MMM dd, yyyy") : ""}
         mode="outlined"
-        outlineColor="#E0E0E0"
-        activeOutlineColor="#B8860B"
         editable={false}
         right={
           <TextInput.Icon
             icon="calendar"
             onPress={showDatePicker}
-            color="#B8860B"
+            color={colors.primary}
           />
         }
         onTouchStart={showDatePicker}
-        style={styles.input}
+        style={{ backgroundColor: colors.card }}
+        outlineStyle={{
+          borderColor: colors.border,
+          borderWidth: 1,
+        }}
+        activeOutlineColor={colors.primary}
       />
 
       {showPicker && (
@@ -62,14 +67,5 @@ const DatePicker: React.FC<DatePickerProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  input: {
-    backgroundColor: "#FFFFFF",
-  },
-});
 
 export default DatePicker;

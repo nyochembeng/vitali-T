@@ -1,8 +1,9 @@
 import React from "react";
-import { View, StyleSheet, Pressable } from "react-native";
-import { Text, Card, useTheme, Badge } from "react-native-paper";
+import { View, Pressable } from "react-native";
+import { Text, Card } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { formatDistanceToNow } from "date-fns";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface NotificationItem {
   id: string;
@@ -25,66 +26,81 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({
   onPress,
   onMarkAsRead,
 }) => {
-  const theme = useTheme();
+  const { colors, typo, layout } = useTheme();
 
-  const getIconAndColor = () => {
+  const getIcon = () => {
     switch (notification.type) {
       case "alert":
-        return { icon: "alert-circle", color: "#FF6B6B" };
+        return { icon: "alert-circle" };
       case "tip":
-        return { icon: "lightbulb", color: "#4ECDC4" };
+        return { icon: "lightbulb" };
       case "report":
-        return { icon: "chart-line", color: "#45B7D1" };
+        return { icon: "chart-line" };
       case "reminder":
-        return { icon: "bell", color: "#96CEB4" };
+        return { icon: "bell" };
       default:
-        return { icon: "information", color: "#95A5A6" };
+        return { icon: "information" };
     }
   };
 
-  const { icon, color } = getIconAndColor();
+  const { icon } = getIcon();
 
   return (
     <Pressable onPress={() => onPress?.(notification)}>
       <Card
-        style={[
-          styles.card,
-          {
-            backgroundColor: notification.read
-              ? theme.colors.surface
-              : theme.colors.surfaceVariant,
-            opacity: notification.read ? 0.7 : 1,
-          },
-        ]}
+        style={{
+          marginHorizontal: layout.spacing.sm,
+          marginVertical: layout.spacing.xs,
+          elevation: layout.elevation,
+          backgroundColor: notification.read ? colors.card : colors.surface,
+          opacity: notification.read ? 0.7 : 1,
+        }}
       >
-        <Card.Content style={styles.content}>
-          <View style={styles.header}>
-            <View style={styles.iconTitleContainer}>
+        <Card.Content
+          style={{
+            padding: layout.spacing.sm,
+          }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              marginBottom: layout.spacing.xs,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                flex: 1,
+              }}
+            >
               <MaterialCommunityIcons
                 name={icon as any}
                 size={24}
-                color={color}
-                style={styles.icon}
+                color={colors.primary}
+                style={{
+                  marginRight: layout.spacing.sm,
+                  marginTop: layout.spacing.xs,
+                }}
               />
-              <View style={styles.titleContainer}>
+              <View style={{ flex: 1 }}>
                 <Text
-                  variant="bodyLarge"
-                  style={[
-                    styles.title,
-                    {
-                      color: theme.colors.onSurface,
-                      fontWeight: notification.read ? "400" : "600",
-                    },
-                  ]}
+                  style={{
+                    ...typo.body1,
+                    color: colors.text,
+                    fontWeight: notification.read ? "400" : "600",
+                    marginBottom: layout.spacing.xs,
+                  }}
                 >
                   {notification.title}
                 </Text>
                 <Text
-                  variant="bodySmall"
-                  style={[
-                    styles.timestamp,
-                    { color: theme.colors.onSurfaceVariant },
-                  ]}
+                  style={{
+                    ...typo.caption,
+                    color: colors.text,
+                    opacity: 0.7,
+                  }}
                 >
                   {formatDistanceToNow(notification.timestamp, {
                     addSuffix: true,
@@ -92,20 +108,16 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({
                 </Text>
               </View>
             </View>
-            {!notification.read && (
-              <Badge style={[styles.unreadBadge, { backgroundColor: color }]} />
-            )}
           </View>
 
           <Text
-            variant="bodyMedium"
-            style={[
-              styles.message,
-              {
-                color: theme.colors.onSurfaceVariant,
-                opacity: notification.read ? 0.7 : 1,
-              },
-            ]}
+            style={{
+              ...typo.body2,
+              color: colors.text,
+              marginLeft: layout.spacing.xl,
+              lineHeight: typo.body2.lineHeight,
+              opacity: notification.read ? 0.7 : 1,
+            }}
           >
             {notification.message}
           </Text>
@@ -114,46 +126,3 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({
     </Pressable>
   );
 };
-
-const styles = StyleSheet.create({
-  card: {
-    marginHorizontal: 16,
-    marginVertical: 6,
-    elevation: 2,
-  },
-  content: {
-    padding: 16,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 8,
-  },
-  iconTitleContainer: {
-    flexDirection: "row",
-    flex: 1,
-  },
-  icon: {
-    marginRight: 12,
-    marginTop: 2,
-  },
-  titleContainer: {
-    flex: 1,
-  },
-  title: {
-    marginBottom: 2,
-  },
-  timestamp: {
-    opacity: 0.7,
-  },
-  message: {
-    marginLeft: 36,
-    lineHeight: 20,
-  },
-  unreadBadge: {
-    width: 8,
-    height: 8,
-    marginTop: 6,
-  },
-});

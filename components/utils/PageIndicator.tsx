@@ -1,5 +1,6 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface PageIndicatorProps {
   currentPage: number;
@@ -10,40 +11,32 @@ const PageIndicator: React.FC<PageIndicatorProps> = ({
   currentPage,
   totalPages,
 }) => {
+  const { colors, layout } = useTheme();
+
   return (
-    <View style={styles.container}>
+    <View
+      style={{
+        flexDirection: "row",
+        justifyContent: "center",
+        alignItems: "center",
+        marginVertical: layout.spacing.md,
+      }}
+    >
       {Array.from({ length: totalPages }, (_, index) => (
         <View
           key={index}
-          style={[
-            styles.dot,
-            index === currentPage ? styles.activeDot : styles.inactiveDot,
-          ]}
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: 4,
+            marginHorizontal: layout.spacing.xs,
+            backgroundColor:
+              index === currentPage ? colors.primary : colors.border,
+          }}
         />
       ))}
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    marginVertical: 20,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginHorizontal: 4,
-  },
-  activeDot: {
-    backgroundColor: "#A67B5B",
-  },
-  inactiveDot: {
-    backgroundColor: "#D4D4D4",
-  },
-});
 
 export default PageIndicator;

@@ -1,16 +1,21 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface BluetoothIconProps {
-  state: "scanning" | "no-devices" | "failed" | "connected";
+  state: "scanning" | "connecting" | "no-devices" | "failed" | "connected";
   size?: number;
 }
 
 const BluetoothIcon: React.FC<BluetoothIconProps> = ({ state, size = 80 }) => {
+  const { colors } = useTheme();
+
   const getIconName = () => {
     switch (state) {
       case "scanning":
+        return "bluetooth";
+      case "connecting":
         return "bluetooth";
       case "no-devices":
         return "bluetooth-off";
@@ -26,35 +31,51 @@ const BluetoothIcon: React.FC<BluetoothIconProps> = ({ state, size = 80 }) => {
   const getIconColor = () => {
     switch (state) {
       case "connected":
-        return "#FFF";
+        return colors.textInverse;
       default:
-        return "#8B5A3C";
+        return colors.primary;
     }
   };
 
   const getBackgroundColor = () => {
     switch (state) {
       case "connected":
-        return "#8B5A3C";
+        return colors.primary;
       default:
         return "transparent";
     }
   };
 
   return (
-    <View style={[styles.outerCircle, { width: size * 2, height: size * 2 }]}>
+    <View
+      style={{
+        borderRadius: 1000,
+        backgroundColor: colors.surface,
+        justifyContent: "center",
+        alignItems: "center",
+        width: size * 2,
+        height: size * 2,
+      }}
+    >
       <View
-        style={[styles.middleCircle, { width: size * 1.5, height: size * 1.5 }]}
+        style={{
+          borderRadius: 1000,
+          backgroundColor: colors.accentLight,
+          justifyContent: "center",
+          alignItems: "center",
+          width: size * 1.5,
+          height: size * 1.5,
+        }}
       >
         <View
-          style={[
-            styles.innerCircle,
-            {
-              width: size,
-              height: size,
-              backgroundColor: getBackgroundColor(),
-            },
-          ]}
+          style={{
+            borderRadius: 1000,
+            backgroundColor: getBackgroundColor(),
+            justifyContent: "center",
+            alignItems: "center",
+            width: size,
+            height: size,
+          }}
         >
           <MaterialCommunityIcons
             name={getIconName() as any}
@@ -66,26 +87,5 @@ const BluetoothIcon: React.FC<BluetoothIconProps> = ({ state, size = 80 }) => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  outerCircle: {
-    borderRadius: 1000,
-    backgroundColor: "#F5F2F0",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  middleCircle: {
-    borderRadius: 1000,
-    backgroundColor: "#E8E0DB",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  innerCircle: {
-    borderRadius: 1000,
-    backgroundColor: "#8B5A3C",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-});
 
 export default BluetoothIcon;

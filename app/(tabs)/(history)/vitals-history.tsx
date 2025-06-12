@@ -2,8 +2,9 @@ import VitalHistoryCard from "@/components/history/VitalHistoryCard";
 import CustomAppBar from "@/components/utils/CustomAppBar";
 import FilterTabs from "@/components/utils/FilterTabs";
 import React, { useState } from "react";
-import { FlatList, SafeAreaView, StyleSheet, View } from "react-native";
+import { FlatList, SafeAreaView, View } from "react-native";
 import { Searchbar } from "react-native-paper";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface VitalReading {
   label: string;
@@ -32,15 +33,16 @@ interface VitalHistoryEntry {
 export default function VitalsHistoryScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState<string>("Today");
+  const { colors, typo, layout } = useTheme();
 
   const filterOptions = ["Today", "Last 7 Days", "Last 30 Days", "Custom"];
 
-  // Sample data - replace with actual data from your API/state
+  // Updated sample data to reflect current date (June 10, 2025)
   const sampleData: VitalHistoryEntry[] = [
     {
       id: "1",
-      date: "May 18, 2024",
-      time: "10:32 AM",
+      date: "June 10, 2025",
+      time: "04:00 PM",
       readings: {
         fhr: { label: "FHR", value: "142", unit: "bpm", trend: "up" },
         mhr: { label: "MHR", value: "78", unit: "bpm" },
@@ -54,8 +56,8 @@ export default function VitalsHistoryScreen() {
     },
     {
       id: "2",
-      date: "May 18, 2024",
-      time: "08:15 AM",
+      date: "June 10, 2025",
+      time: "02:15 PM",
       readings: {
         fhr: { label: "FHR", value: "140", unit: "bpm", trend: "down" },
         mhr: { label: "MHR", value: "76", unit: "bpm" },
@@ -69,7 +71,7 @@ export default function VitalsHistoryScreen() {
     },
     {
       id: "3",
-      date: "May 17, 2024",
+      date: "June 9, 2025",
       time: "11:45 PM",
       readings: {
         fhr: { label: "FHR", value: "145", unit: "bpm", trend: "up" },
@@ -89,70 +91,55 @@ export default function VitalsHistoryScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
       <CustomAppBar title="Vitals History" rightAction="notifications" />
 
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
+      <View
+        style={{
+          flex: 1,
+          paddingHorizontal: layout.spacing.sm,
+          paddingVertical: layout.spacing.xs,
+        }}
+      >
         <Searchbar
           placeholder="Search vitals or dates..."
           onChangeText={setSearchQuery}
           value={searchQuery}
-          style={styles.searchbar}
-          inputStyle={styles.searchInput}
-          iconColor="#999"
+          style={{
+            backgroundColor: colors.surface,
+            elevation: 0,
+            borderRadius: layout.borderRadius.medium,
+            borderColor: colors.border,
+            borderWidth: 1,
+          }}
+          inputStyle={{
+            fontSize: typo.body2.fontSize,
+            ...typo.body2,
+          }}
+          iconColor={colors.text}
+        />
+
+        <FilterTabs
+          selectedFilter={selectedFilter}
+          onFilterChange={setSelectedFilter}
+          options={filterOptions}
+        />
+
+        <FlatList
+          data={sampleData}
+          renderItem={renderVitalCard}
+          keyExtractor={(item) => item.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingBottom: layout.spacing.xl,
+          }}
         />
       </View>
-
-      {/* Filter Tabs */}
-      <FilterTabs
-        selectedFilter={selectedFilter}
-        onFilterChange={setSelectedFilter}
-        options={filterOptions}
-      />
-
-      {/* Vitals List */}
-      <FlatList
-        data={sampleData}
-        renderItem={renderVitalCard}
-        keyExtractor={(item) => item.id}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContainer}
-      />
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f8f9fa",
-  },
-  header: {
-    backgroundColor: "#fff",
-    elevation: 0,
-    shadowOpacity: 0,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-  },
-  searchContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: "#fff",
-  },
-  searchbar: {
-    backgroundColor: "#f5f5f5",
-    elevation: 0,
-    borderRadius: 12,
-  },
-  searchInput: {
-    fontSize: 14,
-  },
-  listContainer: {
-    paddingBottom: 20,
-  },
-});

@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { View, ScrollView, TouchableOpacity } from "react-native";
 import { Text, Card, Button, Chip } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
 import FilterTabs from "@/components/utils/FilterTabs";
 import CustomAppBar from "@/components/utils/CustomAppBar";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface SymptomEntry {
   id: string;
@@ -22,17 +23,19 @@ interface DayGroup {
 
 export default function SymptomsHistoryScreen() {
   const [selectedFilter, setSelectedFilter] = useState<string>("All");
+  const { colors, typo, layout } = useTheme();
 
   const filterOptions = ["All", "Last Week", "Last Month", "By Type"];
 
+  // Updated sample data to reflect current date (June 10, 2025)
   const symptomGroups: DayGroup[] = [
     {
-      date: "May 17, 2025",
+      date: "June 10, 2025",
       symptoms: [
         {
           id: "1",
           type: "Nausea",
-          time: "9:30 AM",
+          time: "09:30 AM",
           description: "Morning sickness with mild discomfort",
           severity: "Low",
           icon: "sick",
@@ -40,7 +43,7 @@ export default function SymptomsHistoryScreen() {
         {
           id: "2",
           type: "Headache",
-          time: "2:15 PM",
+          time: "02:15 PM",
           description: "Slight tension headache",
           severity: "Low",
           icon: "psychology",
@@ -48,7 +51,7 @@ export default function SymptomsHistoryScreen() {
       ],
     },
     {
-      date: "May 16, 2025",
+      date: "June 9, 2025",
       symptoms: [
         {
           id: "3",
@@ -61,7 +64,7 @@ export default function SymptomsHistoryScreen() {
         {
           id: "4",
           type: "Fatigue",
-          time: "4:20 PM",
+          time: "04:20 PM",
           description: "Feeling unusually tired",
           severity: "Medium",
           icon: "battery-alert",
@@ -69,7 +72,7 @@ export default function SymptomsHistoryScreen() {
         {
           id: "5",
           type: "Fever",
-          time: "7:30 PM",
+          time: "07:30 PM",
           description: "Slight fever with chills",
           severity: "High",
           icon: "device-thermostat",
@@ -78,92 +81,173 @@ export default function SymptomsHistoryScreen() {
     },
   ];
 
-  const getSeverityColor = (severity: string) => {
+  const getSeverityColor = (severity: string, colors: any) => {
     switch (severity) {
       case "Low":
-        return "#4CAF50";
+        return colors.success;
       case "Medium":
-        return "#FF9800";
+        return colors.warning;
       case "High":
-        return "#F44336";
+        return colors.error;
       default:
-        return "#666";
+        return colors.text;
     }
   };
 
-  const getSeverityBackgroundColor = (severity: string) => {
+  const getSeverityBackgroundColor = (severity: string, colors: any) => {
     switch (severity) {
       case "Low":
-        return "#E8F5E8";
+        return colors.successLight;
       case "Medium":
-        return "#FFF3E0";
+        return colors.warningLight;
       case "High":
-        return "#FFEBEE";
+        return colors.errorLight;
       default:
-        return "#f5f5f5";
+        return colors.surface;
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
       <CustomAppBar title="Symptoms History" rightAction="notifications" />
 
-      {/* Filter Tabs */}
       <FilterTabs
         selectedFilter={selectedFilter}
         onFilterChange={setSelectedFilter}
         options={filterOptions}
       />
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={{
+          flex: 1,
+        }}
+        contentContainerStyle={{
+          paddingHorizontal: layout.spacing.lg,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
         {symptomGroups.map((group, groupIndex) => (
-          <View key={groupIndex} style={styles.dayGroup}>
-            <Text style={styles.dateHeader}>{group.date}</Text>
+          <View key={groupIndex} style={{ marginBottom: layout.spacing.xl }}>
+            <Text
+              style={{
+                fontSize: typo.h6.fontSize,
+                fontWeight: "600",
+                color: colors.text,
+                marginBottom: layout.spacing.sm,
+                ...typo.h6,
+              }}
+            >
+              {group.date}
+            </Text>
 
             {group.symptoms.map((symptom) => (
               <TouchableOpacity key={symptom.id}>
-                <Card style={styles.symptomCard}>
-                  <Card.Content style={styles.symptomContent}>
-                    <View style={styles.symptomIcon}>
+                <Card
+                  style={{
+                    marginBottom: layout.spacing.sm,
+                    backgroundColor: colors.card,
+                    elevation: 0,
+                  }}
+                >
+                  <Card.Content
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: layout.spacing.xl * 1.5,
+                        height: layout.spacing.xl * 1.5,
+                        borderRadius: layout.borderRadius.medium,
+                        backgroundColor: colors.surface,
+                        justifyContent: "center",
+                        alignItems: "center",
+                        marginRight: layout.spacing.sm,
+                      }}
+                    >
                       <MaterialIcons
                         name={symptom.icon}
                         size={24}
-                        color="#8B4513"
+                        color={colors.primary}
                       />
                     </View>
 
-                    <View style={styles.symptomDetails}>
-                      <View style={styles.symptomHeader}>
-                        <Text style={styles.symptomType}>{symptom.type}</Text>
+                    <View style={{ flex: 1 }}>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          marginBottom: layout.spacing.sm,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: typo.h6.fontSize,
+                            fontWeight: "600",
+                            color: colors.text,
+                            ...typo.h6,
+                          }}
+                        >
+                          {symptom.type}
+                        </Text>
                         <Chip
-                          style={[
-                            styles.severityChip,
-                            {
-                              backgroundColor: getSeverityBackgroundColor(
-                                symptom.severity
-                              ),
-                            },
-                          ]}
-                          textStyle={[
-                            styles.severityText,
-                            { color: getSeverityColor(symptom.severity) },
-                          ]}
+                          style={{
+                            height: layout.spacing.xl,
+                            backgroundColor: getSeverityBackgroundColor(
+                              symptom.severity,
+                              colors
+                            ),
+                          }}
+                          textStyle={{
+                            fontSize: typo.caption.fontSize,
+                            fontWeight: "500",
+                            color: getSeverityColor(symptom.severity, colors),
+                            ...typo.caption,
+                          }}
                         >
                           {symptom.severity}
                         </Chip>
                       </View>
 
-                      <View style={styles.timeRow}>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          marginBottom: layout.spacing.sm,
+                        }}
+                      >
                         <MaterialIcons
                           name="access-time"
                           size={16}
-                          color="#666"
+                          color={colors.text}
                         />
-                        <Text style={styles.symptomTime}>{symptom.time}</Text>
+                        <Text
+                          style={{
+                            fontSize: typo.body2.fontSize,
+                            color: colors.text,
+                            marginLeft: layout.spacing.xs,
+                            ...typo.body2,
+                          }}
+                        >
+                          {symptom.time}
+                        </Text>
                       </View>
 
-                      <Text style={styles.symptomDescription}>
+                      <Text
+                        style={{
+                          fontSize: typo.body2.fontSize,
+                          color: colors.text,
+                          lineHeight: typo.body2.lineHeight,
+                          ...typo.body2,
+                        }}
+                      >
                         {symptom.description}
                       </Text>
                     </View>
@@ -171,7 +255,7 @@ export default function SymptomsHistoryScreen() {
                     <MaterialIcons
                       name="chevron-right"
                       size={24}
-                      color="#ccc"
+                      color={colors.text}
                     />
                   </Card.Content>
                 </Card>
@@ -179,120 +263,32 @@ export default function SymptomsHistoryScreen() {
             ))}
           </View>
         ))}
-      </ScrollView>
 
-      {/* Log New Symptom Button */}
-      <View style={styles.buttonContainer}>
-        <Button
-          mode="contained"
-          style={styles.logButton}
-          labelStyle={styles.logButtonText}
-          onPress={() => {}}
-          icon="plus"
+        <View
+          style={{
+            padding: layout.spacing.sm,
+          }}
         >
-          Log New Symptom
-        </Button>
-      </View>
+          <Button
+            mode="contained"
+            style={{
+              backgroundColor: colors.primary,
+              borderRadius: layout.borderRadius.medium,
+              paddingVertical: layout.spacing.xs,
+            }}
+            labelStyle={{
+              fontSize: typo.button.fontSize,
+              fontWeight: "600",
+              color: colors.textInverse,
+              ...typo.button,
+            }}
+            onPress={() => {}}
+            icon="plus"
+          >
+            Log New Symptom
+          </Button>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  dayGroup: {
-    marginBottom: 24,
-  },
-  dateHeader: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 12,
-  },
-  symptomCard: {
-    marginBottom: 12,
-    backgroundColor: "#f8f8f8",
-    elevation: 0,
-  },
-  symptomContent: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-  },
-  symptomIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 16,
-  },
-  symptomDetails: {
-    flex: 1,
-  },
-  symptomHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  symptomType: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-  },
-  severityChip: {
-    height: 24,
-  },
-  severityText: {
-    fontSize: 12,
-    fontWeight: "500",
-  },
-  timeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  symptomTime: {
-    fontSize: 14,
-    color: "#666",
-    marginLeft: 4,
-  },
-  symptomDescription: {
-    fontSize: 14,
-    color: "#666",
-    lineHeight: 20,
-  },
-  buttonContainer: {
-    padding: 16,
-    paddingBottom: 32,
-  },
-  logButton: {
-    backgroundColor: "#8B4513",
-    borderRadius: 25,
-    paddingVertical: 8,
-  },
-  logButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#fff",
-  },
-});

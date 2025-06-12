@@ -1,7 +1,8 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
 import { Text, Card } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface FetalMovementEntry {
   id: string;
@@ -16,94 +17,118 @@ interface FetalMovementCardProps {
 }
 
 const FetalMovementCard: React.FC<FetalMovementCardProps> = ({ entry }) => {
+  const { colors, typo, layout } = useTheme();
+
   return (
-    <Card style={styles.card}>
+    <Card
+      style={{
+        marginHorizontal: layout.spacing.sm,
+        marginVertical: layout.spacing.xs,
+        backgroundColor: colors.card,
+        elevation: layout.elevation,
+        borderRadius: layout.borderRadius.medium,
+        shadowColor: colors.text,
+        shadowOffset: layout.shadow.light.shadowOffset,
+        shadowOpacity: layout.shadow.light.shadowOpacity,
+        shadowRadius: layout.shadow.light.shadowRadius,
+        padding: layout.spacing.md,
+      }}
+    >
       <Card.Content>
-        <View style={styles.header}>
-          <View style={styles.dateTimeContainer}>
-            <View style={styles.dateContainer}>
-              <MaterialIcons name="calendar-today" size={16} color="#8B4513" />
-              <Text style={styles.date}>{entry.date}</Text>
+        <View
+          style={{
+            marginBottom: layout.spacing.sm,
+          }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <MaterialIcons
+                name="calendar-today"
+                size={16}
+                color={colors.primary}
+              />
+              <Text
+                style={{
+                  fontSize: typo.body2.fontSize,
+                  color: colors.text,
+                  marginLeft: layout.spacing.xs,
+                  fontWeight: "500",
+                  ...typo.body2,
+                }}
+              >
+                {entry.date}
+              </Text>
             </View>
-            <View style={styles.timeContainer}>
-              <MaterialIcons name="access-time" size={16} color="#8B4513" />
-              <Text style={styles.time}>{entry.time}</Text>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <MaterialIcons
+                name="access-time"
+                size={16}
+                color={colors.primary}
+              />
+              <Text
+                style={{
+                  fontSize: typo.body2.fontSize,
+                  color: colors.text,
+                  marginLeft: layout.spacing.xs,
+                  fontWeight: "500",
+                  ...typo.body2,
+                }}
+              >
+                {entry.time}
+              </Text>
             </View>
           </View>
         </View>
 
-        <View style={styles.kickCountContainer}>
-          <Text style={styles.kickCount}>{entry.kickCount}</Text>
-          <Text style={styles.kickLabel}>kicks</Text>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "baseline",
+            marginBottom: layout.spacing.sm,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: typo.h2.fontSize,
+              fontWeight: "700",
+              color: colors.primary,
+              marginRight: layout.spacing.xs,
+              ...typo.h2,
+            }}
+          >
+            {entry.kickCount}
+          </Text>
+          <Text
+            style={{
+              fontSize: typo.body1.fontSize,
+              color: colors.text,
+              fontWeight: "500",
+              ...typo.body1,
+            }}
+          >
+            kicks
+          </Text>
         </View>
 
-        <Text style={styles.notes}>{entry.notes}</Text>
+        <Text
+          style={{
+            fontSize: typo.body2.fontSize,
+            color: colors.text,
+            lineHeight: typo.body2.lineHeight,
+            ...typo.body2,
+          }}
+        >
+          {entry.notes}
+        </Text>
       </Card.Content>
     </Card>
   );
 };
-
-const styles = StyleSheet.create({
-  card: {
-    marginHorizontal: 16,
-    marginVertical: 8,
-    backgroundColor: "#fff",
-    elevation: 1,
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  header: {
-    marginBottom: 16,
-  },
-  dateTimeContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  dateContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  timeContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  date: {
-    fontSize: 14,
-    color: "#333",
-    marginLeft: 6,
-    fontWeight: "500",
-  },
-  time: {
-    fontSize: 14,
-    color: "#333",
-    marginLeft: 6,
-    fontWeight: "500",
-  },
-  kickCountContainer: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    marginBottom: 12,
-  },
-  kickCount: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: "#8B4513",
-    marginRight: 4,
-  },
-  kickLabel: {
-    fontSize: 16,
-    color: "#666",
-    fontWeight: "500",
-  },
-  notes: {
-    fontSize: 14,
-    color: "#666",
-    lineHeight: 20,
-  },
-});
 
 export default FetalMovementCard;

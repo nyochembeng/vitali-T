@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, ScrollView, Alert } from "react-native";
+import { View, ScrollView, Alert } from "react-native";
 import { Text, Button, TextInput, Card, IconButton } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import CustomAppBar from "@/components/utils/CustomAppBar";
 import { useRouter } from "expo-router";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 // Types
 interface ContractionData {
@@ -15,42 +16,96 @@ interface ContractionData {
 }
 
 // Components
-const TimerDisplay: React.FC<{ time: string }> = ({ time }) => (
-  <View style={styles.timerContainer}>
-    <View style={styles.timerCircle}>
-      <Text style={styles.timerText}>{time}</Text>
+const TimerDisplay: React.FC<{ time: string }> = ({ time }) => {
+  const { colors, typo, layout } = useTheme();
+
+  return (
+    <View
+      style={{
+        alignItems: "center",
+        marginBottom: layout.spacing.lg,
+      }}
+    >
+      <View
+        style={{
+          width: layout.spacing.xl * 3.5,
+          height: layout.spacing.xl * 3.5,
+          borderRadius: layout.borderRadius.full,
+          backgroundColor: colors.surface,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Text
+          style={{
+            fontSize: typo.h3.fontSize,
+            fontWeight: "600",
+            color: colors.text,
+            ...typo.h3,
+          }}
+        >
+          {time}
+        </Text>
+      </View>
     </View>
-  </View>
-);
+  );
+};
 
 const TimerControls: React.FC<{
   isActive: boolean;
   onStart: () => void;
   onStop: () => void;
-}> = ({ isActive, onStart, onStop }) => (
-  <View style={styles.controlsContainer}>
-    <Button
-      mode="contained-tonal"
-      onPress={onStart}
-      disabled={isActive}
-      icon="play"
-      style={[styles.controlButton, styles.startButton]}
-      labelStyle={styles.controlButtonText}
+}> = ({ isActive, onStart, onStop }) => {
+  const { colors, typo, layout } = useTheme();
+
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginBottom: layout.spacing.lg,
+        gap: layout.spacing.sm,
+      }}
     >
-      Start Timer
-    </Button>
-    <Button
-      mode="contained-tonal"
-      onPress={onStop}
-      disabled={!isActive}
-      icon="stop"
-      style={[styles.controlButton, styles.stopButton]}
-      labelStyle={styles.controlButtonText}
-    >
-      Stop Timer
-    </Button>
-  </View>
-);
+      <Button
+        mode="contained-tonal"
+        onPress={onStart}
+        disabled={isActive}
+        icon="play"
+        style={{
+          flex: 1,
+          borderRadius: layout.borderRadius.medium,
+        }}
+        labelStyle={{
+          fontSize: typo.body1.fontSize,
+          color: colors.text,
+          ...typo.body1,
+        }}
+        buttonColor={colors.primaryLight}
+      >
+        Start Timer
+      </Button>
+      <Button
+        mode="contained-tonal"
+        onPress={onStop}
+        disabled={!isActive}
+        icon="stop"
+        style={{
+          flex: 1,
+          borderRadius: layout.borderRadius.medium,
+        }}
+        labelStyle={{
+          fontSize: typo.body1.fontSize,
+          color: colors.text,
+          ...typo.body1,
+        }}
+        buttonColor={colors.primaryLight}
+      >
+        Stop Timer
+      </Button>
+    </View>
+  );
+};
 
 const TimeInput: React.FC<{
   label: string;
@@ -58,55 +113,143 @@ const TimeInput: React.FC<{
   onChangeText: (text: string) => void;
   placeholder?: string;
   description?: string;
-}> = ({ label, value, onChangeText, placeholder = "00:00", description }) => (
-  <View style={styles.inputSection}>
-    <Text style={styles.inputLabel}>{label}</Text>
-    <View style={styles.inputContainer}>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        style={styles.timeInput}
-        mode="outlined"
-        right={<TextInput.Icon icon="clock-outline" />}
-      />
+}> = ({ label, value, onChangeText, placeholder = "00:00", description }) => {
+  const { colors, typo, layout } = useTheme();
+
+  return (
+    <View
+      style={{
+        marginBottom: layout.spacing.sm,
+      }}
+    >
+      <Text
+        style={{
+          fontSize: typo.body1.fontSize,
+          fontWeight: "500",
+          marginBottom: layout.spacing.xs,
+          color: colors.text,
+          ...typo.body1,
+        }}
+      >
+        {label}
+      </Text>
+      <View
+        style={{
+          position: "relative",
+        }}
+      >
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          style={{
+            backgroundColor: colors.surface,
+            borderRadius: layout.borderRadius.medium,
+          }}
+          mode="outlined"
+          outlineColor={colors.border}
+          activeOutlineColor={colors.primary}
+          right={<TextInput.Icon icon="clock-outline" color={colors.text} />}
+        />
+      </View>
+      {description && (
+        <Text
+          style={{
+            fontSize: typo.caption.fontSize,
+            color: colors.text,
+            marginTop: layout.spacing.xs,
+            ...typo.caption,
+          }}
+        >
+          {description}
+        </Text>
+      )}
     </View>
-    {description && <Text style={styles.inputDescription}>{description}</Text>}
-  </View>
-);
+  );
+};
 
 const NotesInput: React.FC<{
   value: string;
   onChangeText: (text: string) => void;
-}> = ({ value, onChangeText }) => (
-  <View style={styles.inputSection}>
-    <Text style={styles.inputLabel}>Additional Notes (Optional)</Text>
-    <TextInput
-      value={value}
-      onChangeText={onChangeText}
-      placeholder="Describe pain level, intensity, position, or any other observations..."
-      multiline
-      numberOfLines={4}
-      style={styles.notesInput}
-      mode="outlined"
-    />
-  </View>
-);
+}> = ({ value, onChangeText }) => {
+  const { colors, typo, layout } = useTheme();
 
-const MedicalAlert: React.FC = () => (
-  <Card style={styles.alertCard}>
-    <Card.Content style={styles.alertContent}>
-      <IconButton icon="information" size={20} iconColor="#666" />
-      <Text style={styles.alertText}>
-        Seek medical attention if contractions are less than 5 minutes apart
+  return (
+    <View
+      style={{
+        marginBottom: layout.spacing.lg,
+      }}
+    >
+      <Text
+        style={{
+          fontSize: typo.body1.fontSize,
+          fontWeight: "500",
+          marginBottom: layout.spacing.xs,
+          color: colors.text,
+          ...typo.body1,
+        }}
+      >
+        Additional Notes (Optional)
       </Text>
-    </Card.Content>
-  </Card>
-);
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        placeholder="Describe pain level, intensity, position, or any other observations..."
+        multiline
+        numberOfLines={4}
+        style={{
+          backgroundColor: colors.surface,
+          minHeight: layout.spacing.xl * 4,
+        }}
+        mode="outlined"
+        outlineColor={colors.border}
+        activeOutlineColor={colors.primary}
+      />
+    </View>
+  );
+};
+
+const MedicalAlert: React.FC = () => {
+  const { colors, typo, layout } = useTheme();
+
+  return (
+    <Card
+      style={{
+        backgroundColor: colors.card,
+        marginBottom: layout.spacing.lg,
+        elevation: 0,
+        borderWidth: 1,
+        borderColor: colors.border,
+      }}
+    >
+      <Card.Content
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          paddingVertical: layout.spacing.sm,
+        }}
+      >
+        <IconButton icon="information" size={20} iconColor={colors.accent} />
+        <Text
+          style={{
+            flex: 1,
+            fontSize: typo.body2.fontSize,
+            color: colors.text,
+            marginLeft: layout.spacing.sm,
+            ...typo.body2,
+          }}
+        >
+          Seek medical attention if contractions are less than 5 minutes apart
+        </Text>
+      </Card.Content>
+    </Card>
+  );
+};
 
 // Main Screen Component
 export default function LogContractionScreen() {
   const router = useRouter();
+  const { colors, typo, layout } = useTheme();
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [currentTime, setCurrentTime] = useState("00:00");
   const [contractionData, setContractionData] = useState<ContractionData>({
@@ -184,7 +327,12 @@ export default function LogContractionScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
       <CustomAppBar
         title="Log Uterine Contractions"
         rightAction="info"
@@ -194,10 +342,15 @@ export default function LogContractionScreen() {
       />
 
       <ScrollView
-        style={styles.scrollView}
+        style={{
+          flex: 1,
+        }}
+        contentContainerStyle={{
+          padding: layout.spacing.lg,
+        }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.content}>
+        <View>
           <TimerDisplay time={currentTime} />
 
           <TimerControls
@@ -235,8 +388,17 @@ export default function LogContractionScreen() {
           <Button
             mode="contained"
             onPress={handleSaveContraction}
-            style={styles.saveButton}
-            labelStyle={styles.saveButtonText}
+            style={{
+              backgroundColor: colors.primary,
+              borderRadius: layout.borderRadius.medium,
+              paddingVertical: layout.spacing.xs,
+            }}
+            labelStyle={{
+              fontSize: typo.button.fontSize,
+              fontWeight: "600",
+              color: colors.textInverse,
+              ...typo.button,
+            }}
             icon="content-save"
           >
             Save Contraction Log
@@ -246,113 +408,3 @@ export default function LogContractionScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: 20,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "600",
-    textAlign: "center",
-    marginBottom: 30,
-    color: "#333",
-  },
-  timerContainer: {
-    alignItems: "center",
-    marginBottom: 30,
-  },
-  timerCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: "#f0f0f0",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  timerText: {
-    fontSize: 24,
-    fontWeight: "600",
-    color: "#333",
-  },
-  controlsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 30,
-    gap: 12,
-  },
-  controlButton: {
-    flex: 1,
-    borderRadius: 8,
-  },
-  startButton: {
-    backgroundColor: "#f5f5f5",
-  },
-  stopButton: {
-    backgroundColor: "#f5f5f5",
-  },
-  controlButtonText: {
-    color: "#333",
-    fontSize: 14,
-  },
-  inputSection: {
-    marginBottom: 20,
-  },
-  inputLabel: {
-    fontSize: 16,
-    fontWeight: "500",
-    marginBottom: 8,
-    color: "#333",
-  },
-  inputContainer: {
-    position: "relative",
-  },
-  timeInput: {
-    backgroundColor: "#fff",
-  },
-  inputDescription: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 4,
-  },
-  notesInput: {
-    backgroundColor: "#fff",
-    minHeight: 80,
-  },
-  alertCard: {
-    backgroundColor: "#f8f9fa",
-    marginBottom: 30,
-    elevation: 0,
-    borderWidth: 1,
-    borderColor: "#e9ecef",
-  },
-  alertContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 8,
-  },
-  alertText: {
-    flex: 1,
-    fontSize: 14,
-    color: "#666",
-    marginLeft: 8,
-  },
-  saveButton: {
-    backgroundColor: "#8B7355",
-    borderRadius: 12,
-    paddingVertical: 8,
-    marginBottom: 20,
-  },
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#fff",
-  },
-});

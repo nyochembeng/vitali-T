@@ -2,8 +2,9 @@ import VitalDetailCard from "@/components/dashboard/VitalDetailCard";
 import CustomAppBar from "@/components/utils/CustomAppBar";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { View, StyleSheet, SafeAreaView, ScrollView } from "react-native";
+import { View, SafeAreaView, ScrollView } from "react-native";
 import { Button, Portal, Dialog, Text } from "react-native-paper";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface VitalReading {
   id: string;
@@ -20,6 +21,7 @@ interface VitalReading {
 export default function VitalsDetailsScreen() {
   const [showStopDialog, setShowStopDialog] = useState(false);
   const router = useRouter();
+  const { colors, typo, layout } = useTheme();
 
   // Mock vital readings data
   const vitalReadings: VitalReading[] = [
@@ -30,7 +32,7 @@ export default function VitalsDetailsScreen() {
       unit: "BPM",
       status: "normal",
       chartData: [138, 140, 142, 144, 141, 143, 142, 140, 141, 143],
-      chartColor: "#FF6B6B",
+      chartColor: colors.error,
       hasChart: true,
     },
     {
@@ -40,7 +42,7 @@ export default function VitalsDetailsScreen() {
       unit: "BPM",
       status: "normal",
       chartData: [80, 82, 84, 86, 85, 87, 86, 84, 85, 86],
-      chartColor: "#4ECDC4",
+      chartColor: colors.info,
       hasChart: true,
     },
     {
@@ -50,7 +52,7 @@ export default function VitalsDetailsScreen() {
       unit: "mmHg",
       status: "normal",
       trend: "stable",
-      chartColor: "#45B7D1",
+      chartColor: colors.infoDark,
       hasChart: false,
     },
     {
@@ -59,7 +61,7 @@ export default function VitalsDetailsScreen() {
       value: "98",
       unit: "%",
       status: "normal",
-      chartColor: "#96CEB4",
+      chartColor: colors.success,
       hasChart: false,
     },
     {
@@ -69,7 +71,7 @@ export default function VitalsDetailsScreen() {
       unit: "°C",
       status: "normal",
       trend: "up",
-      chartColor: "#FFD93D",
+      chartColor: colors.warning,
       hasChart: false,
     },
     {
@@ -79,7 +81,7 @@ export default function VitalsDetailsScreen() {
       unit: "breaths/min",
       status: "normal",
       trend: "stable",
-      chartColor: "#B8860B",
+      chartColor: colors.primary,
       hasChart: false,
     },
     {
@@ -89,7 +91,7 @@ export default function VitalsDetailsScreen() {
       unit: "ms",
       status: "normal",
       chartData: [65, 67, 68, 70, 69, 71, 68, 66, 67, 69],
-      chartColor: "#20B2AA",
+      chartColor: colors.successDark,
       hasChart: true,
     },
     {
@@ -99,7 +101,7 @@ export default function VitalsDetailsScreen() {
       unit: "",
       status: "normal",
       trend: "stable",
-      chartColor: "#32CD32",
+      chartColor: colors.successLight,
       hasChart: false,
     },
   ];
@@ -115,7 +117,6 @@ export default function VitalsDetailsScreen() {
   const confirmStopMonitoring = () => {
     setShowStopDialog(false);
     // Logic to stop monitoring goes here
-    // For example, disconnect from the device or stop the session
     console.log("Monitoring stopped");
     // Navigate back to dashboard
     router.push("/dashboard");
@@ -126,7 +127,12 @@ export default function VitalsDetailsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
       <CustomAppBar
         title="Vitals Details"
         rightAction="info"
@@ -134,22 +140,45 @@ export default function VitalsDetailsScreen() {
       />
 
       <ScrollView
-        style={styles.content}
+        style={{
+          flex: 1,
+          paddingHorizontal: layout.spacing.lg,
+        }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={{
+          paddingTop: layout.spacing.sm,
+          paddingBottom: layout.spacing.xxl,
+        }}
       >
         {vitalReadings.map((vital) => (
           <VitalDetailCard key={vital.id} vital={vital} />
         ))}
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          backgroundColor: colors.card,
+          padding: layout.spacing.sm,
+          paddingBottom: layout.spacing.lg,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+        }}
+      >
         <Button
           mode="contained"
           onPress={handleStopMonitoring}
-          style={styles.stopButton}
-          buttonColor="#8B5A3C"
-          contentStyle={styles.stopButtonContent}
+          style={{
+            borderRadius: layout.borderRadius.medium,
+            elevation: layout.elevation,
+          }}
+          buttonColor={colors.primary}
+          contentStyle={{
+            paddingVertical: layout.spacing.sm,
+          }}
           icon="stop-circle-outline"
         >
           Stop Monitoring
@@ -160,26 +189,48 @@ export default function VitalsDetailsScreen() {
         <Dialog
           visible={showStopDialog}
           onDismiss={cancelStopMonitoring}
-          style={styles.dialog}
+          style={{
+            backgroundColor: colors.card,
+          }}
         >
-          <Dialog.Title style={styles.dialogTitle}>
+          <Dialog.Title
+            style={{
+              fontSize: typo.h4.fontSize,
+              fontWeight: "600",
+              color: colors.text,
+              ...typo.h4,
+            }}
+          >
             Stop Monitoring?
           </Dialog.Title>
           <Dialog.Content>
-            <Text style={styles.dialogText}>
+            <Text
+              style={{
+                fontSize: typo.body1.fontSize,
+                color: colors.text,
+                lineHeight: typo.body1.lineHeight,
+                ...typo.body1,
+              }}
+            >
               Are you sure you want to stop monitoring? This will disconnect
               your device and end the current session.
             </Text>
           </Dialog.Content>
-          <Dialog.Actions style={styles.dialogActions}>
-            <Button onPress={cancelStopMonitoring} textColor="#666">
+          <Dialog.Actions
+            style={{
+              paddingTop: layout.spacing.sm,
+            }}
+          >
+            <Button onPress={cancelStopMonitoring} textColor={colors.text}>
               Cancel
             </Button>
             <Button
               onPress={confirmStopMonitoring}
-              buttonColor="#8B5A3C"
+              buttonColor={colors.error}
               mode="contained"
-              style={styles.confirmButton}
+              style={{
+                borderRadius: layout.borderRadius.medium,
+              }}
             >
               Stop
             </Button>
@@ -189,64 +240,3 @@ export default function VitalsDetailsScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F8F9FA",
-  },
-  header: {
-    backgroundColor: "#FFF",
-    elevation: 0,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#000",
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  scrollContent: {
-    paddingTop: 16,
-    paddingBottom: 100,
-  },
-  footer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "#FFF",
-    padding: 16,
-    paddingBottom: 32,
-    borderTopWidth: 1,
-    borderTopColor: "#E0E0E0",
-  },
-  stopButton: {
-    borderRadius: 12,
-    elevation: 2,
-  },
-  stopButtonContent: {
-    paddingVertical: 8,
-  },
-  dialog: {
-    backgroundColor: "#FFF",
-  },
-  dialogTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#000",
-  },
-  dialogText: {
-    fontSize: 16,
-    color: "#666",
-    lineHeight: 24,
-  },
-  dialogActions: {
-    paddingTop: 16,
-  },
-  confirmButton: {
-    borderRadius: 8,
-  },
-});

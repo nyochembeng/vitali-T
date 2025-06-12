@@ -1,11 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-} from "react-native";
+import { View, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
 import {
   Text,
   Card,
@@ -18,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import DatePicker from "@/components/utils/DatePicker";
 import CustomAppBar from "@/components/utils/CustomAppBar";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface ReportItem {
   id: string;
@@ -30,6 +25,7 @@ export default function GenerateReportScreen() {
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [notes, setNotes] = useState("");
+  const { colors, typo, layout } = useTheme();
 
   const [reportItems, setReportItems] = useState<ReportItem[]>([
     { id: "vitals", label: "Vitals", icon: "heart-outline", checked: true },
@@ -45,7 +41,7 @@ export default function GenerateReportScreen() {
     {
       id: "contractions",
       label: "Uterine Contractions",
-      icon: "moon-outline",
+      icon: "pulse",
       checked: true,
     },
   ]);
@@ -59,7 +55,7 @@ export default function GenerateReportScreen() {
   };
 
   const handleGenerateReport = () => {
-    // Handle report generation logic
+    // Handle report generation logic with animation
     console.log("Generating report with:", {
       startDate,
       endDate,
@@ -69,65 +65,139 @@ export default function GenerateReportScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <CustomAppBar
-        title="Generate Health Report"
-        titleIcon={{ name: "help-circle-outline", position: "right" }}
-      />
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
+      <CustomAppBar title="Generate Health Report" rightAction="help" />
 
       <KeyboardAvoidingView
-        style={styles.flex}
+        style={{
+          flex: 1,
+        }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <ScrollView
-          style={styles.scrollView}
+          style={{
+            flex: 1,
+            paddingHorizontal: layout.spacing.lg,
+          }}
           showsVerticalScrollIndicator={false}
         >
           {/* Date Range Section */}
-          <Card style={styles.card}>
+          <Card
+            style={{
+              backgroundColor: colors.card,
+              marginVertical: layout.spacing.sm,
+              borderRadius: layout.borderRadius.medium,
+              elevation: layout.elevation,
+              shadowColor: colors.text,
+              shadowOffset: layout.shadow.light.shadowOffset,
+              shadowOpacity: layout.shadow.light.shadowOpacity,
+              shadowRadius: layout.shadow.light.shadowRadius,
+            }}
+          >
             <Card.Content>
-              <Text variant="titleMedium" style={styles.sectionTitle}>
+              <Text
+                variant="titleMedium"
+                style={{
+                  color: colors.text,
+                  fontWeight: "600",
+                  marginBottom: layout.spacing.sm,
+                  ...typo.subtitle2,
+                }}
+              >
                 Select Date Range
               </Text>
 
-              <View style={styles.dateRow}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  gap: layout.spacing.sm,
+                }}
+              >
                 <DatePicker
                   label="Start Date"
                   value={startDate}
                   onChange={setStartDate}
-                  style={styles.dateInput}
+                  style={{
+                    flex: 1,
+                  }}
                 />
                 <DatePicker
                   label="End Date"
                   value={endDate}
                   onChange={setEndDate}
-                  style={styles.dateInput}
+                  style={{
+                    flex: 1,
+                  }}
                 />
               </View>
             </Card.Content>
           </Card>
 
           {/* Include in Report Section */}
-          <Card style={styles.card}>
+          <Card
+            style={{
+              backgroundColor: colors.card,
+              marginVertical: layout.spacing.sm,
+              borderRadius: layout.borderRadius.medium,
+              elevation: layout.elevation,
+              shadowColor: colors.text,
+              shadowOffset: layout.shadow.light.shadowOffset,
+              shadowOpacity: layout.shadow.light.shadowOpacity,
+              shadowRadius: layout.shadow.light.shadowRadius,
+            }}
+          >
             <Card.Content>
-              <Text variant="titleMedium" style={styles.sectionTitle}>
+              <Text
+                variant="titleMedium"
+                style={{
+                  color: colors.text,
+                  fontWeight: "600",
+                  marginBottom: layout.spacing.sm,
+                  ...typo.subtitle2,
+                }}
+              >
                 Include in Report
               </Text>
 
               {reportItems.map((item) => (
-                <View key={item.id} style={styles.checkboxRow}>
+                <View
+                  key={item.id}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    paddingVertical: layout.spacing.xs,
+                  }}
+                >
                   <Checkbox
                     status={item.checked ? "checked" : "unchecked"}
                     onPress={() => toggleReportItem(item.id)}
-                    theme={{ colors: { primary: "#B8860B" } }}
+                    color={colors.primary}
                   />
                   <IconButton
                     icon={item.icon}
                     size={20}
-                    iconColor="#B8860B"
-                    style={styles.itemIcon}
+                    iconColor={colors.primary}
+                    style={{
+                      margin: 0,
+                      marginLeft: -layout.spacing.sm,
+                      marginRight: layout.spacing.xs,
+                    }}
                   />
-                  <Text variant="bodyLarge" style={styles.checkboxLabel}>
+                  <Text
+                    variant="bodyLarge"
+                    style={{
+                      flex: 1,
+                      color: colors.text,
+                      marginLeft: layout.spacing.sm,
+                      ...typo.body1,
+                    }}
+                  >
                     {item.label}
                   </Text>
                 </View>
@@ -136,9 +206,28 @@ export default function GenerateReportScreen() {
           </Card>
 
           {/* Additional Notes Section */}
-          <Card style={styles.card}>
+          <Card
+            style={{
+              backgroundColor: colors.card,
+              marginVertical: layout.spacing.sm,
+              borderRadius: layout.borderRadius.medium,
+              elevation: layout.elevation,
+              shadowColor: colors.text,
+              shadowOffset: layout.shadow.light.shadowOffset,
+              shadowOpacity: layout.shadow.light.shadowOpacity,
+              shadowRadius: layout.shadow.light.shadowRadius,
+            }}
+          >
             <Card.Content>
-              <Text variant="titleMedium" style={styles.sectionTitle}>
+              <Text
+                variant="titleMedium"
+                style={{
+                  color: colors.text,
+                  fontWeight: "600",
+                  marginBottom: layout.spacing.sm,
+                  ...typo.subtitle2,
+                }}
+              >
                 Additional Notes
               </Text>
 
@@ -146,23 +235,37 @@ export default function GenerateReportScreen() {
                 value={notes}
                 onChangeText={setNotes}
                 placeholder="Add custom notes to be included in the report"
+                placeholderTextColor={colors.text}
                 multiline
                 numberOfLines={4}
-                style={styles.notesInput}
+                style={{
+                  backgroundColor: colors.card,
+                  ...typo.input,
+                }}
                 mode="outlined"
-                outlineColor="#E0E0E0"
-                activeOutlineColor="#B8860B"
+                outlineColor={colors.border}
+                activeOutlineColor={colors.primary}
               />
             </Card.Content>
           </Card>
 
           {/* Image Section */}
-          <View style={styles.imageContainer}>
+          <View
+            style={{
+              marginVertical: layout.spacing.sm,
+              borderRadius: layout.borderRadius.medium,
+              overflow: "hidden",
+            }}
+          >
             {/* <Image
               source={{
                 uri: "https://images.unsplash.com/photo-1584362917165-526a968579e8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
               }}
-              style={styles.image}
+              style={{
+                width: "100%",
+                height: 200,
+                borderRadius: layout.borderRadius.medium,
+              }}
               contentFit="cover"
             /> */}
           </View>
@@ -171,10 +274,16 @@ export default function GenerateReportScreen() {
           <Button
             mode="contained"
             onPress={handleGenerateReport}
-            style={styles.generateButton}
-            buttonColor="#B8860B"
-            textColor="#FFFFFF"
-            contentStyle={styles.generateButtonContent}
+            style={{
+              marginVertical: layout.spacing.sm,
+              marginBottom: layout.spacing.lg,
+              borderRadius: layout.borderRadius.medium,
+            }}
+            buttonColor={colors.primary}
+            textColor={colors.textInverse}
+            contentStyle={{
+              paddingVertical: layout.spacing.sm,
+            }}
           >
             Generate Report
           </Button>
@@ -183,89 +292,3 @@ export default function GenerateReportScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F5F5F5",
-  },
-  flex: {
-    flex: 1,
-  },
-  header: {
-    backgroundColor: "#FFFFFF",
-    elevation: 0,
-    shadowOpacity: 0,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#1F2937",
-  },
-  scrollView: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  card: {
-    backgroundColor: "#FFFFFF",
-    marginVertical: 8,
-    borderRadius: 12,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  sectionTitle: {
-    color: "#1F2937",
-    fontWeight: "600",
-    marginBottom: 16,
-  },
-  dateRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  dateInput: {
-    flex: 1,
-  },
-  checkboxRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 4,
-  },
-  itemIcon: {
-    margin: 0,
-    marginLeft: -8,
-    marginRight: 4,
-  },
-  checkboxLabel: {
-    flex: 1,
-    color: "#1F2937",
-    marginLeft: 8,
-  },
-  notesInput: {
-    backgroundColor: "#FFFFFF",
-  },
-  imageContainer: {
-    marginVertical: 16,
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  image: {
-    width: "100%",
-    height: 200,
-    borderRadius: 12,
-  },
-  generateButton: {
-    marginVertical: 16,
-    marginBottom: 32,
-    borderRadius: 8,
-  },
-  generateButtonContent: {
-    paddingVertical: 8,
-  },
-});

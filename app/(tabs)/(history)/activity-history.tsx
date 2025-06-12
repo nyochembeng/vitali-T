@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { View, ScrollView, TouchableOpacity } from "react-native";
 import { Text, Card, Button } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
 import FilterTabs from "@/components/utils/FilterTabs";
 import CustomAppBar from "@/components/utils/CustomAppBar";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface ActivityItem {
   id: string;
@@ -19,6 +20,7 @@ interface ActivityItem {
 export default function ActivityHistoryScreen() {
   const [selectedFilter, setSelectedFilter] =
     useState<string>("All Activities");
+  const { colors, typo, layout } = useTheme();
 
   const filterOptions = ["All Activities", "Walking", "Yoga"];
 
@@ -76,52 +78,188 @@ export default function ActivityHistoryScreen() {
       : activities.filter((activity) => activity.type === selectedFilter);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
       <CustomAppBar title="Activity History" rightAction="notifications" />
 
-      {/* Filter Tabs */}
       <FilterTabs
         selectedFilter={selectedFilter}
         onFilterChange={setSelectedFilter}
         options={filterOptions}
       />
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Weekly Goal Card */}
-        <Card style={styles.goalCard}>
-          <Card.Content style={styles.goalContent}>
-            <View style={styles.goalIndicator}>
-              <Text style={styles.goalFraction}>
+      <ScrollView
+        style={{
+          flex: 1,
+          paddingHorizontal: layout.spacing.lg,
+        }}
+        contentContainerStyle={{
+          paddingHorizontal: layout.spacing.sm,
+          paddingBottom: layout.spacing.xxl,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        <Card
+          style={{
+            marginBottom: layout.spacing.sm,
+            backgroundColor: colors.card,
+            elevation: 0,
+          }}
+        >
+          <Card.Content
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                width: layout.spacing.xl * 1.5,
+                height: layout.spacing.xl * 1.5,
+                borderRadius: layout.borderRadius.medium,
+                backgroundColor: colors.surface,
+                justifyContent: "center",
+                alignItems: "center",
+                marginRight: layout.spacing.sm,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: typo.body1.fontSize,
+                  fontWeight: "600",
+                  color: colors.text,
+                  ...typo.body1,
+                }}
+              >
                 {weeklyGoal.current}/{weeklyGoal.target}
               </Text>
             </View>
-            <View style={styles.goalText}>
-              <Text style={styles.goalTitle}>Weekly Activity Goal</Text>
-              <Text style={styles.goalSubtitle}>
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  fontSize: typo.h6.fontSize,
+                  fontWeight: "600",
+                  color: colors.text,
+                  marginBottom: layout.spacing.xs,
+                  ...typo.h6,
+                }}
+              >
+                Weekly Activity Goal
+              </Text>
+              <Text
+                style={{
+                  fontSize: typo.body2.fontSize,
+                  color: colors.text,
+                  ...typo.body2,
+                }}
+              >
                 {weeklyGoal.current} days of active movement logged
               </Text>
             </View>
           </Card.Content>
         </Card>
 
-        {/* Activity List */}
         {filteredActivities.map((activity) => (
-          <Card key={activity.id} style={styles.activityCard}>
-            <Card.Content style={styles.activityContent}>
-              <View style={styles.activityIcon}>
-                <MaterialIcons name={activity.icon} size={24} color="#8B4513" />
+          <Card
+            key={activity.id}
+            style={{
+              marginBottom: layout.spacing.sm,
+              backgroundColor: colors.card,
+              elevation: 0,
+            }}
+          >
+            <Card.Content
+              style={{
+                flexDirection: "row",
+                alignItems: "flex-start",
+              }}
+            >
+              <View
+                style={{
+                  width: layout.spacing.xl * 1.5,
+                  height: layout.spacing.xl * 1.5,
+                  borderRadius: layout.borderRadius.medium,
+                  backgroundColor: colors.surface,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  marginRight: layout.spacing.sm,
+                }}
+              >
+                <MaterialIcons
+                  name={activity.icon}
+                  size={24}
+                  color={colors.primary}
+                />
               </View>
-              <View style={styles.activityDetails}>
-                <Text style={styles.activityTitle}>{activity.title}</Text>
-                <Text style={styles.activityDate}>{activity.date}</Text>
-                <View style={styles.durationBadge}>
-                  <Text style={styles.durationText}>{activity.duration}</Text>
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    fontSize: typo.h6.fontSize,
+                    fontWeight: "600",
+                    color: colors.text,
+                    marginBottom: layout.spacing.xs,
+                    ...typo.h6,
+                  }}
+                >
+                  {activity.title}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: typo.body2.fontSize,
+                    color: colors.text,
+                    marginBottom: layout.spacing.sm,
+                    ...typo.body2,
+                  }}
+                >
+                  {activity.date}
+                </Text>
+                <View
+                  style={{
+                    alignSelf: "flex-start",
+                    backgroundColor: colors.surface,
+                    paddingHorizontal: layout.spacing.xs,
+                    paddingVertical: layout.spacing.xs,
+                    borderRadius: layout.borderRadius.medium,
+                    marginBottom: layout.spacing.sm,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: typo.caption.fontSize,
+                      color: colors.primary,
+                      fontWeight: "500",
+                      ...typo.caption,
+                    }}
+                  >
+                    {activity.duration}
+                  </Text>
                 </View>
-                <Text style={styles.activityDescription}>
+                <Text
+                  style={{
+                    fontSize: typo.body2.fontSize,
+                    color: "rgba(17, 12, 9, 0.6)",
+                    lineHeight: typo.body2.lineHeight,
+                    marginBottom: layout.spacing.sm,
+                    ...typo.body2,
+                  }}
+                >
                   {activity.description}
                 </Text>
                 <TouchableOpacity>
-                  <Text style={styles.viewMore}>View more</Text>
+                  <Text
+                    style={{
+                      fontSize: typo.body2.fontSize,
+                      color: colors.primary,
+                      fontWeight: "500",
+                      ...typo.body2,
+                    }}
+                  >
+                    View more
+                  </Text>
                 </TouchableOpacity>
               </View>
             </Card.Content>
@@ -129,12 +267,25 @@ export default function ActivityHistoryScreen() {
         ))}
       </ScrollView>
 
-      {/* Log New Activity Button */}
-      <View style={styles.buttonContainer}>
+      <View
+        style={{
+          padding: layout.spacing.sm,
+          paddingBottom: layout.spacing.lg,
+        }}
+      >
         <Button
           mode="contained"
-          style={styles.logButton}
-          labelStyle={styles.logButtonText}
+          style={{
+            backgroundColor: colors.primary,
+            borderRadius: layout.borderRadius.medium,
+            paddingVertical: layout.spacing.xs,
+          }}
+          labelStyle={{
+            fontSize: typo.button.fontSize,
+            fontWeight: "600",
+            color: colors.textInverse,
+            ...typo.button,
+          }}
           onPress={() => {}}
           icon="plus"
         >
@@ -144,132 +295,3 @@ export default function ActivityHistoryScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  goalCard: {
-    marginBottom: 16,
-    backgroundColor: "#f8f8f8",
-    elevation: 0,
-  },
-  goalContent: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  goalIndicator: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 16,
-  },
-  goalFraction: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#8B4513",
-  },
-  goalText: {
-    flex: 1,
-  },
-  goalTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 4,
-  },
-  goalSubtitle: {
-    fontSize: 14,
-    color: "#666",
-  },
-  activityCard: {
-    marginBottom: 12,
-    backgroundColor: "#f8f8f8",
-    elevation: 0,
-  },
-  activityContent: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-  },
-  activityIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 16,
-  },
-  activityDetails: {
-    flex: 1,
-  },
-  activityTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 4,
-  },
-  activityDate: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 8,
-  },
-  durationBadge: {
-    alignSelf: "flex-start",
-    backgroundColor: "#e8e8e8",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginBottom: 8,
-  },
-  durationText: {
-    fontSize: 12,
-    color: "#8B4513",
-    fontWeight: "500",
-  },
-  activityDescription: {
-    fontSize: 14,
-    color: "#666",
-    lineHeight: 20,
-    marginBottom: 8,
-  },
-  viewMore: {
-    fontSize: 14,
-    color: "#8B4513",
-    fontWeight: "500",
-  },
-  buttonContainer: {
-    padding: 16,
-    paddingBottom: 32,
-  },
-  logButton: {
-    backgroundColor: "#8B4513",
-    borderRadius: 25,
-    paddingVertical: 8,
-  },
-  logButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#fff",
-  },
-});

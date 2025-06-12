@@ -1,7 +1,8 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
-import { Text, Switch, useTheme } from "react-native-paper";
+import { View } from "react-native";
+import { Text, Switch } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface NotificationSetting {
   id: string;
@@ -19,33 +20,55 @@ interface NotificationSettingItemProps {
 export const NotificationSettingItem: React.FC<
   NotificationSettingItemProps
 > = ({ setting, onToggle }) => {
-  const theme = useTheme();
+  const { colors, typo, layout } = useTheme();
 
   return (
     <View
-      style={[
-        styles.container,
-        { backgroundColor: theme.colors.surfaceVariant },
-      ]}
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        padding: layout.spacing.lg,
+        marginVertical: layout.spacing.sm,
+        marginHorizontal: layout.spacing.md,
+        borderRadius: layout.borderRadius.medium,
+        backgroundColor: colors.card,
+      }}
     >
-      <View style={styles.iconContainer}>
+      <View
+        style={{
+          marginRight: layout.spacing.md,
+        }}
+      >
         <MaterialCommunityIcons
           name={setting.icon as any}
           size={24}
-          color="#4A90E2"
+          color={colors.primary}
         />
       </View>
 
-      <View style={styles.contentContainer}>
+      <View
+        style={{
+          flex: 1,
+          marginRight: layout.spacing.sm,
+        }}
+      >
         <Text
-          variant="bodyLarge"
-          style={[styles.title, { color: theme.colors.onSurface }]}
+          style={{
+            ...typo.body1,
+            color: colors.text,
+            fontWeight: "600",
+            marginBottom: layout.spacing.xs,
+          }}
         >
           {setting.title}
         </Text>
         <Text
-          variant="bodyMedium"
-          style={[styles.description, { color: theme.colors.onSurfaceVariant }]}
+          style={{
+            ...typo.body2,
+            color: colors.text,
+            lineHeight: typo.body2.lineHeight,
+            opacity: 0.8,
+          }}
         >
           {setting.description}
         </Text>
@@ -54,35 +77,9 @@ export const NotificationSettingItem: React.FC<
       <Switch
         value={setting.enabled}
         onValueChange={(enabled) => onToggle(setting.id, enabled)}
-        thumbColor={setting.enabled ? "#4A90E2" : "#E0E0E0"}
-        trackColor={{ false: "#E0E0E0", true: "#4A90E2" }}
+        thumbColor={setting.enabled ? colors.primary : colors.border}
+        trackColor={{ false: colors.border, true: colors.primary + "50" }}
       />
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 20,
-    marginVertical: 8,
-    marginHorizontal: 24,
-    borderRadius: 16,
-  },
-  iconContainer: {
-    marginRight: 16,
-  },
-  contentContainer: {
-    flex: 1,
-    marginRight: 16,
-  },
-  title: {
-    fontWeight: "600",
-    marginBottom: 4,
-  },
-  description: {
-    lineHeight: 20,
-    opacity: 0.8,
-  },
-});

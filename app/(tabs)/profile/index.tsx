@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import {
   View,
-  StyleSheet,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
@@ -21,6 +20,7 @@ import * as ImagePicker from "expo-image-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
 import CustomAppBar from "@/components/utils/CustomAppBar";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface ProfileData {
   fullName: string;
@@ -36,7 +36,6 @@ interface ProfileData {
   profileImage?: string;
 }
 
-// Draft data for initial profile state
 const initialData: ProfileData = {
   fullName: "John Doe",
   email: "john.doe@example.com",
@@ -52,9 +51,9 @@ const initialData: ProfileData = {
 };
 
 export default function ProfileSettingsScreen() {
+  const { colors, typo, layout } = useTheme();
   const router = useRouter();
 
-  // State to hold profile data
   const [profileData, setProfileData] = useState<ProfileData>({
     fullName: initialData?.fullName || "",
     email: initialData?.email || "",
@@ -128,8 +127,6 @@ export default function ProfileSettingsScreen() {
   const handleSave = async () => {
     setLoading(true);
     try {
-      // Make API call to save profile changes
-      // example: await api.saveProfile(profileData);
       console.log("Profile data saved:", profileData);
     } catch (error) {
       Alert.alert("Error", "Failed to save profile changes" + error);
@@ -156,7 +153,12 @@ export default function ProfileSettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
       <CustomAppBar
         title="Profile Settings"
         rightAction="more"
@@ -187,7 +189,6 @@ export default function ProfileSettingsScreen() {
             title: "Logout",
             icon: "logout",
             onPress: () => {
-              // Handle logout logic here
               console.log("User logged out");
               router.push("/auth/login");
             },
@@ -201,37 +202,77 @@ export default function ProfileSettingsScreen() {
       />
 
       <KeyboardAvoidingView
-        style={styles.flex}
+        style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            paddingHorizontal: layout.spacing.lg,
+            paddingTop: layout.spacing.md,
+            paddingBottom: layout.spacing.xl,
+          }}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Profile Photo */}
-          <View style={styles.photoSection}>
+          <View
+            style={{
+              alignItems: "center",
+              paddingVertical: layout.spacing.lg,
+              position: "relative",
+            }}
+          >
             {/* <Avatar.Image
-              size={80}
+              size={layout.spacing.xl * 2.5} // 80px approximation
               source={
                 profileData.profileImage
                   ? { uri: profileData.profileImage }
                   : require("./default-avatar.png")
               }
-              style={styles.avatar}
+              style={{ backgroundColor: colors.card }}
             /> */}
             <IconButton
               icon="camera"
               mode="contained"
               size={20}
-              style={styles.cameraButton}
+              style={{
+                position: "absolute",
+                // bottom: layout.spacing.md,
+                // right: layout.spacing.xl * 1.25, // Approx 40% of screen
+                backgroundColor: colors.primary,
+              }}
               onPress={handleImagePicker}
             />
-            <Text variant="bodyMedium" style={styles.changePhotoText}>
+            <Text
+              style={{
+                ...typo.body2,
+                color: colors.text,
+                marginTop: layout.spacing.sm,
+              }}
+            >
               Change Photo
             </Text>
           </View>
 
-          <View style={styles.form}>
+          <View
+            style={{
+              gap: layout.spacing.md,
+              paddingBottom: layout.spacing.lg,
+            }}
+          >
             {/* Full Name */}
-            <View style={styles.field}>
-              <Text variant="labelLarge" style={styles.label}>
+            <View
+              style={{
+                gap: layout.spacing.sm,
+              }}
+            >
+              <Text
+                style={{
+                  ...typo.label,
+                  color: colors.text,
+                  fontWeight: "600",
+                }}
+              >
                 Full Name
               </Text>
               <TextInput
@@ -241,14 +282,27 @@ export default function ProfileSettingsScreen() {
                 onChangeText={(text) =>
                   setProfileData((prev) => ({ ...prev, fullName: text }))
                 }
-                style={styles.input}
-                outlineStyle={styles.inputOutline}
+                style={{ backgroundColor: colors.card }}
+                outlineStyle={{
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                }}
               />
             </View>
 
             {/* Email */}
-            <View style={styles.field}>
-              <Text variant="labelLarge" style={styles.label}>
+            <View
+              style={{
+                gap: layout.spacing.sm,
+              }}
+            >
+              <Text
+                style={{
+                  ...typo.label,
+                  color: colors.text,
+                  fontWeight: "600",
+                }}
+              >
                 Email Address
               </Text>
               <TextInput
@@ -259,14 +313,27 @@ export default function ProfileSettingsScreen() {
                   setProfileData((prev) => ({ ...prev, email: text }))
                 }
                 keyboardType="email-address"
-                style={styles.input}
-                outlineStyle={styles.inputOutline}
+                style={{ backgroundColor: colors.card }}
+                outlineStyle={{
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                }}
               />
             </View>
 
             {/* Date of Birth */}
-            <View style={styles.field}>
-              <Text variant="labelLarge" style={styles.label}>
+            <View
+              style={{
+                gap: layout.spacing.sm,
+              }}
+            >
+              <Text
+                style={{
+                  ...typo.label,
+                  color: colors.text,
+                  fontWeight: "600",
+                }}
+              >
                 Date of Birth
               </Text>
               <TextInput
@@ -276,17 +343,35 @@ export default function ProfileSettingsScreen() {
                 onPressIn={() => showDatePickerFor("dateOfBirth")}
                 showSoftInputOnFocus={false}
                 right={<TextInput.Icon icon="calendar" />}
-                style={styles.input}
-                outlineStyle={styles.inputOutline}
+                style={{ backgroundColor: colors.card }}
+                outlineStyle={{
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                }}
               />
             </View>
 
             {/* Height */}
-            <View style={styles.field}>
-              <Text variant="labelLarge" style={styles.label}>
+            <View
+              style={{
+                gap: layout.spacing.sm,
+              }}
+            >
+              <Text
+                style={{
+                  ...typo.label,
+                  color: colors.text,
+                  fontWeight: "600",
+                }}
+              >
                 Height
               </Text>
-              <View style={styles.inputGroup}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  gap: layout.spacing.sm,
+                }}
+              >
                 <TextInput
                   mode="outlined"
                   placeholder="Enter height"
@@ -295,8 +380,11 @@ export default function ProfileSettingsScreen() {
                     setProfileData((prev) => ({ ...prev, height: text }))
                   }
                   keyboardType="numeric"
-                  style={[styles.input, styles.inputGroupMain]}
-                  outlineStyle={styles.inputOutline}
+                  style={{ flex: 1, backgroundColor: colors.card }}
+                  outlineStyle={{
+                    borderColor: colors.border,
+                    borderWidth: 1,
+                  }}
                 />
                 <Menu
                   visible={heightMenuVisible}
@@ -305,8 +393,15 @@ export default function ProfileSettingsScreen() {
                     <Button
                       mode="outlined"
                       onPress={() => setHeightMenuVisible(true)}
-                      style={styles.unitButton}
-                      labelStyle={styles.unitButtonText}
+                      style={{
+                        borderColor: colors.border,
+                        backgroundColor: colors.card,
+                        minWidth: layout.spacing.md * 1.875, // 60px approximation
+                      }}
+                      labelStyle={{
+                        ...typo.body2,
+                        color: colors.text,
+                      }}
                     >
                       {profileData.heightUnit}
                     </Button>
@@ -331,11 +426,26 @@ export default function ProfileSettingsScreen() {
             </View>
 
             {/* Weight */}
-            <View style={styles.field}>
-              <Text variant="labelLarge" style={styles.label}>
+            <View
+              style={{
+                gap: layout.spacing.sm,
+              }}
+            >
+              <Text
+                style={{
+                  ...typo.label,
+                  color: colors.text,
+                  fontWeight: "600",
+                }}
+              >
                 Weight (optional)
               </Text>
-              <View style={styles.inputGroup}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  gap: layout.spacing.sm,
+                }}
+              >
                 <TextInput
                   mode="outlined"
                   placeholder="Enter weight"
@@ -344,8 +454,11 @@ export default function ProfileSettingsScreen() {
                     setProfileData((prev) => ({ ...prev, weight: text }))
                   }
                   keyboardType="numeric"
-                  style={[styles.input, styles.inputGroupMain]}
-                  outlineStyle={styles.inputOutline}
+                  style={{ flex: 1, backgroundColor: colors.card }}
+                  outlineStyle={{
+                    borderColor: colors.border,
+                    borderWidth: 1,
+                  }}
                 />
                 <Menu
                   visible={weightMenuVisible}
@@ -354,8 +467,15 @@ export default function ProfileSettingsScreen() {
                     <Button
                       mode="outlined"
                       onPress={() => setWeightMenuVisible(true)}
-                      style={styles.unitButton}
-                      labelStyle={styles.unitButtonText}
+                      style={{
+                        borderColor: colors.border,
+                        backgroundColor: colors.card,
+                        minWidth: layout.spacing.md * 1.875, // 60px approximation
+                      }}
+                      labelStyle={{
+                        ...typo.body2,
+                        color: colors.text,
+                      }}
                     >
                       {profileData.weightUnit}
                     </Button>
@@ -383,8 +503,18 @@ export default function ProfileSettingsScreen() {
             </View>
 
             {/* Phone Number */}
-            <View style={styles.field}>
-              <Text variant="labelLarge" style={styles.label}>
+            <View
+              style={{
+                gap: layout.spacing.sm,
+              }}
+            >
+              <Text
+                style={{
+                  ...typo.label,
+                  color: colors.text,
+                  fontWeight: "600",
+                }}
+              >
                 Telephone Number
               </Text>
               <TextInput
@@ -395,14 +525,27 @@ export default function ProfileSettingsScreen() {
                   setProfileData((prev) => ({ ...prev, phoneNumber: text }))
                 }
                 keyboardType="phone-pad"
-                style={styles.input}
-                outlineStyle={styles.inputOutline}
+                style={{ backgroundColor: colors.card }}
+                outlineStyle={{
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                }}
               />
             </View>
 
             {/* Conceived Date */}
-            <View style={styles.field}>
-              <Text variant="labelLarge" style={styles.label}>
+            <View
+              style={{
+                gap: layout.spacing.sm,
+              }}
+            >
+              <Text
+                style={{
+                  ...typo.label,
+                  color: colors.text,
+                  fontWeight: "600",
+                }}
+              >
                 Conceived Date
               </Text>
               <TextInput
@@ -412,14 +555,27 @@ export default function ProfileSettingsScreen() {
                 onPressIn={() => showDatePickerFor("conceivedDate")}
                 showSoftInputOnFocus={false}
                 right={<TextInput.Icon icon="calendar" />}
-                style={styles.input}
-                outlineStyle={styles.inputOutline}
+                style={{ backgroundColor: colors.card }}
+                outlineStyle={{
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                }}
               />
             </View>
 
             {/* Due Date */}
-            <View style={styles.field}>
-              <Text variant="labelLarge" style={styles.label}>
+            <View
+              style={{
+                gap: layout.spacing.sm,
+              }}
+            >
+              <Text
+                style={{
+                  ...typo.label,
+                  color: colors.text,
+                  fontWeight: "600",
+                }}
+              >
                 Due Date (EDD)
               </Text>
               <TextInput
@@ -429,8 +585,11 @@ export default function ProfileSettingsScreen() {
                 onPressIn={() => showDatePickerFor("dueDate")}
                 showSoftInputOnFocus={false}
                 right={<TextInput.Icon icon="calendar" />}
-                style={styles.input}
-                outlineStyle={styles.inputOutline}
+                style={{ backgroundColor: colors.card }}
+                outlineStyle={{
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                }}
               />
             </View>
 
@@ -440,21 +599,37 @@ export default function ProfileSettingsScreen() {
               onPress={handleSave}
               loading={loading}
               disabled={loading}
-              style={styles.saveButton}
-              labelStyle={styles.saveButtonText}
+              style={{
+                backgroundColor: colors.primary,
+                marginTop: layout.spacing.sm,
+                paddingVertical: layout.spacing.xs,
+                borderRadius: layout.borderRadius.large,
+              }}
+              labelStyle={{
+                ...typo.button,
+                fontWeight: "600",
+                color: colors.textInverse,
+              }}
             >
               Save Changes
             </Button>
 
-            <Divider style={styles.divider} />
+            <Divider
+              style={{
+                marginVertical: layout.spacing.md,
+                backgroundColor: colors.border,
+              }}
+            />
 
             {/* Delete Account */}
             <Button
               mode="text"
               icon="delete"
               onPress={handleDeleteAccount}
-              textColor="#EF4444"
-              style={styles.deleteButton}
+              textColor={colors.error}
+              style={{
+                alignSelf: "center",
+              }}
             >
               Delete Account
             </Button>
@@ -474,87 +649,3 @@ export default function ProfileSettingsScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F9FAFB",
-  },
-  flex: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  photoSection: {
-    alignItems: "center",
-    paddingVertical: 32,
-    position: "relative",
-  },
-  avatar: {
-    backgroundColor: "#E5E7EB",
-  },
-  cameraButton: {
-    position: "absolute",
-    bottom: 45,
-    right: "40%",
-    backgroundColor: "#8B7355",
-  },
-  changePhotoText: {
-    marginTop: 12,
-    color: "#374151",
-  },
-  form: {
-    gap: 20,
-    paddingBottom: 32,
-  },
-  field: {
-    gap: 8,
-  },
-  label: {
-    color: "#374151",
-    fontWeight: "600",
-  },
-  input: {
-    backgroundColor: "#FFFFFF",
-  },
-  inputOutline: {
-    borderColor: "#E5E7EB",
-    borderWidth: 1,
-  },
-  inputGroup: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  inputGroupMain: {
-    flex: 1,
-  },
-  unitButton: {
-    borderColor: "#E5E7EB",
-    borderWidth: 1,
-    backgroundColor: "#FFFFFF",
-    minWidth: 60,
-  },
-  unitButtonText: {
-    color: "#374151",
-  },
-  saveButton: {
-    backgroundColor: "#8B7355",
-    marginTop: 16,
-    paddingVertical: 8,
-    borderRadius: 12,
-  },
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  divider: {
-    marginVertical: 24,
-    backgroundColor: "#E5E7EB",
-  },
-  deleteButton: {
-    alignSelf: "center",
-  },
-});

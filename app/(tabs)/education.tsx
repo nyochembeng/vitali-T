@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, FlatList } from "react-native";
+import { View, ScrollView, FlatList } from "react-native";
 import { Text, Surface, Button } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -8,6 +8,8 @@ import { ArticleCard } from "@/components/education/ArticleCard";
 import { TopicCard } from "@/components/education/TopicCard";
 import FilterTabs from "@/components/utils/FilterTabs";
 import CustomAppBar from "@/components/utils/CustomAppBar";
+import { useTheme } from "@/lib/hooks/useTheme";
+import { Colors } from "@/lib/constants/Colors";
 
 interface Video {
   id: string;
@@ -79,16 +81,37 @@ const mockArticles: Article[] = [
 ];
 
 const mockTopics: Topic[] = [
-  { id: "1", title: "Nutrition", icon: "restaurant", color: "#8B5CF6" },
-  { id: "2", title: "Exercise", icon: "fitness-center", color: "#10B981" },
-  { id: "3", title: "Mental Health", icon: "psychology", color: "#F59E0B" },
-  { id: "4", title: "Warning Signs", icon: "warning", color: "#EF4444" },
+  {
+    id: "1",
+    title: "Nutrition",
+    icon: "restaurant",
+    color: Colors.light.accent,
+  },
+  {
+    id: "2",
+    title: "Exercise",
+    icon: "fitness-center",
+    color: Colors.light.accent,
+  },
+  {
+    id: "3",
+    title: "Mental Health",
+    icon: "psychology",
+    color: Colors.light.accent,
+  },
+  {
+    id: "4",
+    title: "Warning Signs",
+    icon: "warning",
+    color: Colors.light.accent,
+  },
 ];
 
 const tabs = ["All", "Videos", "Articles", "Topics"];
 
 export default function HealthEducationScreen() {
   const [activeTab, setActiveTab] = useState("All");
+  const { colors, typo, layout } = useTheme();
 
   const handleVideoPress = (video: Video) => {
     // Navigate to video player
@@ -111,12 +134,34 @@ export default function HealthEducationScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
+    >
       <CustomAppBar title="Health Education" rightAction="notifications" />
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.subtitle}>
-          <Text variant="bodyLarge" style={styles.subtitleText}>
+      <ScrollView
+        style={{
+          flex: 1,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View
+          style={{
+            paddingHorizontal: layout.spacing.sm,
+            paddingVertical: layout.spacing.sm,
+          }}
+        >
+          <Text
+            variant="bodyLarge"
+            style={{
+              color: "rgba(17, 12, 9, 0.6)",
+              textAlign: "center",
+              ...typo.body1,
+            }}
+          >
             Learn about pregnancy and maternal health
           </Text>
         </View>
@@ -128,8 +173,21 @@ export default function HealthEducationScreen() {
         />
 
         {(activeTab === "All" || activeTab === "Videos") && (
-          <View style={styles.section}>
-            <Text variant="headlineSmall" style={styles.sectionTitle}>
+          <View
+            style={{
+              marginBottom: layout.spacing.lg,
+            }}
+          >
+            <Text
+              variant="headlineSmall"
+              style={{
+                fontWeight: "600",
+                marginBottom: layout.spacing.sm,
+                paddingHorizontal: layout.spacing.sm,
+                color: colors.text,
+                ...typo.h6,
+              }}
+            >
               Featured Videos
             </Text>
             <FlatList
@@ -143,14 +201,29 @@ export default function HealthEducationScreen() {
                 />
               )}
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.horizontalList}
+              contentContainerStyle={{
+                paddingLeft: layout.spacing.sm,
+              }}
             />
           </View>
         )}
 
         {(activeTab === "All" || activeTab === "Articles") && (
-          <View style={styles.section}>
-            <Text variant="headlineSmall" style={styles.sectionTitle}>
+          <View
+            style={{
+              marginBottom: layout.spacing.lg,
+            }}
+          >
+            <Text
+              variant="headlineSmall"
+              style={{
+                fontWeight: "600",
+                marginBottom: layout.spacing.sm,
+                paddingHorizontal: layout.spacing.sm,
+                color: colors.text,
+                ...typo.h6,
+              }}
+            >
               Popular Articles
             </Text>
             {mockArticles.map((article) => (
@@ -164,11 +237,31 @@ export default function HealthEducationScreen() {
         )}
 
         {(activeTab === "All" || activeTab === "Topics") && (
-          <View style={styles.section}>
-            <Text variant="headlineSmall" style={styles.sectionTitle}>
+          <View
+            style={{
+              marginBottom: layout.spacing.lg,
+            }}
+          >
+            <Text
+              variant="headlineSmall"
+              style={{
+                fontWeight: "600",
+                marginBottom: layout.spacing.sm,
+                paddingHorizontal: layout.spacing.sm,
+                color: colors.text,
+                ...typo.h6,
+              }}
+            >
               Browse by Topic
             </Text>
-            <View style={styles.topicsGrid}>
+            <View
+              style={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                justifyContent: "space-between",
+                paddingHorizontal: layout.spacing.sm,
+              }}
+            >
               {mockTopics.map((topic) => (
                 <TopicCard
                   key={topic.id}
@@ -180,18 +273,51 @@ export default function HealthEducationScreen() {
           </View>
         )}
 
-        <Surface style={styles.suggestionCard} elevation={1}>
-          <MaterialIcons name="lightbulb-outline" size={24} color="#8B5CF6" />
-          <View style={styles.suggestionContent}>
-            <Text variant="titleMedium" style={styles.suggestionTitle}>
+        <Surface
+          style={{
+            margin: layout.spacing.sm,
+            padding: layout.spacing.sm,
+            borderRadius: layout.borderRadius.medium,
+            flexDirection: "row",
+            alignItems: "center",
+            backgroundColor: colors.card,
+            elevation: 1,
+          }}
+        >
+          <MaterialIcons
+            name="lightbulb-outline"
+            size={24}
+            color={colors.primary}
+          />
+          <View
+            style={{
+              flex: 1,
+              marginLeft: layout.spacing.sm,
+            }}
+          >
+            <Text
+              variant="titleMedium"
+              style={{
+                fontWeight: "500",
+                color: colors.text,
+                ...typo.body2,
+              }}
+            >
               {`Got a topic you'd like us to cover?`}
             </Text>
           </View>
           <Button
             mode="contained"
             onPress={handleSendSuggestion}
-            style={styles.suggestionButton}
-            labelStyle={styles.suggestionButtonText}
+            style={{
+              backgroundColor: colors.primary,
+              borderRadius: layout.borderRadius.small,
+            }}
+            labelStyle={{
+              fontSize: typo.body3.fontSize,
+              fontWeight: "600",
+              ...typo.body3,
+            }}
           >
             Send Suggestion
           </Button>
@@ -200,68 +326,3 @@ export default function HealthEducationScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
-  header: {
-    backgroundColor: "#FFFFFF",
-    elevation: 0,
-  },
-  headerTitle: {
-    fontWeight: "600",
-    fontSize: 18,
-  },
-  content: {
-    flex: 1,
-  },
-  subtitle: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  subtitleText: {
-    color: "#6B7280",
-  },
-  section: {
-    marginBottom: 32,
-  },
-  sectionTitle: {
-    fontWeight: "600",
-    marginBottom: 16,
-    paddingHorizontal: 16,
-  },
-  horizontalList: {
-    paddingLeft: 16,
-  },
-  topicsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-  },
-  suggestionCard: {
-    margin: 16,
-    padding: 16,
-    borderRadius: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F8FAFC",
-  },
-  suggestionContent: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  suggestionTitle: {
-    fontWeight: "500",
-  },
-  suggestionButton: {
-    backgroundColor: "#8B5CF6",
-    borderRadius: 8,
-  },
-  suggestionButtonText: {
-    fontSize: 12,
-    fontWeight: "600",
-  },
-});

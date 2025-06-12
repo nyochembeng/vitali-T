@@ -1,7 +1,8 @@
 import React from "react";
-import { View, StyleSheet, Image, TouchableOpacity } from "react-native";
-import { Text, Surface } from "react-native-paper";
+import { View, TouchableOpacity, Image } from "react-native";
+import { Surface, Text } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface Video {
   id: string;
@@ -17,28 +18,105 @@ interface VideoCardProps {
 }
 
 export const VideoCard: React.FC<VideoCardProps> = ({ video, onPress }) => {
+  const { colors, typo, layout } = useTheme();
+
   return (
-    <TouchableOpacity onPress={onPress} style={styles.container}>
-      <Surface style={styles.surface} elevation={2}>
-        <View style={styles.thumbnailContainer}>
+    <TouchableOpacity
+      onPress={onPress}
+      style={{
+        width: 280,
+        marginRight: layout.spacing.sm,
+      }}
+    >
+      <Surface
+        style={{
+          borderRadius: layout.borderRadius.medium,
+          overflow: "hidden",
+          elevation: layout.elevation,
+        }}
+      >
+        <View
+          style={{
+            position: "relative",
+            height: layout.spacing.xl * 5, // Approximating 160px
+          }}
+        >
           {/* <Image source={{ uri: video.thumbnail }} style={styles.thumbnail} /> */}
-          <View style={styles.playButton}>
-            <MaterialIcons name="play-arrow" size={24} color="white" />
+          <View
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: [
+                { translateX: -layout.spacing.lg / 2 },
+                { translateY: -layout.spacing.lg / 2 },
+              ],
+              width: layout.spacing.xl,
+              height: layout.spacing.xl,
+              borderRadius: layout.borderRadius.medium,
+              backgroundColor: "rgba(0,0,0,0.7)",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <MaterialIcons
+              name="play-arrow"
+              size={24}
+              color={colors.textInverse}
+            />
           </View>
         </View>
-        <View style={styles.content}>
-          <Text variant="titleMedium" style={styles.title} numberOfLines={2}>
+        <View
+          style={{
+            padding: layout.spacing.sm,
+          }}
+        >
+          <Text
+            variant="titleMedium"
+            style={{
+              fontWeight: "600",
+              marginBottom: layout.spacing.sm,
+              color: colors.text,
+              ...typo.h6,
+            }}
+            numberOfLines={2}
+          >
             {video.title}
           </Text>
-          <View style={styles.metadata}>
-            <View style={styles.metadataItem}>
-              <MaterialIcons name="access-time" size={16} color="#666" />
-              <Text variant="bodySmall" style={styles.metadataText}>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+              }}
+            >
+              <MaterialIcons name="access-time" size={16} color={colors.text} />
+              <Text
+                variant="bodySmall"
+                style={{
+                  marginLeft: layout.spacing.xs,
+                  color: colors.text,
+                  ...typo.body2,
+                }}
+              >
                 {video.duration}
               </Text>
             </View>
             {video.trimester && (
-              <Text variant="bodySmall" style={styles.trimester}>
+              <Text
+                variant="bodySmall"
+                style={{
+                  color: colors.primary,
+                  fontWeight: "500",
+                  ...typo.body2,
+                }}
+              >
                 {video.trimester}
               </Text>
             )}
@@ -48,59 +126,3 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, onPress }) => {
     </TouchableOpacity>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    width: 280,
-    marginRight: 16,
-  },
-  surface: {
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  thumbnailContainer: {
-    position: "relative",
-    height: 160,
-  },
-  thumbnail: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
-  playButton: {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: [{ translateX: -20 }, { translateY: -20 }],
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(0,0,0,0.7)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  content: {
-    padding: 12,
-  },
-  title: {
-    fontWeight: "600",
-    marginBottom: 8,
-  },
-  metadata: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  metadataItem: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  metadataText: {
-    marginLeft: 4,
-    color: "#666",
-  },
-  trimester: {
-    color: "#8B5CF6",
-    fontWeight: "500",
-  },
-});

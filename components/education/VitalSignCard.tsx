@@ -1,14 +1,14 @@
 import React from "react";
-import { TouchableOpacity, StyleSheet, View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 import { Surface, Text } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface VitalSign {
   id: string;
   title: string;
   subtitle: string;
   icon: string;
-  color: string;
 }
 
 interface VitalSignCardProps {
@@ -20,58 +20,66 @@ export const VitalSignCard: React.FC<VitalSignCardProps> = ({
   vitalSign,
   onPress,
 }) => {
+  const { colors, typo, layout } = useTheme();
+
   return (
-    <TouchableOpacity onPress={onPress} style={styles.container}>
+    <TouchableOpacity
+      onPress={onPress}
+      style={{
+        marginBottom: layout.spacing.sm,
+      }}
+    >
       <Surface
-        style={[styles.card, { backgroundColor: vitalSign.color }]}
-        elevation={2}
+        style={{
+          borderRadius: layout.borderRadius.medium,
+          padding: layout.spacing.sm,
+          flexDirection: "row",
+          alignItems: "center",
+          backgroundColor: colors.card,
+          elevation: layout.elevation,
+        }}
       >
-        <View style={styles.iconContainer}>
-          <MaterialIcons name={vitalSign.icon as any} size={24} color="white" />
+        <View
+          style={{
+            width: layout.spacing.xl * 1.5,
+            height: layout.spacing.xl * 1.5,
+            borderRadius: layout.borderRadius.full,
+            backgroundColor: colors.surface,
+            justifyContent: "center",
+            alignItems: "center",
+            marginRight: layout.spacing.sm,
+          }}
+        >
+          <MaterialIcons
+            name={vitalSign.icon as any}
+            size={24}
+            color={colors.primary}
+          />
         </View>
-        <View style={styles.content}>
-          <Text variant="titleMedium" style={styles.title}>
+        <View style={{ flex: 1 }}>
+          <Text
+            variant="titleMedium"
+            style={{
+              color: colors.text,
+              fontWeight: "600",
+              marginBottom: layout.spacing.xs,
+              ...typo.h6,
+            }}
+          >
             {vitalSign.title}
           </Text>
-          <Text variant="bodyMedium" style={styles.subtitle}>
+          <Text
+            variant="bodyMedium"
+            style={{
+              color: "rgba(17, 12, 9, 0.6)",
+              ...typo.body1,
+            }}
+          >
             {vitalSign.subtitle}
           </Text>
         </View>
-        <MaterialIcons name="chevron-right" size={24} color="white" />
+        <MaterialIcons name="chevron-right" size={24} color={colors.border} />
       </Surface>
     </TouchableOpacity>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: 12,
-  },
-  card: {
-    borderRadius: 16,
-    padding: 16,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 16,
-  },
-  content: {
-    flex: 1,
-  },
-  title: {
-    color: "white",
-    fontWeight: "600",
-    marginBottom: 4,
-  },
-  subtitle: {
-    color: "rgba(255, 255, 255, 0.8)",
-    fontSize: 14,
-  },
-});

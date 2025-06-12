@@ -1,6 +1,7 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View } from "react-native";
 import Svg, { Path, Defs, LinearGradient, Stop } from "react-native-svg";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface DetailChartProps {
   data: number[];
@@ -15,8 +16,10 @@ const DetailChart: React.FC<DetailChartProps> = ({
   height = 60,
   width = 300,
 }) => {
+  const { colors, layout } = useTheme();
+
   const generatePath = () => {
-    if (data.length < 2) return "";
+    if (data.length < 2) return { linePath: "", fillPath: "" };
 
     const max = Math.max(...data);
     const min = Math.min(...data);
@@ -43,14 +46,17 @@ const DetailChart: React.FC<DetailChartProps> = ({
     return { linePath: path, fillPath };
   };
 
-  // Generate paths for the chart and return empty strings if no data is available
-  const { linePath, fillPath } = generatePath() || {
-    linePath: "",
-    fillPath: "",
-  };
+  const { linePath, fillPath } = generatePath();
 
   return (
-    <View style={[styles.container, { height }]}>
+    <View
+      style={{
+        backgroundColor: colors.card,
+        borderRadius: layout.borderRadius.medium,
+        overflow: "hidden",
+        height,
+      }}
+    >
       <Svg width="100%" height={height}>
         <Defs>
           <LinearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -71,13 +77,5 @@ const DetailChart: React.FC<DetailChartProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: "#F8F9FA",
-    borderRadius: 8,
-    overflow: "hidden",
-  },
-});
 
 export default DetailChart;

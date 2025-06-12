@@ -2,9 +2,10 @@ import { PrivacySectionItem } from "@/components/settings/PrivacySectionItem";
 import CustomAppBar from "@/components/utils/CustomAppBar";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { View, ScrollView, StyleSheet, StatusBar } from "react-native";
-import { Text, Button, useTheme } from "react-native-paper";
+import { View, ScrollView, StatusBar } from "react-native";
+import { Text, Button } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface PrivacySection {
   id: string;
@@ -14,7 +15,7 @@ interface PrivacySection {
 }
 
 export default function PrivacyPolicyScreen() {
-  const theme = useTheme();
+  const { colors, typo, layout, mode } = useTheme();
   const router = useRouter();
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set()
@@ -59,53 +60,76 @@ export default function PrivacyPolicyScreen() {
   };
 
   const handleAccept = () => {
-    // Handle acceptance logic here, e.g., save preference, navigate, etc.
     console.log("Privacy policy accepted");
-    // Navigate back to the settings screen
     router.back();
   };
 
   return (
     <SafeAreaView
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+      }}
     >
       <StatusBar
-        barStyle="dark-content"
-        backgroundColor={theme.colors.background}
+        barStyle={mode === "dark" ? "light-content" : "dark-content"}
+        backgroundColor={colors.background}
       />
 
       <CustomAppBar title="Privacy Policy" rightAction="help" />
 
       <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingBottom: layout.spacing.xl,
+          padding: layout.spacing.md,
+        }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
+        <View
+          style={{
+            paddingHorizontal: layout.spacing.sm,
+            paddingTop: layout.spacing.sm,
+            paddingBottom: layout.spacing.xs,
+            alignItems: "center",
+          }}
+        >
           <Text
-            variant="bodyMedium"
-            style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}
+            style={{
+              ...typo.h3,
+              color: colors.text,
+              textAlign: "center",
+            }}
           >
             Your data is safe with us.
           </Text>
         </View>
 
         <View
-          style={[
-            styles.introCard,
-            { backgroundColor: theme.colors.surfaceVariant },
-          ]}
+          style={{
+            marginHorizontal: layout.spacing.sm,
+            marginBottom: layout.spacing.lg,
+            padding: layout.spacing.sm,
+            borderRadius: layout.borderRadius.medium,
+          }}
         >
           <Text
-            variant="bodyMedium"
-            style={[styles.introText, { color: theme.colors.onSurfaceVariant }]}
+            style={{
+              ...typo.body1,
+              color: colors.text,
+              lineHeight: typo.body1.lineHeight,
+              textAlign: "center",
+            }}
           >
-            {`At Vitali-T, we prioritize your privacy. This policy outlines how we collect, use, and 
-            protect your personal data. You're always in control.`}
+            {`At Vitali-T, we prioritize your privacy. This policy outlines how we collect, use, and protect your personal data. You're always in control.`}
           </Text>
         </View>
 
-        <View style={styles.sectionsContainer}>
+        <View
+          style={{
+            paddingHorizontal: layout.spacing.sm,
+          }}
+        >
           {privacySections.map((section) => (
             <PrivacySectionItem
               key={section.id}
@@ -118,14 +142,32 @@ export default function PrivacyPolicyScreen() {
       </ScrollView>
 
       <View
-        style={[styles.footer, { backgroundColor: theme.colors.background }]}
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          padding: layout.spacing.sm,
+          paddingBottom: layout.spacing.lg,
+          backgroundColor: colors.background,
+        }}
       >
         <Button
           mode="contained"
           onPress={handleAccept}
-          style={[styles.acceptButton, { backgroundColor: "#B8860B" }]}
-          contentStyle={styles.acceptButtonContent}
-          labelStyle={styles.acceptButtonLabel}
+          style={{
+            borderRadius: layout.borderRadius.large,
+            elevation: layout.elevation,
+          }}
+          contentStyle={{
+            paddingVertical: layout.spacing.xs,
+          }}
+          labelStyle={{
+            ...typo.button,
+            fontWeight: "600",
+            color: colors.textInverse,
+          }}
+          buttonColor={colors.primary}
         >
           Accept
         </Button>
@@ -133,63 +175,3 @@ export default function PrivacyPolicyScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 100,
-  },
-  header: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 24,
-    alignItems: "center",
-  },
-  title: {
-    fontWeight: "600",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  subtitle: {
-    textAlign: "center",
-    opacity: 0.7,
-  },
-  introCard: {
-    marginHorizontal: 24,
-    marginBottom: 24,
-    padding: 20,
-    borderRadius: 16,
-  },
-  introText: {
-    lineHeight: 22,
-    textAlign: "left",
-  },
-  sectionsContainer: {
-    paddingHorizontal: 24,
-  },
-  footer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 24,
-    paddingBottom: 34,
-  },
-  acceptButton: {
-    borderRadius: 25,
-    elevation: 2,
-  },
-  acceptButtonContent: {
-    paddingVertical: 8,
-  },
-  acceptButtonLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "white",
-  },
-});

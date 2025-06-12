@@ -1,7 +1,8 @@
 import React from "react";
-import { TouchableOpacity, StyleSheet } from "react-native";
+import { TouchableOpacity } from "react-native";
 import { Surface, Text } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface Topic {
   id: string;
@@ -16,37 +17,41 @@ interface TopicCardProps {
 }
 
 export const TopicCard: React.FC<TopicCardProps> = ({ topic, onPress }) => {
+  const { colors, typo, layout } = useTheme();
+
   return (
-    <TouchableOpacity onPress={onPress} style={styles.container}>
+    <TouchableOpacity
+      onPress={onPress}
+      style={{
+        width: "48%",
+        marginBottom: layout.spacing.sm,
+      }}
+    >
       <Surface
-        style={[styles.surface, { backgroundColor: topic.color }]}
-        elevation={2}
+        style={{
+          padding: layout.spacing.sm,
+          borderRadius: layout.borderRadius.medium,
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: layout.spacing.xl * 2,
+          backgroundColor: colors.card,
+          elevation: layout.elevation,
+        }}
       >
-        <MaterialIcons name={topic.icon as any} size={24} color="white" />
-        <Text variant="labelMedium" style={styles.title}>
+        <MaterialIcons name={topic.icon as any} size={24} color={topic.color} />
+        <Text
+          variant="labelMedium"
+          style={{
+            color: topic.color,
+            fontWeight: "600",
+            marginTop: layout.spacing.xs,
+            textAlign: "center",
+            ...typo.caption,
+          }}
+        >
           {topic.title}
         </Text>
       </Surface>
     </TouchableOpacity>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    width: "48%",
-    marginBottom: 12,
-  },
-  surface: {
-    padding: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 80,
-  },
-  title: {
-    color: "white",
-    fontWeight: "600",
-    marginTop: 8,
-    textAlign: "center",
-  },
-});
