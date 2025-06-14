@@ -1,16 +1,9 @@
-import React from "react";
-import { View, TouchableOpacity, Image } from "react-native";
-import { Surface, Text } from "react-native-paper";
-import { MaterialIcons } from "@expo/vector-icons";
 import { useTheme } from "@/lib/hooks/useTheme";
-
-interface Video {
-  id: string;
-  title: string;
-  duration: string;
-  trimester?: string;
-  thumbnail?: string;
-}
+import { Video } from "@/lib/schemas/healthEducationSchema";
+import { MaterialIcons } from "@expo/vector-icons";
+import React from "react";
+import { TouchableOpacity, View } from "react-native";
+import { Surface, Text } from "react-native-paper";
 
 interface VideoCardProps {
   video: Video;
@@ -23,10 +16,7 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, onPress }) => {
   return (
     <TouchableOpacity
       onPress={onPress}
-      style={{
-        width: 280,
-        marginRight: layout.spacing.sm,
-      }}
+      style={{ width: 280, marginRight: layout.spacing.sm }}
     >
       <Surface
         style={{
@@ -35,13 +25,8 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, onPress }) => {
           elevation: layout.elevation,
         }}
       >
-        <View
-          style={{
-            position: "relative",
-            height: layout.spacing.xl * 5, // Approximating 160px
-          }}
-        >
-          {/* <Image source={{ uri: video.thumbnail }} style={styles.thumbnail} /> */}
+        <View style={{ position: "relative", height: layout.spacing.xl * 5 }}>
+          {/* <Image source={{ uri: video.mediaUrl }} style={{ width: '100%', height: '100%' }} /> */}
           <View
             style={{
               position: "absolute",
@@ -66,11 +51,7 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, onPress }) => {
             />
           </View>
         </View>
-        <View
-          style={{
-            padding: layout.spacing.sm,
-          }}
-        >
+        <View style={{ padding: layout.spacing.sm }}>
           <Text
             variant="titleMedium"
             style={{
@@ -90,12 +71,7 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, onPress }) => {
               alignItems: "center",
             }}
           >
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-              }}
-            >
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
               <MaterialIcons name="access-time" size={16} color={colors.text} />
               <Text
                 variant="bodySmall"

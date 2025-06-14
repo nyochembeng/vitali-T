@@ -1,22 +1,26 @@
-import React, { useState } from "react";
-import { View, ScrollView, Alert } from "react-native";
-import { Text, Button, TextInput, Menu } from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Image } from "expo-image";
+import CustomAppBar from "@/components/utils/CustomAppBar";
+import { useTheme } from "@/lib/hooks/useTheme";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { Symptom, symptomSchema } from "@/lib/schemas/symptomSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
 import Slider from "@react-native-community/slider";
 import * as Haptics from "expo-haptics";
-import CustomAppBar from "@/components/utils/CustomAppBar";
 import { useRouter } from "expo-router";
-import { useTheme } from "@/lib/hooks/useTheme";
+import React, { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { ScrollView, View } from "react-native";
+import {
+  Button,
+  Menu,
+  Text,
+  TextInput,
+  Portal,
+  Dialog,
+} from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useCreateSymptomMutation } from "@/lib/features/symptoms/symptomsService";
+import Toast from "react-native-toast-message";
 
-// Types
-interface SymptomData {
-  symptom: string;
-  severity: number;
-  notes: string;
-}
-
-// Sample symptoms list
 const SYMPTOMS = [
   "Nausea",
   "Vomiting",
@@ -33,10 +37,8 @@ const SYMPTOMS = [
   "Other",
 ];
 
-// Severity emojis
 const SEVERITY_EMOJIS = ["😊", "🙂", "😐", "😟", "😣"];
 
-// Components
 const HeroImage: React.FC = () => {
   const { layout } = useTheme();
   return (
@@ -46,29 +48,20 @@ const HeroImage: React.FC = () => {
         borderRadius: layout.borderRadius.medium,
         overflow: "hidden",
       }}
-    >
-      {/* <Image
-        source={require("./assets/symptom-hero.jpg")} // Replace with your image
-        style={{ width: "100%", height: layout.spacing.xxl * 9 }}
-        contentFit="cover"
-      /> */}
-    </View>
+    ></View>
   );
 };
 
 const SymptomSelector: React.FC<{
   selectedSymptom: string;
   onSelect: (symptom: string) => void;
-}> = ({ selectedSymptom, onSelect }) => {
+  error?: string;
+}> = ({ selectedSymptom, onSelect, error }) => {
   const { colors, typo, layout } = useTheme();
   const [menuVisible, setMenuVisible] = useState(false);
 
   return (
-    <View
-      style={{
-        marginBottom: layout.spacing.lg,
-      }}
-    >
+    <View style={{ marginBottom: layout.spacing.lg }}>
       <Text
         style={{
           fontSize: typo.body1.fontSize,
@@ -88,7 +81,7 @@ const SymptomSelector: React.FC<{
             mode="outlined"
             onPress={() => setMenuVisible(true)}
             style={{
-              borderColor: colors.border,
+              borderColor: error ? colors.error : colors.border,
               borderRadius: layout.borderRadius.small,
             }}
             contentStyle={{
@@ -118,27 +111,36 @@ const SymptomSelector: React.FC<{
           />
         ))}
       </Menu>
+      {error && (
+        <Text
+          style={{
+            fontSize: typo.caption.fontSize,
+            color: colors.error,
+            marginTop: layout.spacing.xs,
+          }}
+        >
+          {error}
+        </Text>
+      )}
     </View>
   );
 };
 
 const SeveritySlider: React.FC<{
-  severity: number;
-  onSeverityChange: (value: number) => void;
-}> = ({ severity, onSeverityChange }) => {
+  severity: string;
+  onSeverityChange: (value: string) => void;
+  disabled: boolean;
+}> = ({ severity, onSeverityChange, disabled }) => {
   const { colors, typo, layout } = useTheme();
 
   const handleValueChange = (value: number) => {
-    onSeverityChange(Math.round(value));
+    if (disabled) return;
+    onSeverityChange(value.toString());
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   return (
-    <View
-      style={{
-        marginBottom: layout.spacing.lg,
-      }}
-    >
+    <View style={{ marginBottom: layout.spacing.lg }}>
       <Text
         style={{
           fontSize: typo.body1.fontSize,
@@ -150,7 +152,6 @@ const SeveritySlider: React.FC<{
       >
         How severe is it?
       </Text>
-
       <View
         style={{
           flexDirection: "row",
@@ -163,12 +164,8 @@ const SeveritySlider: React.FC<{
           <Text
             key={index}
             style={[
-              {
-                fontSize: typo.h4.fontSize,
-                opacity: 0.4,
-                ...typo.h4,
-              },
-              severity === index && {
+              { fontSize: typo.h4.fontSize, opacity: 0.4, ...typo.h4 },
+              parseInt(severity) === index && {
                 opacity: 1,
                 transform: [{ scale: 1.2 }],
               },
@@ -178,22 +175,18 @@ const SeveritySlider: React.FC<{
           </Text>
         ))}
       </View>
-
-      <View
-        style={{
-          paddingHorizontal: layout.spacing.sm,
-        }}
-      >
+      <View style={{ paddingHorizontal: layout.spacing.sm }}>
         <Slider
           style={{ width: "100%", height: layout.spacing.xl }}
           minimumValue={0}
           maximumValue={4}
-          value={severity}
+          value={parseInt(severity)}
           onValueChange={handleValueChange}
           step={1}
           minimumTrackTintColor={colors.primary}
           maximumTrackTintColor={colors.border}
           thumbTintColor={colors.primary}
+          disabled={disabled}
         />
         <View
           style={{
@@ -229,15 +222,13 @@ const SeveritySlider: React.FC<{
 const NotesInput: React.FC<{
   notes: string;
   onNotesChange: (text: string) => void;
-}> = ({ notes, onNotesChange }) => {
+  error?: string;
+  disabled: boolean;
+}> = ({ notes, onNotesChange, error, disabled }) => {
   const { colors, typo, layout } = useTheme();
 
   return (
-    <View
-      style={{
-        marginBottom: layout.spacing.lg,
-      }}
-    >
+    <View style={{ marginBottom: layout.spacing.lg }}>
       <Text
         style={{
           fontSize: typo.body1.fontSize,
@@ -260,109 +251,161 @@ const NotesInput: React.FC<{
           minHeight: layout.spacing.xl * 5,
         }}
         mode="outlined"
-        outlineColor={colors.border}
+        outlineColor={error ? colors.error : colors.border}
         activeOutlineColor={colors.primary}
+        error={!!error}
+        disabled={disabled}
       />
+      {error && (
+        <Text
+          style={{
+            fontSize: typo.caption.fontSize,
+            color: colors.error,
+            marginTop: layout.spacing.xs,
+          }}
+        >
+          {error}
+        </Text>
+      )}
     </View>
   );
 };
 
-// Main Screen Component
 export default function LogSymptomScreen() {
   const router = useRouter();
   const { colors, typo, layout } = useTheme();
-  const [symptomData, setSymptomData] = useState<SymptomData>({
-    symptom: "",
-    severity: 2,
-    notes: "",
+  const { user, isActionQueued } = useAuth();
+  const [createSymptom, { isLoading }] = useCreateSymptomMutation();
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<Symptom>({
+    resolver: zodResolver(symptomSchema),
+    defaultValues: {
+      symptomId: "",
+      userId: user?.userId || "",
+      deviceId: "VT-001",
+      symptom: "",
+      severity: "2",
+      notes: "",
+      timestamp: new Date().toISOString(),
+    },
   });
 
-  const handleSymptomSelect = (symptom: string) => {
-    setSymptomData((prev) => ({
-      ...prev,
-      symptom,
-    }));
-  };
+  const onSubmit = async (data: Symptom) => {
+    if (isActionQueued) return;
+    try {
+      const validatedData = symptomSchema.parse({
+        ...data,
+        userId: user?.userId,
+        timestamp: new Date().toISOString(),
+      });
 
-  const handleSeverityChange = (severity: number) => {
-    setSymptomData((prev) => ({
-      ...prev,
-      severity,
-    }));
-  };
+      await createSymptom({
+        userId: validatedData.userId,
+        deviceId: validatedData.deviceId,
+        symptom: validatedData.symptom,
+        severity: validatedData.severity,
+        notes: validatedData.notes,
+        timestamp: validatedData.timestamp,
+      }).unwrap();
 
-  const handleNotesChange = (notes: string) => {
-    setSymptomData((prev) => ({
-      ...prev,
-      notes,
-    }));
-  };
+      reset({
+        symptomId: "",
+        userId: user?.userId || "",
+        deviceId: "VT-001",
+        symptom: "",
+        severity: "2",
+        notes: "",
+        timestamp: new Date().toISOString(),
+      });
 
-  const handleSaveSymptom = () => {
-    if (!symptomData.symptom) {
-      Alert.alert("Missing Information", "Please select a symptom.");
-      return;
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setShowSuccessDialog(true);
+    } catch (error: any) {
+      if (error.message === "ACTION_QUEUED") {
+        reset({
+          symptomId: "",
+          userId: user?.userId || "",
+          deviceId: "VT-001",
+          symptom: "",
+          severity: "2",
+          notes: "",
+          timestamp: new Date().toISOString(),
+        });
+        setShowSuccessDialog(true);
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: "Failed to save symptom log.",
+        });
+      }
     }
+  };
 
-    // Save logic here
-    Alert.alert("Success", "Symptom log saved successfully!");
-    console.log("Symptom Data:", symptomData);
-
-    // Reset form
-    setSymptomData({
-      symptom: "",
-      severity: 2,
-      notes: "",
-    });
-
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  const handleDialogDismiss = () => {
+    setShowSuccessDialog(false);
+    router.push("/symptom-history");
   };
 
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: colors.background,
-      }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <CustomAppBar
         title="Log Symptoms"
         rightAction="info"
-        onInfoPress={() => {
-          router.push("/vital-signs-education");
-        }}
+        onInfoPress={() =>
+          !isActionQueued && router.push("/vital-signs-education")
+        }
       />
-
       <ScrollView
-        style={{
-          flex: 1,
-        }}
-        contentContainerStyle={{
-          padding: layout.spacing.sm,
-        }}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: layout.spacing.sm }}
         showsVerticalScrollIndicator={false}
       >
         <View>
           <HeroImage />
-
-          <SymptomSelector
-            selectedSymptom={symptomData.symptom}
-            onSelect={handleSymptomSelect}
+          <Controller
+            control={control}
+            name="symptom"
+            render={({ field: { value, onChange }, fieldState: { error } }) => (
+              <SymptomSelector
+                selectedSymptom={value}
+                onSelect={onChange}
+                error={error?.message}
+              />
+            )}
           />
-
-          <SeveritySlider
-            severity={symptomData.severity}
-            onSeverityChange={handleSeverityChange}
+          <Controller
+            control={control}
+            name="severity"
+            render={({ field: { value, onChange } }) => (
+              <SeveritySlider
+                severity={value}
+                onSeverityChange={onChange}
+                disabled={isActionQueued}
+              />
+            )}
           />
-
-          <NotesInput
-            notes={symptomData.notes}
-            onNotesChange={handleNotesChange}
+          <Controller
+            control={control}
+            name="notes"
+            render={({ field: { value, onChange }, fieldState: { error } }) => (
+              <NotesInput
+                notes={value || ""}
+                onNotesChange={onChange}
+                error={error?.message}
+                disabled={isActionQueued}
+              />
+            )}
           />
-
           <Button
             mode="contained"
-            onPress={handleSaveSymptom}
+            onPress={handleSubmit(onSubmit)}
             style={{
               backgroundColor: colors.primary,
               borderRadius: layout.borderRadius.medium,
@@ -375,11 +418,54 @@ export default function LogSymptomScreen() {
               ...typo.button,
             }}
             icon="content-save"
+            disabled={isActionQueued || isLoading}
+            loading={isLoading}
           >
             Save Symptom Log
           </Button>
         </View>
       </ScrollView>
+      <Portal>
+        <Dialog
+          visible={showSuccessDialog}
+          onDismiss={handleDialogDismiss}
+          style={{ backgroundColor: colors.card }}
+        >
+          <Dialog.Title
+            style={{
+              fontSize: typo.h4.fontSize,
+              fontWeight: "600",
+              color: colors.text,
+              ...typo.h4,
+            }}
+          >
+            Success
+          </Dialog.Title>
+          <Dialog.Content>
+            <Text
+              style={{
+                fontSize: typo.body1.fontSize,
+                color: colors.text,
+                lineHeight: typo.body1.lineHeight,
+                ...typo.body1,
+              }}
+            >
+              {isActionQueued
+                ? "Your symptom log has been queued and will be saved when you're back online."
+                : "Your symptom log has been saved successfully!"}
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button
+              onPress={handleDialogDismiss}
+              textColor={colors.primary}
+              disabled={isActionQueued}
+            >
+              OK
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </SafeAreaView>
   );
 }

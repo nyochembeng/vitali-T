@@ -1,122 +1,79 @@
 import { NotificationCard } from "@/components/notifications/NotificationCard";
 import CustomAppBar from "@/components/utils/CustomAppBar";
-import { useRouter } from "expo-router";
-import React, { useState, useEffect } from "react";
-import { View, ScrollView, StatusBar } from "react-native";
-import { Text, Chip, Divider } from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "@/lib/hooks/useTheme";
-
-interface NotificationItem {
-  id: string;
-  type: "alert" | "tip" | "report" | "reminder";
-  title: string;
-  message: string;
-  timestamp: Date;
-  read: boolean;
-  priority: "high" | "medium" | "low";
-}
+import { useAuth } from "@/lib/hooks/useAuth";
+import {
+  useGetNotificationsQuery,
+  useMarkNotificationAsReadMutation,
+} from "@/lib/features/notifications/notificationsService";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import { ScrollView, StatusBar, View } from "react-native";
+import { Chip, Divider, Text } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 
 export default function NotificationsScreen() {
   const { colors, typo, layout, mode } = useTheme();
+  const { user, isActionQueued } = useAuth();
   const router = useRouter();
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [filter, setFilter] = useState<"all" | "unread">("all");
 
-  useEffect(() => {
-    const sampleNotifications: NotificationItem[] = [
-      {
-        id: "1",
-        type: "alert",
-        title: "Unusual Heart Rate Detected",
-        message:
-          "Your heart rate has been elevated for the past 30 minutes. Consider taking a break.",
-        timestamp: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
-        read: false,
-        priority: "high",
-      },
-      {
-        id: "2",
-        type: "tip",
-        title: "Daily Health Tip",
-        message:
-          "Stay hydrated! Aim to drink at least 8 glasses of water throughout the day.",
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-        read: false,
-        priority: "low",
-      },
-      {
-        id: "3",
-        type: "report",
-        title: "Weekly Health Report Ready",
-        message:
-          "Your weekly health summary is now available. View your progress and insights.",
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-        read: true,
-        priority: "medium",
-      },
-      {
-        id: "4",
-        type: "reminder",
-        title: "Log Your Symptoms",
-        message:
-          "Don't forget to log your daily symptoms to track your health patterns.",
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2), // 2 days ago
-        read: true,
-        priority: "medium",
-      },
-      {
-        id: "5",
-        type: "alert",
-        title: "Medication Reminder",
-        message: "Time to take your evening medication. Tap to mark as taken.",
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3), // 3 days ago
-        read: true,
-        priority: "high",
-      },
-    ];
-    setNotifications(sampleNotifications);
-  }, []);
-
-  const filteredNotifications = notifications.filter(
-    (notification) => filter === "all" || !notification.read
+  const {
+    data: notifications = [],
+    isLoading,
+    isFetching,
+  } = useGetNotificationsQuery(
+    {
+      userId: user?.userId as string,
+      params: { read: filter === "unread" ? false : undefined },
+    },
+    { skip: !user?.userId }
   );
+
+  const [markNotificationAsRead] = useMarkNotificationAsReadMutation();
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const handleNotificationPress = (notification: NotificationItem) => {
-    if (!notification.read) {
-      markAsRead(notification.id);
+  const handleMarkAsRead = async (id: string) => {
+    if (isActionQueued) return;
+    try {
+      await markNotificationAsRead({ userId: user!.userId, id }).unwrap();
+    } catch (error) {
+      // Error toast is handled in the service
     }
-    // Handle navigation based on notification type
   };
 
-  const markAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((notification) =>
-        notification.id === id ? { ...notification, read: true } : notification
-      )
-    );
-  };
-
-  const markAllAsRead = () => {
-    setNotifications((prev) =>
-      prev.map((notification) => ({ ...notification, read: true }))
-    );
+  const handleMarkAllAsRead = async () => {
+    if (isActionQueued) return;
+    try {
+      // Mark each unread notification individually
+      const unreadNotifications = notifications.filter((n) => !n.read);
+      await Promise.all(
+        unreadNotifications.map((n) =>
+          markNotificationAsRead({ userId: user!.userId, id: n.id }).unwrap()
+        )
+      );
+      Toast.show({
+        type: "success",
+        text1: "Success",
+        text2: "All notifications marked as read.",
+      });
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Failed to mark all notifications as read.",
+      });
+    }
   };
 
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: colors.background,
-      }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar
         barStyle={mode === "dark" ? "light-content" : "dark-content"}
         backgroundColor={colors.background}
       />
-
       <CustomAppBar
         title="Notifications"
         rightAction="more"
@@ -124,25 +81,21 @@ export default function NotificationsScreen() {
           {
             title: "Mark all as read",
             icon: "check-all",
-            onPress: markAllAsRead,
+            onPress: handleMarkAllAsRead,
+            disabled: isActionQueued || unreadCount === 0,
           },
           {
             title: "Settings",
             icon: "cog",
-            onPress: () => {
-              router.push("/settings");
-            },
+            onPress: () => router.push("/settings"),
           },
           {
             title: "Help",
             icon: "help-circle",
-            onPress: () => {
-              router.push("/help");
-            },
+            onPress: () => router.push("/help"),
           },
         ]}
       />
-
       <View
         style={{
           flexDirection: "row",
@@ -153,14 +106,14 @@ export default function NotificationsScreen() {
         <Chip
           selected={filter === "all"}
           onPress={() => setFilter("all")}
-          style={{
-            marginRight: layout.spacing.sm,
-          }}
+          style={{ marginRight: layout.spacing.sm }}
+          disabled={isActionQueued}
         >
           <Text
             style={{
-              ...typo.button,
+              fontSize: typo.button.fontSize,
               color: filter === "all" ? colors.textInverse : colors.text,
+              ...typo.button,
             }}
           >
             All ({notifications.length})
@@ -169,28 +122,26 @@ export default function NotificationsScreen() {
         <Chip
           selected={filter === "unread"}
           onPress={() => setFilter("unread")}
-          style={{
-            marginRight: layout.spacing.sm,
-          }}
+          style={{ marginRight: layout.spacing.sm }}
+          disabled={isActionQueued}
         >
           <Text
             style={{
-              ...typo.button,
+              fontSize: typo.button.fontSize,
               color: filter === "unread" ? colors.textInverse : colors.text,
+              ...typo.button,
             }}
           >
             Unread ({unreadCount})
           </Text>
         </Chip>
       </View>
-
       <Divider
         style={{
           marginHorizontal: layout.spacing.sm,
           backgroundColor: colors.border,
         }}
       />
-
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
@@ -199,21 +150,42 @@ export default function NotificationsScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        {filteredNotifications.length === 0 ? (
+        {isLoading || isFetching ? (
           <View
             style={{
               flex: 1,
               justifyContent: "center",
               alignItems: "center",
-              paddingTop: layout.spacing.xl * 2.5, // Approx 100px
+              paddingTop: layout.spacing.xl * 2.5,
             }}
           >
             <Text
               style={{
+                fontSize: typo.body1.fontSize,
+                color: colors.text,
+                textAlign: "center",
                 ...typo.body1,
+              }}
+            >
+              Loading notifications...
+            </Text>
+          </View>
+        ) : notifications.length === 0 ? (
+          <View
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
+              paddingTop: layout.spacing.xl * 2.5,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: typo.body1.fontSize,
                 color: colors.text,
                 textAlign: "center",
                 opacity: 0.6,
+                ...typo.body1,
               }}
             >
               {filter === "unread"
@@ -222,12 +194,11 @@ export default function NotificationsScreen() {
             </Text>
           </View>
         ) : (
-          filteredNotifications.map((notification) => (
+          notifications.map((notification) => (
             <NotificationCard
               key={notification.id}
               notification={notification}
-              onPress={handleNotificationPress}
-              onMarkAsRead={markAsRead}
+              onMarkAsRead={handleMarkAsRead}
             />
           ))
         )}

@@ -1,25 +1,32 @@
-import React, { useState, useEffect } from "react";
-import { View, ScrollView, Alert, Pressable } from "react-native";
-import { Text, Button, TextInput, Menu, Card } from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Image } from "expo-image";
+import CustomAppBar from "@/components/utils/CustomAppBar";
+import { useTheme } from "@/lib/hooks/useTheme";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { Activity, activitySchema } from "@/lib/schemas/activitySchema";
+import { zodResolver } from "@hookform/resolvers/zod";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as Haptics from "expo-haptics";
-import CustomAppBar from "@/components/utils/CustomAppBar";
 import { useRouter } from "expo-router";
-import { useTheme } from "@/lib/hooks/useTheme";
+import React, { useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import {
+  Pressable,
+  TextInput as RNTextInput,
+  ScrollView,
+  View,
+} from "react-native";
+import {
+  Button,
+  Card,
+  Menu,
+  Text,
+  TextInput,
+  Portal,
+  Dialog,
+} from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useCreateActivityMutation } from "@/lib/features/activity/activityService";
+import Toast from "react-native-toast-message";
 
-// Types
-interface ActivityData {
-  type: string;
-  startTime: Date | null;
-  endTime: Date | null;
-  duration: string;
-  notes: string;
-  feeling: string;
-}
-
-// Activity types and feelings
 const ACTIVITIES = [
   "Walk",
   "Exercise",
@@ -51,20 +58,17 @@ const QUICK_ACTIVITIES = [
   { label: "Eat", icon: "🍽️" },
 ];
 
-// Components
 const ActivitySelector: React.FC<{
-  selectedActivity: string;
-  onSelect: (activity: string) => void;
-}> = ({ selectedActivity, onSelect }) => {
+  value: string;
+  onChange: (value: string) => void;
+  error?: string;
+  disabled: boolean;
+}> = ({ value, onChange, error, disabled }) => {
   const { colors, typo, layout } = useTheme();
   const [menuVisible, setMenuVisible] = useState(false);
 
   return (
-    <View
-      style={{
-        marginBottom: layout.spacing.lg,
-      }}
-    >
+    <View style={{ marginBottom: layout.spacing.lg }}>
       <Text
         style={{
           fontSize: typo.body1.fontSize,
@@ -76,62 +80,92 @@ const ActivitySelector: React.FC<{
       >
         Activity Type
       </Text>
-      <Menu
-        visible={menuVisible}
-        onDismiss={() => setMenuVisible(false)}
-        anchor={
-          <Button
-            mode="outlined"
-            onPress={() => setMenuVisible(true)}
-            style={{
-              borderColor: colors.border,
-              borderRadius: layout.borderRadius.small,
-            }}
-            contentStyle={{
-              justifyContent: "space-between",
-              paddingVertical: layout.spacing.xs,
-            }}
-            labelStyle={{
-              fontSize: typo.body1.fontSize,
-              color: colors.text,
-              ...typo.body1,
-            }}
-            icon="chevron-down"
-          >
-            {selectedActivity || "Select your activity"}
-          </Button>
-        }
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: layout.spacing.sm,
+        }}
       >
-        {ACTIVITIES.map((activity) => (
-          <Menu.Item
-            key={activity}
-            onPress={() => {
-              onSelect(activity);
-              setMenuVisible(false);
-            }}
-            title={activity}
-            titleStyle={{ ...typo.body1 }}
-          />
-        ))}
-      </Menu>
+        <RNTextInput
+          value={value}
+          onChangeText={onChange}
+          placeholder="Enter or select activity"
+          style={{
+            flex: 1,
+            borderWidth: 1,
+            borderColor: error ? colors.error : colors.border,
+            borderRadius: layout.borderRadius.small,
+            padding: layout.spacing.sm,
+            fontSize: typo.body1.fontSize,
+            color: colors.text,
+            backgroundColor: colors.surface,
+          }}
+          editable={!disabled}
+        />
+        <Menu
+          visible={menuVisible}
+          onDismiss={() => setMenuVisible(false)}
+          anchor={
+            <Button
+              mode="outlined"
+              onPress={() => !disabled && setMenuVisible(true)}
+              style={{
+                borderColor: colors.border,
+                borderRadius: layout.borderRadius.small,
+              }}
+              contentStyle={{ paddingVertical: 4 }}
+              labelStyle={{
+                fontSize: typo.body1.fontSize,
+                color: colors.text,
+                ...typo.body1,
+              }}
+              icon="chevron-down"
+              disabled={disabled}
+            >
+              Select
+            </Button>
+          }
+        >
+          {ACTIVITIES.map((activity) => (
+            <Menu.Item
+              key={activity}
+              onPress={() => {
+                onChange(activity);
+                setMenuVisible(false);
+              }}
+              title={activity}
+              titleStyle={{ ...typo.body1 }}
+            />
+          ))}
+        </Menu>
+      </View>
+      {error && (
+        <Text
+          style={{
+            color: colors.error,
+            fontSize: typo.caption.fontSize,
+            marginTop: layout.spacing.xs,
+          }}
+        >
+          {error}
+        </Text>
+      )}
     </View>
   );
 };
 
 const TimeSelector: React.FC<{
   label: string;
-  time: Date | null;
-  onTimeChange: (time: Date) => void;
-}> = ({ label, time, onTimeChange }) => {
+  value: string | null | undefined;
+  onChange: (value: string | null | undefined) => void;
+  disabled: boolean;
+}> = ({ label, value, onChange, disabled }) => {
   const { colors, typo, layout } = useTheme();
   const [showPicker, setShowPicker] = useState(false);
 
   return (
-    <View
-      style={{
-        flex: 1,
-      }}
-    >
+    <View style={{ flex: 1 }}>
       <Text
         style={{
           fontSize: typo.body1.fontSize,
@@ -144,13 +178,14 @@ const TimeSelector: React.FC<{
         {label}
       </Text>
       <Pressable
-        onPress={() => setShowPicker(true)}
+        onPress={() => !disabled && setShowPicker(true)}
         style={{
           borderWidth: 1,
           borderColor: colors.border,
           borderRadius: layout.borderRadius.small,
           padding: layout.spacing.sm,
           alignItems: "center",
+          opacity: disabled ? 0.6 : 1,
         }}
       >
         <Text
@@ -160,8 +195,8 @@ const TimeSelector: React.FC<{
             ...typo.body1,
           }}
         >
-          {time
-            ? time.toLocaleTimeString([], {
+          {value
+            ? new Date(value).toLocaleTimeString([], {
                 hour: "2-digit",
                 minute: "2-digit",
               })
@@ -170,12 +205,12 @@ const TimeSelector: React.FC<{
       </Pressable>
       {showPicker && (
         <DateTimePicker
-          value={time || new Date()}
+          value={value ? new Date(value) : new Date()}
           mode="time"
           display="default"
           onChange={(event, selectedTime) => {
             setShowPicker(false);
-            if (selectedTime) onTimeChange(selectedTime);
+            onChange(selectedTime ? selectedTime.toISOString() : undefined);
           }}
         />
       )}
@@ -187,11 +222,7 @@ const DurationDisplay: React.FC<{ duration: string }> = ({ duration }) => {
   const { colors, typo, layout } = useTheme();
 
   return (
-    <View
-      style={{
-        marginBottom: layout.spacing.lg,
-      }}
-    >
+    <View style={{ marginBottom: layout.spacing.lg }}>
       <Text
         style={{
           fontSize: typo.body1.fontSize,
@@ -203,17 +234,8 @@ const DurationDisplay: React.FC<{ duration: string }> = ({ duration }) => {
       >
         Duration
       </Text>
-      <Card
-        style={{
-          backgroundColor: colors.card,
-          elevation: 0,
-        }}
-      >
-        <Card.Content
-          style={{
-            paddingVertical: layout.spacing.sm,
-          }}
-        >
+      <Card style={{ backgroundColor: colors.card, elevation: 0 }}>
+        <Card.Content style={{ paddingVertical: layout.spacing.sm }}>
           <Text
             style={{
               fontSize: typo.body1.fontSize,
@@ -231,17 +253,14 @@ const DurationDisplay: React.FC<{ duration: string }> = ({ duration }) => {
 };
 
 const FeelingSelector: React.FC<{
-  selectedFeeling: string;
-  onSelect: (feeling: string) => void;
-}> = ({ selectedFeeling, onSelect }) => {
+  value: Activity["feeling"];
+  onChange: (value: Activity["feeling"]) => void;
+  disabled: boolean;
+}> = ({ value, onChange, disabled }) => {
   const { colors, typo, layout } = useTheme();
 
   return (
-    <View
-      style={{
-        marginBottom: layout.spacing.lg,
-      }}
-    >
+    <View style={{ marginBottom: layout.spacing.lg }}>
       <Text
         style={{
           fontSize: typo.body1.fontSize,
@@ -253,18 +272,15 @@ const FeelingSelector: React.FC<{
       >
         How did you feel?
       </Text>
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-        }}
-      >
+      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
         {FEELINGS.map((feeling) => (
           <Pressable
             key={feeling.label}
             onPress={() => {
-              onSelect(feeling.label);
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              if (!disabled) {
+                onChange(feeling.label as Activity["feeling"]);
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }
             }}
             style={[
               {
@@ -272,9 +288,8 @@ const FeelingSelector: React.FC<{
                 padding: layout.spacing.sm,
                 borderRadius: layout.borderRadius.small,
               },
-              selectedFeeling === feeling.label && {
-                backgroundColor: colors.surface,
-              },
+              value === feeling.label && { backgroundColor: colors.surface },
+              disabled && { opacity: 0.6 },
             ]}
           >
             <Text
@@ -304,7 +319,8 @@ const FeelingSelector: React.FC<{
 
 const QuickSelect: React.FC<{
   onQuickSelect: (activity: string) => void;
-}> = ({ onQuickSelect }) => {
+  disabled: boolean;
+}> = ({ onQuickSelect, disabled }) => {
   const { colors, typo, layout } = useTheme();
 
   return (
@@ -330,7 +346,7 @@ const QuickSelect: React.FC<{
         {QUICK_ACTIVITIES.map((activity) => (
           <Pressable
             key={activity.label}
-            onPress={() => onQuickSelect(activity.label)}
+            onPress={() => !disabled && onQuickSelect(activity.label)}
             style={{
               width: "30%",
               alignItems: "center",
@@ -338,6 +354,7 @@ const QuickSelect: React.FC<{
               backgroundColor: colors.card,
               borderRadius: layout.borderRadius.small,
               marginBottom: layout.spacing.sm,
+              opacity: disabled ? 0.6 : 1,
             }}
           >
             <Text
@@ -368,88 +385,137 @@ const QuickSelect: React.FC<{
 export default function LogActivityScreen() {
   const router = useRouter();
   const { colors, typo, layout } = useTheme();
-  const [activityData, setActivityData] = useState<ActivityData>({
-    type: "",
-    startTime: null,
-    endTime: null,
-    duration: "0 minutes",
-    notes: "",
-    feeling: "",
-  });
+  const { user, isActionQueued } = useAuth();
+  const [createActivity, { isLoading }] = useCreateActivityMutation();
+  const [duration, setDuration] = useState("0 minutes");
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
-  // Calculate duration when times change
-  useEffect(() => {
-    if (activityData.startTime && activityData.endTime) {
-      const diff =
-        activityData.endTime.getTime() - activityData.startTime.getTime();
-      const minutes = Math.floor(diff / 60000);
-      const hours = Math.floor(minutes / 60);
-
-      if (hours > 0) {
-        setActivityData((prev) => ({
-          ...prev,
-          duration: `${hours} hours ${minutes % 60} minutes`,
-        }));
-      } else {
-        setActivityData((prev) => ({
-          ...prev,
-          duration: `${minutes} minutes`,
-        }));
-      }
-    }
-  }, [activityData.startTime, activityData.endTime]);
-
-  const handleSave = () => {
-    if (!activityData.type) {
-      Alert.alert("Missing Information", "Please select an activity type.");
-      return;
-    }
-
-    Alert.alert("Success", "Activity log saved successfully!");
-
-    // Reset form
-    setActivityData({
+  const {
+    control,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+    reset,
+  } = useForm<Activity>({
+    resolver: zodResolver(activitySchema),
+    defaultValues: {
+      activityId: "",
+      userId: user?.userId || "",
+      deviceId: "VT-001",
       type: "",
-      startTime: null,
-      endTime: null,
+      startTime: undefined,
+      endTime: undefined,
       duration: "0 minutes",
       notes: "",
-      feeling: "",
-    });
+      feeling: undefined,
+      timestamp: new Date().toISOString(),
+    },
+  });
 
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  useEffect(() => {
+    const startTime = control._formValues.startTime;
+    const endTime = control._formValues.endTime;
+    if (startTime && endTime) {
+      const start = new Date(startTime);
+      const end = new Date(endTime);
+      const diff = end.getTime() - start.getTime();
+      const minutes = Math.floor(diff / 60000);
+      const hours = Math.floor(minutes / 60);
+      const newDuration =
+        hours > 0
+          ? `${hours} hours ${minutes % 60} minutes`
+          : `${minutes} minutes`;
+      setDuration(newDuration);
+      setValue("duration", newDuration);
+    }
+  }, [control._formValues.startTime, control._formValues.endTime, setValue]);
+
+  const onSubmit = async (data: Activity) => {
+    if (isActionQueued) return;
+    try {
+      const validatedData = activitySchema.parse({
+        ...data,
+        userId: user?.userId,
+        timestamp: new Date().toISOString(),
+      });
+
+      await createActivity({
+        userId: validatedData.userId,
+        deviceId: validatedData.deviceId,
+        type: validatedData.type,
+        startTime: validatedData.startTime,
+        endTime: validatedData.endTime,
+        duration: validatedData.duration,
+        notes: validatedData.notes,
+        feeling: validatedData.feeling,
+        timestamp: validatedData.timestamp,
+      }).unwrap();
+
+      reset({
+        activityId: "",
+        userId: user?.userId || "",
+        deviceId: "VT-001",
+        type: "",
+        startTime: undefined,
+        endTime: undefined,
+        duration: "0 minutes",
+        notes: "",
+        feeling: undefined,
+        timestamp: new Date().toISOString(),
+      });
+      setDuration("0 minutes");
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setShowSuccessDialog(true);
+    } catch (error: any) {
+      if (error.message === "ACTION_QUEUED") {
+        reset({
+          activityId: "",
+          userId: user?.userId || "",
+          deviceId: "VT-001",
+          type: "",
+          startTime: undefined,
+          endTime: undefined,
+          duration: "0 minutes",
+          notes: "",
+          feeling: undefined,
+          timestamp: new Date().toISOString(),
+        });
+        setDuration("0 minutes");
+        setShowSuccessDialog(true);
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: "Failed to save activity log.",
+        });
+      }
+    }
   };
 
   const handleQuickSelect = (activity: string) => {
-    setActivityData((prev) => ({
-      ...prev,
-      type: activity,
-      startTime: new Date(),
-    }));
+    if (isActionQueued) return;
+    setValue("type", activity);
+    setValue("startTime", new Date().toISOString());
+  };
+
+  const handleDialogDismiss = () => {
+    setShowSuccessDialog(false);
+    router.push("/activity-history");
   };
 
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: colors.background,
-      }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <CustomAppBar
         title="Log Activity"
         rightAction="info"
-        onInfoPress={() => {
-          router.push("/vital-signs-education");
-        }}
+        onInfoPress={() =>
+          !isActionQueued && router.push("/vital-signs-education")
+        }
       />
-
       <ScrollView
-        style={{
-          flex: 1,
-        }}
-        contentContainerStyle={{
-          padding: layout.spacing.lg,
-        }}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: layout.spacing.lg }}
         showsVerticalScrollIndicator={false}
       >
         <View>
@@ -459,19 +525,19 @@ export default function LogActivityScreen() {
               borderRadius: layout.borderRadius.medium,
               overflow: "hidden",
             }}
-          >
-            {/* <Image
-              source={require("./assets/activity-hero.jpg")}
-              style={{ width: "100%", height: layout.spacing.xxl * 9 }}
-              contentFit="cover"
-            /> */}
-          </View>
-
-          <ActivitySelector
-            selectedActivity={activityData.type}
-            onSelect={(type) => setActivityData((prev) => ({ ...prev, type }))}
+          ></View>
+          <Controller
+            control={control}
+            name="type"
+            render={({ field: { value, onChange } }) => (
+              <ActivitySelector
+                value={value}
+                onChange={onChange}
+                error={errors.type?.message}
+                disabled={isActionQueued}
+              />
+            )}
           />
-
           <View
             style={{
               flexDirection: "row",
@@ -480,68 +546,92 @@ export default function LogActivityScreen() {
               marginBottom: layout.spacing.lg,
             }}
           >
-            <TimeSelector
-              label="Start Time"
-              time={activityData.startTime}
-              onTimeChange={(startTime) =>
-                setActivityData((prev) => ({ ...prev, startTime }))
-              }
+            <Controller
+              control={control}
+              name="startTime"
+              render={({ field: { value, onChange } }) => (
+                <TimeSelector
+                  label="Start Time"
+                  value={value}
+                  onChange={onChange}
+                  disabled={isActionQueued}
+                />
+              )}
             />
-            <TimeSelector
-              label="End Time"
-              time={activityData.endTime}
-              onTimeChange={(endTime) =>
-                setActivityData((prev) => ({ ...prev, endTime }))
-              }
-            />
-          </View>
-
-          <DurationDisplay duration={activityData.duration} />
-
-          <View
-            style={{
-              marginBottom: layout.spacing.lg,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: typo.body1.fontSize,
-                fontWeight: "500",
-                marginBottom: layout.spacing.xs,
-                color: colors.text,
-                ...typo.body1,
-              }}
-            >
-              Additional Notes
-            </Text>
-            <TextInput
-              value={activityData.notes}
-              onChangeText={(notes) =>
-                setActivityData((prev) => ({ ...prev, notes }))
-              }
-              placeholder="Add any observations or context (e.g., how you felt)..."
-              multiline
-              numberOfLines={3}
-              style={{
-                backgroundColor: colors.surface,
-                minHeight: layout.spacing.xl * 3,
-              }}
-              mode="outlined"
-              outlineColor={colors.border}
-              activeOutlineColor={colors.primary}
+            <Controller
+              control={control}
+              name="endTime"
+              render={({ field: { value, onChange } }) => (
+                <TimeSelector
+                  label="End Time"
+                  value={value}
+                  onChange={onChange}
+                  disabled={isActionQueued}
+                />
+              )}
             />
           </View>
-
-          <FeelingSelector
-            selectedFeeling={activityData.feeling}
-            onSelect={(feeling) =>
-              setActivityData((prev) => ({ ...prev, feeling }))
-            }
+          <DurationDisplay duration={duration} />
+          <Controller
+            control={control}
+            name="notes"
+            render={({ field: { value, onChange } }) => (
+              <View style={{ marginBottom: layout.spacing.lg }}>
+                <Text
+                  style={{
+                    fontSize: typo.body1.fontSize,
+                    fontWeight: "500",
+                    marginBottom: layout.spacing.xs,
+                    color: colors.text,
+                    ...typo.body1,
+                  }}
+                >
+                  Additional Notes
+                </Text>
+                <TextInput
+                  value={value}
+                  onChangeText={onChange}
+                  placeholder="Add any observations or context (e.g., how you felt)..."
+                  multiline
+                  numberOfLines={3}
+                  style={{
+                    backgroundColor: colors.surface,
+                    minHeight: layout.spacing.xl * 3,
+                  }}
+                  mode="outlined"
+                  outlineColor={colors.border}
+                  activeOutlineColor={colors.primary}
+                  error={!!errors.notes}
+                  disabled={isActionQueued}
+                />
+                {errors.notes && (
+                  <Text
+                    style={{
+                      color: colors.error,
+                      fontSize: typo.caption.fontSize,
+                      marginTop: layout.spacing.xs,
+                    }}
+                  >
+                    {errors.notes.message}
+                  </Text>
+                )}
+              </View>
+            )}
           />
-
+          <Controller
+            control={control}
+            name="feeling"
+            render={({ field: { value, onChange } }) => (
+              <FeelingSelector
+                value={value}
+                onChange={onChange}
+                disabled={isActionQueued}
+              />
+            )}
+          />
           <Button
             mode="contained"
-            onPress={handleSave}
+            onPress={handleSubmit(onSubmit)}
             style={{
               backgroundColor: colors.primary,
               borderRadius: layout.borderRadius.medium,
@@ -555,13 +645,58 @@ export default function LogActivityScreen() {
               ...typo.button,
             }}
             icon="content-save"
+            disabled={isActionQueued || isLoading}
+            loading={isLoading}
           >
             Save Activity Log
           </Button>
-
-          <QuickSelect onQuickSelect={handleQuickSelect} />
+          <QuickSelect
+            onQuickSelect={handleQuickSelect}
+            disabled={isActionQueued}
+          />
         </View>
       </ScrollView>
+      <Portal>
+        <Dialog
+          visible={showSuccessDialog}
+          onDismiss={handleDialogDismiss}
+          style={{ backgroundColor: colors.card }}
+        >
+          <Dialog.Title
+            style={{
+              fontSize: typo.h4.fontSize,
+              fontWeight: "600",
+              color: colors.text,
+              ...typo.h4,
+            }}
+          >
+            Success
+          </Dialog.Title>
+          <Dialog.Content>
+            <Text
+              style={{
+                fontSize: typo.body1.fontSize,
+                color: colors.text,
+                lineHeight: typo.body1.lineHeight,
+                ...typo.body1,
+              }}
+            >
+              {isActionQueued
+                ? "Your activity log has been queued and will be saved when you're back online."
+                : "Your activity log has been saved successfully!"}
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button
+              onPress={handleDialogDismiss}
+              textColor={colors.primary}
+              disabled={isActionQueued}
+            >
+              OK
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </SafeAreaView>
   );
 }

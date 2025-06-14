@@ -126,19 +126,12 @@ export default function SettingsScreen() {
   ];
 
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: colors.background,
-      }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar
         barStyle={mode === "dark" ? "light-content" : "dark-content"}
         backgroundColor={colors.background}
       />
-
       <CustomAppBar title="Settings" rightAction="notifications" />
-
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
@@ -148,7 +141,7 @@ export default function SettingsScreen() {
         showsVerticalScrollIndicator={false}
       >
         {sections.map((section) => (
-          <SettingsSection key={section.id} section={section} />
+          <SettingsSection section={section} key={section.id} />
         ))}
       </ScrollView>
     </SafeAreaView>

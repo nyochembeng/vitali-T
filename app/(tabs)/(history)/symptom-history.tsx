@@ -1,88 +1,99 @@
-import React, { useState } from "react";
-import { View, ScrollView, TouchableOpacity } from "react-native";
-import { Text, Card, Button, Chip } from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { MaterialIcons } from "@expo/vector-icons";
-import FilterTabs from "@/components/utils/FilterTabs";
 import CustomAppBar from "@/components/utils/CustomAppBar";
+import FilterTabs from "@/components/utils/FilterTabs";
 import { useTheme } from "@/lib/hooks/useTheme";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { Symptom } from "@/lib/schemas/symptomSchema";
+import { MaterialIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import { ScrollView, TouchableOpacity, View } from "react-native";
+import { Button, Card, Chip, Text } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useGetSymptomsQuery } from "@/lib/features/symptoms/symptomsService";
 
-interface SymptomEntry {
-  id: string;
-  type: string;
-  time: string;
-  description: string;
-  severity: "Low" | "Medium" | "High";
-  icon: keyof typeof MaterialIcons.glyphMap;
-}
-
-interface DayGroup {
-  date: string;
-  symptoms: SymptomEntry[];
-}
+const SYMPTOM_ICONS: Record<string, keyof typeof MaterialIcons.glyphMap> = {
+  Nausea: "sick",
+  Vomiting: "sick",
+  Headache: "psychology",
+  "Back Pain": "healing",
+  Heartburn: "local-fire-department",
+  Constipation: "block",
+  Fatigue: "battery-alert",
+  Dizziness: "3d-rotation",
+  Swelling: "waves",
+  "Mood Changes": "mood",
+  "Sleep Issues": "bedtime",
+  "Breast Tenderness": "favorite",
+  Other: "help-outline",
+};
 
 export default function SymptomsHistoryScreen() {
   const [selectedFilter, setSelectedFilter] = useState<string>("All");
   const { colors, typo, layout } = useTheme();
+  const router = useRouter();
+  const { user, isActionQueued } = useAuth();
+  const {
+    data: symptoms = [],
+    isLoading,
+    isFetching,
+  } = useGetSymptomsQuery(user?.userId as string, {
+    skip: !user?.userId,
+  });
 
   const filterOptions = ["All", "Last Week", "Last Month", "By Type"];
 
-  // Updated sample data to reflect current date (June 10, 2025)
-  const symptomGroups: DayGroup[] = [
-    {
-      date: "June 10, 2025",
-      symptoms: [
-        {
-          id: "1",
-          type: "Nausea",
-          time: "09:30 AM",
-          description: "Morning sickness with mild discomfort",
-          severity: "Low",
-          icon: "sick",
-        },
-        {
-          id: "2",
-          type: "Headache",
-          time: "02:15 PM",
-          description: "Slight tension headache",
-          severity: "Low",
-          icon: "psychology",
-        },
-      ],
-    },
-    {
-      date: "June 9, 2025",
-      symptoms: [
-        {
-          id: "3",
-          type: "Dizziness",
-          time: "11:45 AM",
-          description: "Experienced vertigo while standing",
-          severity: "High",
-          icon: "3d-rotation",
-        },
-        {
-          id: "4",
-          type: "Fatigue",
-          time: "04:20 PM",
-          description: "Feeling unusually tired",
-          severity: "Medium",
-          icon: "battery-alert",
-        },
-        {
-          id: "5",
-          type: "Fever",
-          time: "07:30 PM",
-          description: "Slight fever with chills",
-          severity: "High",
-          icon: "device-thermostat",
-        },
-      ],
-    },
-  ];
+  const groupByDate = (symptoms: Symptom[]) => {
+    const groups: { [key: string]: Symptom[] } = {};
+    symptoms.forEach((symptom) => {
+      const date = new Date(symptom.timestamp).toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      });
+      if (!groups[date]) groups[date] = [];
+      groups[date].push(symptom);
+    });
+    return Object.entries(groups).map(([date, symptoms]) => ({
+      date,
+      symptoms,
+    }));
+  };
 
-  const getSeverityColor = (severity: string, colors: any) => {
-    switch (severity) {
+  const filteredSymptoms = symptoms.filter((symptom) => {
+    const symptomDate = new Date(symptom.timestamp);
+    const today = new Date();
+    const oneWeekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const startOfLastMonth = new Date(
+      today.getFullYear(),
+      today.getMonth() - 1,
+      1
+    );
+    const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+
+    switch (selectedFilter) {
+      case "Last Week":
+        return symptomDate >= oneWeekAgo && symptomDate <= today;
+      case "Last Month":
+        return symptomDate >= startOfLastMonth && symptomDate <= endOfLastMonth;
+      case "By Type":
+        return symptom.symptom === "Nausea";
+      default:
+        return true;
+    }
+  });
+
+  const symptomGroups = groupByDate(filteredSymptoms);
+
+  const getSeverityLabel = (severity: string) => {
+    const severityNum = parseInt(severity);
+    if (severityNum <= 1) return "Low";
+    if (severityNum <= 3) return "Medium";
+    return "High";
+  };
+
+  const getSeverityColor = (severity: string) => {
+    switch (getSeverityLabel(severity)) {
       case "Low":
         return colors.success;
       case "Medium":
@@ -94,8 +105,8 @@ export default function SymptomsHistoryScreen() {
     }
   };
 
-  const getSeverityBackgroundColor = (severity: string, colors: any) => {
-    switch (severity) {
+  const getSeverityBackgroundColor = (severity: string) => {
+    switch (getSeverityLabel(severity)) {
       case "Low":
         return colors.successLight;
       case "Medium":
@@ -107,170 +118,205 @@ export default function SymptomsHistoryScreen() {
     }
   };
 
-  return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: colors.background,
-      }}
-    >
-      <CustomAppBar title="Symptoms History" rightAction="notifications" />
+  const formatTime = (timestamp: string) => {
+    return new Date(timestamp).toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  };
 
+  const handleLogNewSymptom = () => {
+    if (isActionQueued) return;
+    router.push("/log-symptoms");
+  };
+
+  const handleSymptomPress = (symptom: Symptom) => {};
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <CustomAppBar title="Symptoms History" rightAction="notifications" />
       <FilterTabs
         selectedFilter={selectedFilter}
         onFilterChange={setSelectedFilter}
         options={filterOptions}
       />
-
       <ScrollView
-        style={{
-          flex: 1,
-        }}
-        contentContainerStyle={{
-          paddingHorizontal: layout.spacing.lg,
-        }}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingHorizontal: layout.spacing.lg }}
         showsVerticalScrollIndicator={false}
       >
-        {symptomGroups.map((group, groupIndex) => (
-          <View key={groupIndex} style={{ marginBottom: layout.spacing.xl }}>
+        {isLoading || isFetching ? (
+          <View
+            style={{
+              alignItems: "center",
+              marginVertical: layout.spacing.lg,
+            }}
+          >
             <Text
               style={{
-                fontSize: typo.h6.fontSize,
-                fontWeight: "600",
+                fontSize: typo.body2.fontSize,
                 color: colors.text,
-                marginBottom: layout.spacing.sm,
-                ...typo.h6,
+                ...typo.body2,
               }}
             >
-              {group.date}
+              Loading symptoms history...
             </Text>
-
-            {group.symptoms.map((symptom) => (
-              <TouchableOpacity key={symptom.id}>
-                <Card
-                  style={{
-                    marginBottom: layout.spacing.sm,
-                    backgroundColor: colors.card,
-                    elevation: 0,
-                  }}
+          </View>
+        ) : symptomGroups.length === 0 ? (
+          <View
+            style={{
+              alignItems: "center",
+              marginVertical: layout.spacing.lg,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: typo.body2.fontSize,
+                color: colors.text,
+                ...typo.body2,
+              }}
+            >
+              No symptoms history available
+            </Text>
+          </View>
+        ) : (
+          symptomGroups.map((group, groupIndex) => (
+            <View key={groupIndex} style={{ marginBottom: layout.spacing.xl }}>
+              <Text
+                style={{
+                  fontSize: typo.h6.fontSize,
+                  fontWeight: "600",
+                  color: colors.text,
+                  marginBottom: layout.spacing.sm,
+                  ...typo.h6,
+                }}
+              >
+                {group.date}
+              </Text>
+              {group.symptoms.map((symptom) => (
+                <TouchableOpacity
+                  key={symptom.symptomId}
+                  onPress={() => handleSymptomPress(symptom)}
+                  disabled={isActionQueued}
                 >
-                  <Card.Content
+                  <Card
                     style={{
-                      flexDirection: "row",
-                      alignItems: "flex-start",
+                      marginBottom: layout.spacing.sm,
+                      backgroundColor: colors.card,
+                      elevation: 0,
+                      opacity: isActionQueued ? 0.6 : 1,
                     }}
                   >
-                    <View
-                      style={{
-                        width: layout.spacing.xl * 1.5,
-                        height: layout.spacing.xl * 1.5,
-                        borderRadius: layout.borderRadius.medium,
-                        backgroundColor: colors.surface,
-                        justifyContent: "center",
-                        alignItems: "center",
-                        marginRight: layout.spacing.sm,
-                      }}
+                    <Card.Content
+                      style={{ flexDirection: "row", alignItems: "flex-start" }}
                     >
-                      <MaterialIcons
-                        name={symptom.icon}
-                        size={24}
-                        color={colors.primary}
-                      />
-                    </View>
-
-                    <View style={{ flex: 1 }}>
                       <View
                         style={{
-                          flexDirection: "row",
+                          width: layout.spacing.xl * 1.5,
+                          height: layout.spacing.xl * 1.5,
+                          borderRadius: layout.borderRadius.medium,
+                          backgroundColor: colors.surface,
+                          justifyContent: "center",
                           alignItems: "center",
-                          justifyContent: "space-between",
-                          marginBottom: layout.spacing.sm,
-                        }}
-                      >
-                        <Text
-                          style={{
-                            fontSize: typo.h6.fontSize,
-                            fontWeight: "600",
-                            color: colors.text,
-                            ...typo.h6,
-                          }}
-                        >
-                          {symptom.type}
-                        </Text>
-                        <Chip
-                          style={{
-                            height: layout.spacing.xl,
-                            backgroundColor: getSeverityBackgroundColor(
-                              symptom.severity,
-                              colors
-                            ),
-                          }}
-                          textStyle={{
-                            fontSize: typo.caption.fontSize,
-                            fontWeight: "500",
-                            color: getSeverityColor(symptom.severity, colors),
-                            ...typo.caption,
-                          }}
-                        >
-                          {symptom.severity}
-                        </Chip>
-                      </View>
-
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          alignItems: "center",
-                          marginBottom: layout.spacing.sm,
+                          marginRight: layout.spacing.sm,
                         }}
                       >
                         <MaterialIcons
-                          name="access-time"
-                          size={16}
-                          color={colors.text}
+                          name={
+                            SYMPTOM_ICONS[symptom.symptom] || "help-outline"
+                          }
+                          size={24}
+                          color={colors.primary}
                         />
-                        <Text
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <View
                           style={{
-                            fontSize: typo.body2.fontSize,
-                            color: colors.text,
-                            marginLeft: layout.spacing.xs,
-                            ...typo.body2,
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            marginBottom: layout.spacing.sm,
                           }}
                         >
-                          {symptom.time}
-                        </Text>
+                          <Text
+                            style={{
+                              fontSize: typo.h6.fontSize,
+                              fontWeight: "600",
+                              color: colors.text,
+                              ...typo.h6,
+                            }}
+                          >
+                            {symptom.symptom}
+                          </Text>
+                          <Chip
+                            style={{
+                              height: layout.spacing.xl,
+                              backgroundColor: getSeverityBackgroundColor(
+                                symptom.severity
+                              ),
+                            }}
+                            textStyle={{
+                              fontSize: typo.caption.fontSize,
+                              fontWeight: "500",
+                              color: getSeverityColor(symptom.severity),
+                              ...typo.caption,
+                            }}
+                          >
+                            {getSeverityLabel(symptom.severity)}
+                          </Chip>
+                        </View>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            marginBottom: layout.spacing.sm,
+                          }}
+                        >
+                          <MaterialIcons
+                            name="access-time"
+                            size={16}
+                            color={colors.text}
+                          />
+                          <Text
+                            style={{
+                              fontSize: typo.body2.fontSize,
+                              color: colors.text,
+                              marginLeft: layout.spacing.xs,
+                              ...typo.body2,
+                            }}
+                          >
+                            {formatTime(symptom.timestamp)}
+                          </Text>
+                        </View>
+                        {symptom.notes && (
+                          <Text
+                            style={{
+                              fontSize: typo.body2.fontSize,
+                              color: colors.text,
+                              lineHeight: typo.body2.lineHeight,
+                              ...typo.body2,
+                            }}
+                          >
+                            {symptom.notes}
+                          </Text>
+                        )}
                       </View>
-
-                      <Text
-                        style={{
-                          fontSize: typo.body2.fontSize,
-                          color: colors.text,
-                          lineHeight: typo.body2.lineHeight,
-                          ...typo.body2,
-                        }}
-                      >
-                        {symptom.description}
-                      </Text>
-                    </View>
-
-                    <MaterialIcons
-                      name="chevron-right"
-                      size={24}
-                      color={colors.text}
-                    />
-                  </Card.Content>
-                </Card>
-              </TouchableOpacity>
-            ))}
-          </View>
-        ))}
-
-        <View
-          style={{
-            padding: layout.spacing.sm,
-          }}
-        >
+                      <MaterialIcons
+                        name="chevron-right"
+                        size={24}
+                        color={colors.text}
+                      />
+                    </Card.Content>
+                  </Card>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ))
+        )}
+        <View style={{ padding: layout.spacing.sm }}>
           <Button
             mode="contained"
+            onPress={handleLogNewSymptom}
             style={{
               backgroundColor: colors.primary,
               borderRadius: layout.borderRadius.medium,
@@ -282,8 +328,9 @@ export default function SymptomsHistoryScreen() {
               color: colors.textInverse,
               ...typo.button,
             }}
-            onPress={() => {}}
             icon="plus"
+            disabled={isActionQueued}
+            loading={isLoading}
           >
             Log New Symptom
           </Button>

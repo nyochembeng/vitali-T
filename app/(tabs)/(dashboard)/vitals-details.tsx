@@ -1,138 +1,51 @@
 import VitalDetailCard from "@/components/dashboard/VitalDetailCard";
 import CustomAppBar from "@/components/utils/CustomAppBar";
+import { useTheme } from "@/lib/hooks/useTheme";
+import { useAuth } from "@/lib/hooks/useAuth";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { View, SafeAreaView, ScrollView } from "react-native";
-import { Button, Portal, Dialog, Text } from "react-native-paper";
-import { useTheme } from "@/lib/hooks/useTheme";
-
-interface VitalReading {
-  id: string;
-  name: string;
-  value: string | number;
-  unit: string;
-  status: "normal" | "warning" | "critical";
-  chartData?: number[];
-  trend?: "up" | "down" | "stable";
-  chartColor: string;
-  hasChart?: boolean;
-}
+import { SafeAreaView, ScrollView, View } from "react-native";
+import { Button, Dialog, Portal, Text } from "react-native-paper";
+import { useGetVitalsQuery } from "@/lib/features/vitals/vitalsService";
 
 export default function VitalsDetailsScreen() {
   const [showStopDialog, setShowStopDialog] = useState(false);
   const router = useRouter();
   const { colors, typo, layout } = useTheme();
-
-  // Mock vital readings data
-  const vitalReadings: VitalReading[] = [
-    {
-      id: "1",
-      name: "Fetal Heart Rate",
-      value: "142",
-      unit: "BPM",
-      status: "normal",
-      chartData: [138, 140, 142, 144, 141, 143, 142, 140, 141, 143],
-      chartColor: colors.error,
-      hasChart: true,
-    },
-    {
-      id: "2",
-      name: "Maternal Heart Rate",
-      value: "86",
-      unit: "BPM",
-      status: "normal",
-      chartData: [80, 82, 84, 86, 85, 87, 86, 84, 85, 86],
-      chartColor: colors.info,
-      hasChart: true,
-    },
-    {
-      id: "3",
-      name: "Blood Pressure",
-      value: "120/80",
-      unit: "mmHg",
-      status: "normal",
-      trend: "stable",
-      chartColor: colors.infoDark,
-      hasChart: false,
-    },
-    {
-      id: "4",
-      name: "Oxygen Saturation",
-      value: "98",
-      unit: "%",
-      status: "normal",
-      chartColor: colors.success,
-      hasChart: false,
-    },
-    {
-      id: "5",
-      name: "Temperature",
-      value: "37.2",
-      unit: "°C",
-      status: "normal",
-      trend: "up",
-      chartColor: colors.warning,
-      hasChart: false,
-    },
-    {
-      id: "6",
-      name: "Respiratory Rate",
-      value: "16",
-      unit: "breaths/min",
-      status: "normal",
-      trend: "stable",
-      chartColor: colors.primary,
-      hasChart: false,
-    },
-    {
-      id: "7",
-      name: "Heart Rate Variability",
-      value: "68",
-      unit: "ms",
-      status: "normal",
-      chartData: [65, 67, 68, 70, 69, 71, 68, 66, 67, 69],
-      chartColor: colors.successDark,
-      hasChart: true,
-    },
-    {
-      id: "8",
-      name: "Shock Index",
-      value: "0.7",
-      unit: "",
-      status: "normal",
-      trend: "stable",
-      chartColor: colors.successLight,
-      hasChart: false,
-    },
-  ];
+  const { user, isActionQueued } = useAuth();
+  const {
+    data: vitals = [],
+    isLoading,
+    isFetching,
+  } = useGetVitalsQuery(user?.userId as string, {
+    skip: !user?.userId,
+    pollingInterval: 1000, // Poll every 1 second for real-time updates
+  });
 
   const handleInfo = () => {
+    if (isActionQueued) return;
     router.push("/vital-signs-education");
   };
 
   const handleStopMonitoring = () => {
+    if (isActionQueued) return;
     setShowStopDialog(true);
   };
 
   const confirmStopMonitoring = () => {
+    if (isActionQueued) return;
     setShowStopDialog(false);
-    // Logic to stop monitoring goes here
     console.log("Monitoring stopped");
-    // Navigate back to dashboard
     router.push("/dashboard");
   };
 
   const cancelStopMonitoring = () => {
+    if (isActionQueued) return;
     setShowStopDialog(false);
   };
 
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: colors.background,
-      }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <CustomAppBar
         title="Vitals Details"
         rightAction="info"
@@ -140,19 +53,52 @@ export default function VitalsDetailsScreen() {
       />
 
       <ScrollView
-        style={{
-          flex: 1,
-          paddingHorizontal: layout.spacing.lg,
-        }}
+        style={{ flex: 1, paddingHorizontal: layout.spacing.lg }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingTop: layout.spacing.sm,
           paddingBottom: layout.spacing.xxl,
         }}
       >
-        {vitalReadings.map((vital) => (
-          <VitalDetailCard key={vital.id} vital={vital} />
-        ))}
+        {isLoading || isFetching ? (
+          <View
+            style={{
+              alignItems: "center",
+              marginVertical: layout.spacing.lg,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: typo.body2.fontSize,
+                color: colors.text,
+                ...typo.body2,
+              }}
+            >
+              Loading vitals...
+            </Text>
+          </View>
+        ) : vitals.length === 0 ? (
+          <View
+            style={{
+              alignItems: "center",
+              marginVertical: layout.spacing.lg,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: typo.body2.fontSize,
+                color: colors.text,
+                ...typo.body2,
+              }}
+            >
+              No vitals data available
+            </Text>
+          </View>
+        ) : (
+          vitals.map((vital) => (
+            <VitalDetailCard key={vital.vitalId} vital={vital} />
+          ))
+        )}
       </ScrollView>
 
       <View
@@ -176,10 +122,10 @@ export default function VitalsDetailsScreen() {
             elevation: layout.elevation,
           }}
           buttonColor={colors.primary}
-          contentStyle={{
-            paddingVertical: layout.spacing.sm,
-          }}
+          contentStyle={{ paddingVertical: layout.spacing.sm }}
           icon="stop-circle-outline"
+          disabled={isActionQueued}
+          loading={isLoading}
         >
           Stop Monitoring
         </Button>
@@ -189,9 +135,7 @@ export default function VitalsDetailsScreen() {
         <Dialog
           visible={showStopDialog}
           onDismiss={cancelStopMonitoring}
-          style={{
-            backgroundColor: colors.card,
-          }}
+          style={{ backgroundColor: colors.card }}
         >
           <Dialog.Title
             style={{
@@ -216,21 +160,20 @@ export default function VitalsDetailsScreen() {
               your device and end the current session.
             </Text>
           </Dialog.Content>
-          <Dialog.Actions
-            style={{
-              paddingTop: layout.spacing.sm,
-            }}
-          >
-            <Button onPress={cancelStopMonitoring} textColor={colors.text}>
+          <Dialog.Actions style={{ paddingTop: layout.spacing.sm }}>
+            <Button
+              onPress={cancelStopMonitoring}
+              textColor={colors.text}
+              disabled={isActionQueued}
+            >
               Cancel
             </Button>
             <Button
               onPress={confirmStopMonitoring}
               buttonColor={colors.error}
               mode="contained"
-              style={{
-                borderRadius: layout.borderRadius.medium,
-              }}
+              style={{ borderRadius: layout.borderRadius.medium }}
+              disabled={isActionQueued}
             >
               Stop
             </Button>

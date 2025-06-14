@@ -1,20 +1,17 @@
-import React, { useState, useEffect } from "react";
-import { View, SafeAreaView, ScrollView, TouchableOpacity } from "react-native";
-import { Text, Button } from "react-native-paper";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import ScanningAnimation from "@/components/bluetooth/ScanningAnimation";
 import BluetoothIcon from "@/components/bluetooth/BluetoothIcon";
 import DeviceListItem from "@/components/bluetooth/DeviceListItem";
-import { useRouter } from "expo-router";
+import ScanningAnimation from "@/components/bluetooth/ScanningAnimation";
 import CustomAppBar from "@/components/utils/CustomAppBar";
 import { useTheme } from "@/lib/hooks/useTheme";
+import { Device } from "@/lib/schemas/deviceSchema";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { SafeAreaView, ScrollView, TouchableOpacity, View } from "react-native";
+import { Button, Text } from "react-native-paper";
 
-interface BluetoothDevice {
-  id: string;
-  name: string;
-  status: "ready" | "connecting" | "connected" | "disconnected";
-  rssi?: number;
-}
+// Mock auth hook for userId; replace with actual auth context
+const useAuth = () => ({ userId: "user_1234567890" }); // TODO: Implement actual auth context
 
 type ConnectionState =
   | "scanning"
@@ -26,27 +23,36 @@ type ConnectionState =
 export default function BluetoothConnectionScreen() {
   const [connectionState, setConnectionState] =
     useState<ConnectionState>("scanning");
-  const [devices, setDevices] = useState<BluetoothDevice[]>([]);
-  const [connectedDevice, setConnectedDevice] =
-    useState<BluetoothDevice | null>(null);
-  const [connectingDevice, setConnectingDevice] =
-    useState<BluetoothDevice | null>(null);
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
+  const [connectingDevice, setConnectingDevice] = useState<Device | null>(null);
   const [isScanning, setIsScanning] = useState(true);
   const router = useRouter();
   const { colors, typo, layout } = useTheme();
+  const { userId } = useAuth();
 
-  // Mock devices for demo
-  const mockDevices: BluetoothDevice[] = [
+  // Mock devices for demo, aligned with deviceSchema
+  const mockDevices: Device[] = [
     {
-      id: "1",
-      name: "Vitali-T Device",
+      deviceId: "VT-001",
+      model: "Vitali-T Device",
+      firmwareVersion: "1.0.0",
+      batteryLevel: 85,
       status: "ready",
+      lastSyncTime: new Date().toISOString(),
+      pairedTo: null,
+      isConnected: false,
       rssi: -45,
     },
     {
-      id: "2",
-      name: "Vitali-T Pro",
+      deviceId: "VT-002",
+      model: "Vitali-T Pro",
+      firmwareVersion: "1.1.0",
+      batteryLevel: 60,
       status: "ready",
+      lastSyncTime: new Date().toISOString(),
+      pairedTo: null,
+      isConnected: false,
       rssi: -60,
     },
   ];
@@ -62,7 +68,14 @@ export default function BluetoothConnectionScreen() {
     return () => clearTimeout(scanTimer);
   }, []);
 
-  const handleConnect = async (device: BluetoothDevice) => {
+  const handleConnect = async (device: Device) => {
+    // Only allow connection if device is unpaired or paired to current user
+    if (device.pairedTo && device.pairedTo !== userId) {
+      setConnectionState("connection-failed");
+      setIsScanning(false);
+      return;
+    }
+
     setConnectionState("connecting");
     setConnectingDevice(device);
     setIsScanning(true);
@@ -73,7 +86,13 @@ export default function BluetoothConnectionScreen() {
       const success = Math.random() > 0.3;
 
       if (success) {
-        setConnectedDevice({ ...device, id: "#0213" });
+        const updatedDevice = {
+          ...device,
+          status: "connected" as const,
+          isConnected: true,
+          pairedTo: userId, // Pair to current user
+        };
+        setConnectedDevice(updatedDevice);
         setConnectionState("connected");
       } else {
         setConnectionState("connection-failed");
@@ -116,7 +135,6 @@ export default function BluetoothConnectionScreen() {
   };
 
   const handleStartMonitoring = () => {
-    // Navigate to monitoring screen
     router.push("/vitals-details");
   };
 
@@ -161,15 +179,10 @@ export default function BluetoothConnectionScreen() {
       </Text>
 
       {devices.length > 0 && !isScanning && (
-        <View
-          style={{
-            width: "100%",
-            marginTop: layout.spacing.lg,
-          }}
-        >
+        <View style={{ width: "100%", marginTop: layout.spacing.lg }}>
           {devices.map((device) => (
             <DeviceListItem
-              key={device.id}
+              key={device.deviceId}
               device={device}
               onConnect={handleConnect}
             />
@@ -199,7 +212,7 @@ export default function BluetoothConnectionScreen() {
           ...typo.body1,
         }}
       >
-        Connecting to {connectingDevice?.name}...
+        Connecting to {connectingDevice?.model}...
       </Text>
     </View>
   );
@@ -382,7 +395,7 @@ export default function BluetoothConnectionScreen() {
           ...typo.body1,
         }}
       >
-        Vitali-T Monitor {connectedDevice?.id}
+        Vitali-T Monitor {connectedDevice?.deviceId}
       </Text>
 
       <View
@@ -439,24 +452,15 @@ export default function BluetoothConnectionScreen() {
   };
 
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: colors.background,
-      }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <CustomAppBar
         title="Connect to Vitali-T"
         rightAction="info"
-        onInfoPress={() => {
-          router.push("/getting-started");
-        }}
+        onInfoPress={() => router.push("/getting-started")}
       />
 
       <ScrollView
-        style={{
-          flex: 1,
-        }}
+        style={{ flex: 1 }}
         contentContainerStyle={{
           flexGrow: 1,
           justifyContent: "center",
@@ -467,12 +471,7 @@ export default function BluetoothConnectionScreen() {
         {renderContent()}
       </ScrollView>
 
-      <View
-        style={{
-          paddingBottom: layout.spacing.lg,
-          alignItems: "center",
-        }}
-      >
+      <View style={{ paddingBottom: layout.spacing.lg, alignItems: "center" }}>
         <TouchableOpacity
           style={{
             flexDirection: "row",

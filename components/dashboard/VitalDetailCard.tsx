@@ -1,24 +1,13 @@
+import { useTheme } from "@/lib/hooks/useTheme";
+import { Vital } from "@/lib/schemas/vitalSchema";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import React from "react";
 import { View } from "react-native";
 import { Card, Text } from "react-native-paper";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import DetailChart from "./DetailChart";
-import { useTheme } from "@/lib/hooks/useTheme";
-
-interface VitalReading {
-  id: string;
-  name: string;
-  value: string | number;
-  unit: string;
-  status: "normal" | "warning" | "critical";
-  chartData?: number[];
-  trend?: "up" | "down" | "stable";
-  chartColor: string;
-  hasChart?: boolean;
-}
 
 interface VitalDetailCardProps {
-  vital: VitalReading;
+  vital: Vital;
 }
 
 const VitalDetailCard: React.FC<VitalDetailCardProps> = ({ vital }) => {
@@ -63,6 +52,30 @@ const VitalDetailCard: React.FC<VitalDetailCardProps> = ({ vital }) => {
     }
   };
 
+  // Map vital type to display name
+  const getVitalName = (type: Vital["type"]) => {
+    switch (type) {
+      case "fhr":
+        return "Fetal Heart Rate";
+      case "mhr":
+        return "Maternal Heart Rate";
+      case "bp":
+        return "Blood Pressure";
+      case "spo2":
+        return "Oxygen Saturation";
+      case "bt":
+        return "Body Temperature";
+      case "rr":
+        return "Respiratory Rate";
+      case "hrv":
+        return "Heart Rate Variability";
+      case "si":
+        return "Shock Index";
+      default:
+        return type;
+    }
+  };
+
   return (
     <Card
       style={{
@@ -72,11 +85,7 @@ const VitalDetailCard: React.FC<VitalDetailCardProps> = ({ vital }) => {
       }}
       mode="contained"
     >
-      <Card.Content
-        style={{
-          padding: layout.spacing.sm,
-        }}
-      >
+      <Card.Content style={{ padding: layout.spacing.sm }}>
         <View
           style={{
             flexDirection: "row",
@@ -93,31 +102,19 @@ const VitalDetailCard: React.FC<VitalDetailCardProps> = ({ vital }) => {
               ...typo.body1,
             }}
           >
-            {vital.name}
+            {getVitalName(vital.type)}
           </Text>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-            }}
-          >
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
             {vital.trend && getTrendIcon(vital.trend) && (
               <MaterialCommunityIcons
                 name={getTrendIcon(vital.trend) as any}
                 size={16}
                 color={getTrendColor(vital.trend)}
-                style={{
-                  marginRight: layout.spacing.sm,
-                }}
+                style={{ marginRight: layout.spacing.sm }}
               />
             )}
             {vital.status !== "normal" && (
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                }}
-              >
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <View
                   style={{
                     width: 8,
@@ -174,7 +171,7 @@ const VitalDetailCard: React.FC<VitalDetailCardProps> = ({ vital }) => {
         {vital.hasChart && vital.chartData && (
           <DetailChart
             data={vital.chartData}
-            color={vital.chartColor}
+            color={colors.primary}
             height={60}
           />
         )}

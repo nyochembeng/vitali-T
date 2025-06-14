@@ -1,79 +1,116 @@
-import React, { useState } from "react";
-import { View, ScrollView } from "react-native";
-import { Button } from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import { NotificationSettingItem } from "@/components/settings/NotificationSettingItem";
+import NotificationSettingItem from "@/components/settings/NotificationSettingItem";
 import CustomAppBar from "@/components/utils/CustomAppBar";
 import { useTheme } from "@/lib/hooks/useTheme";
+import { useAuth } from "@/lib/hooks/useAuth";
+import {
+  NotificationPreferences,
+  notificationPreferencesSchema,
+} from "@/lib/schemas/settingsSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "expo-router";
+import React from "react";
+import { Controller, useForm } from "react-hook-form";
+import { ScrollView, Text, View } from "react-native";
+import { Button } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
+import {
+  useGetSettingsQuery,
+  useUpdateSettingsMutation,
+} from "@/lib/features/settings/settingsService";
 
 interface NotificationSetting {
-  id: string;
+  id: keyof NotificationPreferences;
   title: string;
   description: string;
   icon: string;
-  enabled: boolean;
 }
+
+const NOTIFICATION_SETTINGS: NotificationSetting[] = [
+  {
+    id: "monitoringAlerts",
+    title: "Monitoring Alerts",
+    description: "Receive alerts about unusual health readings",
+    icon: "heart-pulse",
+  },
+  {
+    id: "dailyHealthTips",
+    title: "Daily Health Tips",
+    description: "Get a helpful health or wellness tip each day",
+    icon: "lightbulb-outline",
+  },
+  {
+    id: "weeklyReports",
+    title: "Weekly Reports",
+    description: "Weekly summary of your logged vitals and activities",
+    icon: "chart-bar",
+  },
+  {
+    id: "symptomReminders",
+    title: "Reminders to Log Symptoms",
+    description: "Gentle nudges to keep your symptom tracking updated",
+    icon: "clipboard-text-outline",
+  },
+];
 
 export default function NotificationSettingsScreen() {
   const { colors, typo, layout } = useTheme();
   const router = useRouter();
+  const { user, isActionQueued } = useAuth();
+  const { data: settings } = useGetSettingsQuery(user?.userId as string, {
+    skip: !user?.userId,
+  });
+  const [updateSettings, { isLoading: isUpdating }] =
+    useUpdateSettingsMutation();
 
-  const [settings, setSettings] = useState<NotificationSetting[]>([
-    {
-      id: "monitoring-alerts",
-      title: "Monitoring Alerts",
-      description: "Receive alerts about unusual health readings",
-      icon: "heart-pulse",
-      enabled: true,
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<NotificationPreferences>({
+    resolver: zodResolver(notificationPreferencesSchema),
+    defaultValues: {
+      monitoringAlerts:
+        settings?.notificationPreferences?.monitoringAlerts ?? true,
+      dailyHealthTips:
+        settings?.notificationPreferences?.dailyHealthTips ?? true,
+      weeklyReports: settings?.notificationPreferences?.weeklyReports ?? true,
+      symptomReminders:
+        settings?.notificationPreferences?.symptomReminders ?? true,
     },
-    {
-      id: "daily-health-tips",
-      title: "Daily Health Tips",
-      description: "Get a helpful health or wellness tip each day",
-      icon: "lightbulb-outline",
-      enabled: true,
-    },
-    {
-      id: "weekly-reports",
-      title: "Weekly Reports",
-      description: "Weekly summary of your logged vitals and activities",
-      icon: "chart-bar",
-      enabled: true,
-    },
-    {
-      id: "symptom-reminders",
-      title: "Reminders to Log Symptoms",
-      description: "Gentle nudges to keep your symptom tracking updated",
-      icon: "clipboard-text-outline",
-      enabled: true,
-    },
-  ]);
+  });
 
-  const handleToggle = (id: string, enabled: boolean) => {
-    setSettings((prev) =>
-      prev.map((setting) =>
-        setting.id === id ? { ...setting, enabled } : setting
-      )
-    );
-  };
-
-  const handleSave = () => {
-    // Here you would typically save the settings to a backend or local storage
-    console.log("Settings saved:", settings);
-    // Navigate back to the settings screen
-    router.back();
+  const onSubmit = async (data: NotificationPreferences) => {
+    if (!user?.userId) return;
+    try {
+      const result = await updateSettings({
+        userId: user.userId,
+        data: { notificationPreferences: data },
+      }).unwrap();
+      if ("queued" in result && result.queued) {
+        return; // Queued actions handled by Toast and SyncStatus
+      }
+      Toast.show({
+        type: "success",
+        text1: "Success",
+        text2: "Notification settings updated successfully.",
+      });
+      router.back();
+    } catch (error: any) {
+      if (error.message === "ACTION_QUEUED") {
+        return; // Queued actions handled by Toast and SyncStatus
+      }
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: error?.data?.message || "Failed to update settings.",
+      });
+    }
   };
 
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: colors.background,
-      }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <CustomAppBar title="Notification Settings" rightAction="notifications" />
-
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
@@ -82,21 +119,35 @@ export default function NotificationSettingsScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <View
-          style={{
-            paddingBottom: layout.spacing.lg,
-          }}
-        >
-          {settings.map((setting) => (
-            <NotificationSettingItem
+        <View style={{ paddingBottom: layout.spacing.lg }}>
+          {NOTIFICATION_SETTINGS.map((setting) => (
+            <Controller
               key={setting.id}
-              setting={setting}
-              onToggle={handleToggle}
+              control={control}
+              name={setting.id}
+              render={({ field: { onChange, value } }) => (
+                <NotificationSettingItem
+                  setting={{ ...setting, enabled: value as boolean }}
+                  onToggle={(id, enabled) => onChange(enabled)}
+                  disabled={isActionQueued || isUpdating}
+                />
+              )}
             />
+          ))}
+          {Object.keys(errors).map((key) => (
+            <Text
+              key={key}
+              style={{
+                color: colors.error,
+                ...typo.body3,
+                marginHorizontal: layout.spacing.md,
+              }}
+            >
+              {errors[key as keyof NotificationPreferences]?.message}
+            </Text>
           ))}
         </View>
       </ScrollView>
-
       <View
         style={{
           position: "absolute",
@@ -110,14 +161,14 @@ export default function NotificationSettingsScreen() {
       >
         <Button
           mode="contained"
-          onPress={handleSave}
+          onPress={handleSubmit(onSubmit)}
+          disabled={isUpdating || isActionQueued}
+          loading={isUpdating}
           style={{
             borderRadius: layout.borderRadius.large,
             elevation: layout.elevation,
           }}
-          contentStyle={{
-            paddingVertical: layout.spacing.xs,
-          }}
+          contentStyle={{ paddingVertical: layout.spacing.xs }}
           labelStyle={{
             fontSize: typo.button.fontSize,
             fontWeight: "600",

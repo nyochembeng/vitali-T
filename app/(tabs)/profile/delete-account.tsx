@@ -1,40 +1,97 @@
 import React from "react";
-import { View, ScrollView } from "react-native";
-import { Text, Button } from "react-native-paper";
+import { Alert, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Button, Text } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import CustomAppBar from "@/components/utils/CustomAppBar";
+
 import { useTheme } from "@/lib/hooks/useTheme";
+import { useAuth } from "@/lib/hooks/useAuth";
+import CustomAppBar from "@/components/utils/CustomAppBar";
+import { useDeleteProfileMutation } from "@/lib/features/profile/profileService";
+import { Typo } from "@/lib/constants/Typo";
 
 export default function DeleteAccountScreen() {
-  const { colors, typo, layout } = useTheme();
   const router = useRouter();
+  const { colors, typo, layout } = useTheme();
+  const { user, isActionQueued, logout } = useAuth();
+  const [deleteProfile, { isLoading }] = useDeleteProfileMutation();
+
+  const textStyle = {
+    body2: {
+      ...typo.body2,
+      color: colors.text,
+      lineHeight: typo.body2.lineHeight,
+    },
+    subtitle2: {
+      ...typo.subtitle2,
+      color: colors.text,
+      fontWeight: Typo.subtitle2.fontWeight,
+    },
+    caption: { ...typo.caption, color: `${colors.text}99` },
+  };
+
+  const buttonStyle = {
+    contained: {
+      backgroundColor: colors.primary,
+      borderRadius: layout.borderRadius.large,
+      paddingVertical: layout.spacing.xs,
+    },
+    outlined: {
+      borderColor: colors.primary,
+      borderRadius: layout.borderRadius.large,
+      paddingVertical: layout.spacing.xs,
+    },
+    label: {
+      ...typo.button,
+      fontWeight: Typo.button.fontWeight,
+    },
+  };
 
   const handleDeleteAccount = () => {
-    console.log("Account deletion requested");
-    router.push("/auth/login");
+    Alert.alert(
+      "Confirm Deletion",
+      "Are you sure you want to delete your account? This action is irreversible.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const result = await deleteProfile(
+                user?.userId as string
+              ).unwrap();
+              if ("queued" in result && result.queued) {
+                return; // Queued actions handled by Toast and SyncStatus
+              }
+              await logout();
+              Alert.alert("Success", "Account deleted successfully.", [
+                { text: "OK", onPress: () => router.replace("/auth/login") },
+              ]);
+            } catch (error: any) {
+              if (error.message === "ACTION_QUEUED") {
+                return; // Queued actions handled by Toast and SyncStatus
+              }
+              Alert.alert(
+                "Error",
+                error?.data?.message || "Failed to delete account.",
+                [{ text: "OK" }]
+              );
+            }
+          },
+        },
+      ]
+    );
   };
 
-  const handleCancel = () => {
-    console.log("Deletion cancellation requested");
-    router.back();
-  };
+  const handleCancel = () => router.back();
 
-  const handleContactSupport = () => {
-    console.log("Support request initiated");
-    router.push("/help");
-  };
+  const handleContactSupport = () => router.push("/help");
 
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: colors.background,
-      }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <CustomAppBar title="Delete Account" rightAction="help" />
-
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
@@ -43,15 +100,11 @@ export default function DeleteAccountScreen() {
       >
         {/* Trash Icon */}
         <View
-          style={{
-            alignItems: "center",
-            marginTop: layout.spacing.xl,
-            marginBottom: layout.spacing.xl,
-          }}
+          style={{ alignItems: "center", marginVertical: layout.spacing.xl }}
         >
           <View
             style={{
-              width: layout.spacing.xl * 3.75, // 120px approximation
+              width: layout.spacing.xl * 3.75,
               height: layout.spacing.xl * 3.75,
               borderRadius: layout.borderRadius.xl * 3.75,
               backgroundColor: colors.errorLight,
@@ -78,19 +131,12 @@ export default function DeleteAccountScreen() {
             alignItems: "flex-start",
           }}
         >
-          <MaterialIcons
-            name="warning"
-            size={20}
-            color={colors.warning}
-          />
+          <MaterialIcons name="warning" size={20} color={colors.warning} />
           <Text
-            style={{
-              ...typo.body2,
-              color: colors.text,
-              flex: 1,
-              marginLeft: layout.spacing.sm,
-              lineHeight: typo.body2.lineHeight,
-            }}
+            style={[
+              textStyle.body2,
+              { flex: 1, marginLeft: layout.spacing.sm },
+            ]}
           >
             Are you sure you want to delete your Vitali-T account? This action
             is irreversible.
@@ -98,31 +144,23 @@ export default function DeleteAccountScreen() {
         </View>
 
         {/* Information Section */}
-        <View
-          style={{
-            marginBottom: layout.spacing.xl,
-          }}
-        >
+        <View style={{ marginBottom: layout.spacing.xl }}>
           <Text
-            style={{
-              ...typo.subtitle2,
-              color: colors.text,
-              fontWeight: "500",
-              marginBottom: layout.spacing.sm,
-            }}
+            style={[textStyle.subtitle2, { marginBottom: layout.spacing.sm }]}
           >
             This will permanently delete:
           </Text>
-
-          <View
-            style={{
-              gap: layout.spacing.sm,
-            }}
-          >
+          {[
+            "Your profile and personal information",
+            "Your activity history and preferences",
+            "All saved data and settings",
+          ].map((item, index) => (
             <View
+              key={index}
               style={{
                 flexDirection: "row",
                 alignItems: "flex-start",
+                marginBottom: layout.spacing.sm,
               }}
             >
               <View
@@ -135,113 +173,31 @@ export default function DeleteAccountScreen() {
                   marginRight: layout.spacing.sm,
                 }}
               />
-              <Text
-                style={{
-                  ...typo.body2,
-                  color: colors.text,
-                  flex: 1,
-                  lineHeight: typo.body2.lineHeight,
-                }}
-              >
-                Your profile and personal information
-              </Text>
+              <Text style={textStyle.body2}>{item}</Text>
             </View>
-
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "flex-start",
-              }}
-            >
-              <View
-                style={{
-                  width: layout.spacing.xs,
-                  height: layout.spacing.xs,
-                  borderRadius: layout.borderRadius.small,
-                  backgroundColor: colors.text,
-                  marginTop: layout.spacing.sm,
-                  marginRight: layout.spacing.sm,
-                }}
-              />
-              <Text
-                style={{
-                  ...typo.body2,
-                  color: colors.text,
-                  flex: 1,
-                  lineHeight: typo.body2.lineHeight,
-                }}
-              >
-                Your activity history and preferences
-              </Text>
-            </View>
-
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "flex-start",
-              }}
-            >
-              <View
-                style={{
-                  width: layout.spacing.xs,
-                  height: layout.spacing.xs,
-                  borderRadius: layout.borderRadius.small,
-                  backgroundColor: colors.text,
-                  marginTop: layout.spacing.sm,
-                  marginRight: layout.spacing.sm,
-                }}
-              />
-              <Text
-                style={{
-                  ...typo.body2,
-                  color: colors.text,
-                  flex: 1,
-                  lineHeight: typo.body2.lineHeight,
-                }}
-              >
-                All saved data and settings
-              </Text>
-            </View>
-          </View>
+          ))}
         </View>
 
         {/* Action Buttons */}
         <View
-          style={{
-            gap: layout.spacing.sm,
-            marginBottom: layout.spacing.md,
-          }}
+          style={{ gap: layout.spacing.sm, marginBottom: layout.spacing.md }}
         >
           <Button
             mode="contained"
             onPress={handleDeleteAccount}
-            style={{
-              backgroundColor: colors.primary,
-              borderRadius: layout.borderRadius.large,
-              paddingVertical: layout.spacing.xs,
-            }}
-            labelStyle={{
-              ...typo.button,
-              fontWeight: "500",
-              color: colors.textInverse,
-            }}
+            disabled={isLoading || isActionQueued}
+            loading={isLoading}
+            style={buttonStyle.contained}
+            labelStyle={[buttonStyle.label, { color: colors.textInverse }]}
           >
             Delete My Account
           </Button>
-
           <Button
             mode="outlined"
             onPress={handleCancel}
-            style={{
-              borderColor: colors.primary,
-              borderRadius: layout.borderRadius.large,
-              paddingVertical: layout.spacing.xs,
-            }}
-            labelStyle={{
-              ...typo.button,
-              fontWeight: "500",
-              color: colors.primary,
-            }}
+            disabled={isLoading || isActionQueued}
+            style={buttonStyle.outlined}
+            labelStyle={[buttonStyle.label, { color: colors.primary }]}
           >
             Cancel
           </Button>
@@ -251,13 +207,9 @@ export default function DeleteAccountScreen() {
         <Button
           mode="text"
           onPress={handleContactSupport}
-          style={{
-            alignSelf: "center",
-          }}
-          labelStyle={{
-            ...typo.caption,
-            color: colors.text + "99", // 60% opacity
-          }}
+          style={{ alignSelf: "center" }}
+          labelStyle={textStyle.caption}
+          disabled={isActionQueued}
         >
           Need help? Contact Support
         </Button>

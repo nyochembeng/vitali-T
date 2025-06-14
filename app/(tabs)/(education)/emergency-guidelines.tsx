@@ -1,109 +1,48 @@
 import { EmergencySymptomCard } from "@/components/education/EmergencySymptomCard";
 import CustomAppBar from "@/components/utils/CustomAppBar";
+import { useTheme } from "@/lib/hooks/useTheme";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { useGetEmergencySymptomsQuery } from "@/lib/features/emergency-symptoms/emergencySymptomService";
 import React from "react";
-import { View, ScrollView, Linking } from "react-native";
+import { Linking, ScrollView, View } from "react-native";
 import { Button, Text } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTheme } from "@/lib/hooks/useTheme";
-
-interface EmergencySymptom {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-  severity: "high" | "medium" | "low";
-}
-
-const emergencySymptoms: EmergencySymptom[] = [
-  {
-    id: "1",
-    title: "Sudden High Blood Pressure",
-    description: "Swelling, vision changes, or severe headaches",
-    icon: "warning",
-    severity: "high",
-  },
-  {
-    id: "2",
-    title: "Decreased Fetal Movement",
-    description: "Less movement or kicks than usual",
-    icon: "child-care",
-    severity: "high",
-  },
-  {
-    id: "3",
-    title: "Severe or Persistent Headaches",
-    description: "Especially if accompanied by vision changes",
-    icon: "psychology",
-    severity: "medium",
-  },
-  {
-    id: "4",
-    title: "Heavy Bleeding or Fluid Loss",
-    description: "Any unusual discharge or bleeding",
-    icon: "opacity",
-    severity: "high",
-  },
-  {
-    id: "5",
-    title: "Severe Abdominal Pain",
-    description: "Sharp or persistent cramping",
-    icon: "fitness-center",
-    severity: "medium",
-  },
-  {
-    id: "6",
-    title: "Shortness of Breath",
-    description: "Difficulty breathing or chest pain",
-    icon: "air",
-    severity: "medium",
-  },
-  {
-    id: "7",
-    title: "Seizures or Fainting",
-    description: "Loss of consciousness or convulsions",
-    icon: "flash-on",
-    severity: "high",
-  },
-  {
-    id: "8",
-    title: "Signs of Preterm Labor",
-    description: "Regular contractions before 37 weeks",
-    icon: "schedule",
-    severity: "high",
-  },
-  {
-    id: "9",
-    title: "High Fever",
-    description: "Temperature of 100.4°F (38°C) or higher",
-    icon: "thermostat",
-    severity: "medium",
-  },
-];
 
 export default function EmergencyGuidelinesScreen() {
   const { colors, typo, layout } = useTheme();
+  const { user, isActionQueued } = useAuth();
+
+  const {
+    data: symptoms = [],
+    isLoading,
+    isFetching,
+  } = useGetEmergencySymptomsQuery(
+    {
+      category: undefined,
+      type: undefined,
+      severity: undefined,
+      keywords: undefined,
+    },
+    { skip: !user?.userId }
+  );
+
+  // Sort symptoms by severity (high > medium > low)
+  const sortedSymptoms = symptoms.sort((a, b) => {
+    const severityOrder = { high: 3, medium: 2, low: 1 };
+    return severityOrder[b.severity] - severityOrder[a.severity];
+  });
 
   const handleCallDoctor = () => {
-    Linking.openURL("tel:911");
+    if (isActionQueued) return;
+    Linking.openURL("tel:+237682113688");
   };
 
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: colors.background,
-      }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <CustomAppBar title="Emergency Guidelines" rightAction="help" />
-
       <ScrollView
-        style={{
-          flex: 1,
-          paddingHorizontal: layout.spacing.lg,
-        }}
-        contentContainerStyle={{
-          paddingBottom: layout.spacing.xxl,
-        }}
+        style={{ flex: 1, paddingHorizontal: layout.spacing.lg }}
+        contentContainerStyle={{ paddingBottom: layout.spacing.xxl }}
         showsVerticalScrollIndicator={false}
       >
         <View
@@ -114,23 +53,23 @@ export default function EmergencyGuidelinesScreen() {
           }}
         >
           <Text
-            variant="headlineMedium"
             style={{
               fontWeight: "700",
               color: colors.text,
               textAlign: "center",
               marginBottom: layout.spacing.sm,
+              fontSize: typo.h4.fontSize,
               ...typo.h4,
             }}
           >
             When to Seek Help
           </Text>
           <Text
-            variant="bodyLarge"
             style={{
               color: colors.text,
               textAlign: "center",
               lineHeight: typo.body1.lineHeight,
+              fontSize: typo.body1.fontSize,
               ...typo.body1,
             }}
           >
@@ -138,23 +77,55 @@ export default function EmergencyGuidelinesScreen() {
             healthcare provider immediately.
           </Text>
         </View>
-
-        <View
-          style={{
-            paddingHorizontal: layout.spacing.sm,
-          }}
-        >
-          {emergencySymptoms.map((symptom) => (
-            <EmergencySymptomCard key={symptom.id} symptom={symptom} />
-          ))}
+        <View style={{ paddingHorizontal: layout.spacing.sm }}>
+          {isLoading || isFetching ? (
+            <View
+              style={{
+                alignItems: "center",
+                paddingVertical: layout.spacing.xl,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: typo.body2.fontSize,
+                  color: colors.text,
+                  ...typo.body2,
+                }}
+              >
+                Loading emergency symptoms...
+              </Text>
+            </View>
+          ) : sortedSymptoms.length === 0 ? (
+            <View
+              style={{
+                alignItems: "center",
+                paddingVertical: layout.spacing.xl,
+                paddingHorizontal: layout.spacing.sm,
+              }}
+            >
+              <Text
+                style={{
+                  color: colors.text,
+                  textAlign: "center",
+                  fontSize: typo.body1.fontSize,
+                  ...typo.body1,
+                }}
+              >
+                No emergency symptoms available
+              </Text>
+            </View>
+          ) : (
+            sortedSymptoms.map((symptom) => (
+              <EmergencySymptomCard
+                key={symptom.emergencySymptomId}
+                symptom={symptom}
+              />
+            ))
+          )}
         </View>
       </ScrollView>
-
       <View
-        style={{
-          padding: layout.spacing.sm,
-          paddingBottom: layout.spacing.lg,
-        }}
+        style={{ padding: layout.spacing.sm, paddingBottom: layout.spacing.lg }}
       >
         <Button
           mode="contained"
@@ -172,9 +143,11 @@ export default function EmergencyGuidelinesScreen() {
             color: colors.textInverse,
             fontWeight: "600",
             marginLeft: layout.spacing.sm,
+            fontSize: typo.button.fontSize,
             ...typo.button,
           }}
-          // icon="phone"
+          icon="phone"
+          disabled={isActionQueued}
         >
           Call Your Doctor
         </Button>

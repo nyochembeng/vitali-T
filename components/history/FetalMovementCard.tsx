@@ -1,23 +1,35 @@
+import { useTheme } from "@/lib/hooks/useTheme";
+import { FetalMovement } from "@/lib/schemas/fetalMovementSchema";
+import { MaterialIcons } from "@expo/vector-icons";
 import React from "react";
 import { View } from "react-native";
-import { Text, Card } from "react-native-paper";
-import { MaterialIcons } from "@expo/vector-icons";
-import { useTheme } from "@/lib/hooks/useTheme";
-
-interface FetalMovementEntry {
-  id: string;
-  date: string;
-  time: string;
-  kickCount: number;
-  notes: string;
-}
+import { Card, Text } from "react-native-paper";
 
 interface FetalMovementCardProps {
-  entry: FetalMovementEntry;
+  entry: FetalMovement;
 }
 
 const FetalMovementCard: React.FC<FetalMovementCardProps> = ({ entry }) => {
   const { colors, typo, layout } = useTheme();
+
+  const formatDate = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const today = new Date();
+    const isToday = date.toDateString() === today.toDateString();
+    const isYesterday =
+      date.toDateString() ===
+      new Date(today.setDate(today.getDate() - 1)).toDateString();
+    return isToday
+      ? "Today"
+      : isYesterday
+        ? "Yesterday"
+        : date.toLocaleDateString();
+  };
+
+  const formatTime = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  };
 
   return (
     <Card
@@ -35,11 +47,7 @@ const FetalMovementCard: React.FC<FetalMovementCardProps> = ({ entry }) => {
       }}
     >
       <Card.Content>
-        <View
-          style={{
-            marginBottom: layout.spacing.sm,
-          }}
-        >
+        <View style={{ marginBottom: layout.spacing.sm }}>
           <View
             style={{
               flexDirection: "row",
@@ -62,7 +70,7 @@ const FetalMovementCard: React.FC<FetalMovementCardProps> = ({ entry }) => {
                   ...typo.body2,
                 }}
               >
-                {entry.date}
+                {formatDate(entry.timestamp)}
               </Text>
             </View>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -80,7 +88,7 @@ const FetalMovementCard: React.FC<FetalMovementCardProps> = ({ entry }) => {
                   ...typo.body2,
                 }}
               >
-                {entry.time}
+                {formatTime(entry.timestamp)}
               </Text>
             </View>
           </View>
@@ -116,16 +124,18 @@ const FetalMovementCard: React.FC<FetalMovementCardProps> = ({ entry }) => {
           </Text>
         </View>
 
-        <Text
-          style={{
-            fontSize: typo.body2.fontSize,
-            color: colors.text,
-            lineHeight: typo.body2.lineHeight,
-            ...typo.body2,
-          }}
-        >
-          {entry.notes}
-        </Text>
+        {entry.notes && (
+          <Text
+            style={{
+              fontSize: typo.body2.fontSize,
+              color: colors.text,
+              lineHeight: typo.body2.lineHeight,
+              ...typo.body2,
+            }}
+          >
+            {entry.notes}
+          </Text>
+        )}
       </Card.Content>
     </Card>
   );

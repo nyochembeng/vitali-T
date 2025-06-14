@@ -1,16 +1,22 @@
+import { useTheme } from "@/lib/hooks/useTheme";
+import { EmergencySymptom } from "@/lib/schemas/emergencySymptomSchema";
+import { MaterialIcons } from "@expo/vector-icons";
 import React from "react";
 import { View } from "react-native";
 import { Surface, Text } from "react-native-paper";
-import { MaterialIcons } from "@expo/vector-icons";
-import { useTheme } from "@/lib/hooks/useTheme";
 
-interface EmergencySymptom {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-  severity: "high" | "medium" | "low";
-}
+// Map vital sign types to MaterialIcons and human-readable titles
+const SYMPTOM_INFO: Record<
+  string,
+  { icon: keyof typeof MaterialIcons.glyphMap; title: string }
+> = {
+  bp: { icon: "warning", title: "Sudden High Blood Pressure" },
+  fhr: { icon: "child-care", title: "Decreased Fetal Movement" },
+  mhr: { icon: "psychology", title: "Severe or Persistent Headaches" },
+  rr: { icon: "air", title: "Shortness of Breath" },
+  bt: { icon: "thermostat", title: "High Fever" },
+  other: { icon: "warning", title: "Other Emergency Symptom" },
+};
 
 interface EmergencySymptomCardProps {
   symptom: EmergencySymptom;
@@ -32,6 +38,7 @@ export const EmergencySymptomCard: React.FC<EmergencySymptomCardProps> = ({
 }) => {
   const { colors, typo, layout } = useTheme();
   const iconColor = getIconColor(symptom.severity, colors);
+  const { icon, title } = SYMPTOM_INFO[symptom.type] || SYMPTOM_INFO["other"];
 
   return (
     <Surface
@@ -56,7 +63,7 @@ export const EmergencySymptomCard: React.FC<EmergencySymptomCardProps> = ({
           marginRight: layout.spacing.sm,
         }}
       >
-        <MaterialIcons name={symptom.icon as any} size={24} color={iconColor} />
+        <MaterialIcons name={icon} size={24} color={iconColor} />
       </View>
       <View style={{ flex: 1 }}>
         <Text
@@ -68,7 +75,7 @@ export const EmergencySymptomCard: React.FC<EmergencySymptomCardProps> = ({
             ...typo.h6,
           }}
         >
-          {symptom.title}
+          {title}
         </Text>
         <Text
           variant="bodyMedium"

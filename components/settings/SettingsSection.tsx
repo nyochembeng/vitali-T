@@ -1,7 +1,7 @@
 import React from "react";
 import { View } from "react-native";
 import { Text } from "react-native-paper";
-import { SettingsItem } from "./SettingsItem";
+import { SettingsItem } from "@/components/settings/SettingsItem";
 import { useTheme } from "@/lib/hooks/useTheme";
 
 interface SettingsItemType {
@@ -31,15 +31,13 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
 
   return (
     <View
-      style={{
-        marginBottom: layout.spacing.lg,
-        padding: layout.spacing.md,
-      }}
+      style={{ marginBottom: layout.spacing.lg, padding: layout.spacing.md }}
     >
       {section.title && (
         <Text
           style={{
-            ...typo.h5,
+            fontSize: typo.title.fontSize,
+            fontWeight: "600",
             color: colors.text,
             marginHorizontal: layout.spacing.md,
             marginBottom: layout.spacing.sm,

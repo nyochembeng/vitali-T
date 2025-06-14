@@ -1,18 +1,24 @@
+import { useTheme } from "@/lib/hooks/useTheme";
+import { VitalSignEducation } from "@/lib/schemas/vitalSignEducationSchema";
+import { MaterialIcons } from "@expo/vector-icons";
 import React from "react";
 import { TouchableOpacity, View } from "react-native";
 import { Surface, Text } from "react-native-paper";
-import { MaterialIcons } from "@expo/vector-icons";
-import { useTheme } from "@/lib/hooks/useTheme";
 
-interface VitalSign {
-  id: string;
-  title: string;
-  subtitle: string;
-  icon: string;
-}
+// Map vital sign types to MaterialIcons
+const VITAL_SIGN_ICONS: Record<string, keyof typeof MaterialIcons.glyphMap> = {
+  fhr: "favorite",
+  mhr: "person",
+  bp: "add-box",
+  spo2: "healing",
+  bt: "edit",
+  rr: "air",
+  hrv: "show-chart",
+  si: "favorite-border",
+};
 
 interface VitalSignCardProps {
-  vitalSign: VitalSign;
+  vitalSign: VitalSignEducation;
   onPress: () => void;
 }
 
@@ -25,9 +31,7 @@ export const VitalSignCard: React.FC<VitalSignCardProps> = ({
   return (
     <TouchableOpacity
       onPress={onPress}
-      style={{
-        marginBottom: layout.spacing.sm,
-      }}
+      style={{ marginBottom: layout.spacing.sm }}
     >
       <Surface
         style={{
@@ -51,7 +55,7 @@ export const VitalSignCard: React.FC<VitalSignCardProps> = ({
           }}
         >
           <MaterialIcons
-            name={vitalSign.icon as any}
+            name={VITAL_SIGN_ICONS[vitalSign.type] || "help-outline"}
             size={24}
             color={colors.primary}
           />

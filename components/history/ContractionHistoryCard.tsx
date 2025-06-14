@@ -1,27 +1,37 @@
+import { useTheme } from "@/lib/hooks/useTheme";
+import { Contraction } from "@/lib/schemas/contractionSchema";
+import { MaterialIcons } from "@expo/vector-icons";
 import React from "react";
 import { View } from "react-native";
-import { Text, Card } from "react-native-paper";
-import { MaterialIcons } from "@expo/vector-icons";
-import { useTheme } from "@/lib/hooks/useTheme";
-
-interface ContractionEntry {
-  id: string;
-  date: string;
-  timeRange: string;
-  duration: string;
-  avgContraction: string;
-  interval: string;
-  notes: string;
-}
+import { Card, Text } from "react-native-paper";
 
 interface ContractionHistoryCardProps {
-  entry: ContractionEntry;
+  entry: Contraction;
 }
 
 const ContractionHistoryCard: React.FC<ContractionHistoryCardProps> = ({
   entry,
 }) => {
   const { colors, typo, layout } = useTheme();
+
+  const formatDate = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const today = new Date();
+    const isToday = date.toDateString() === today.toDateString();
+    const isYesterday =
+      date.toDateString() ===
+      new Date(today.setDate(today.getDate() - 1)).toDateString();
+    return isToday
+      ? "Today"
+      : isYesterday
+        ? "Yesterday"
+        : date.toLocaleDateString();
+  };
+
+  const formatTimeRange = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  };
 
   return (
     <Card
@@ -61,7 +71,7 @@ const ContractionHistoryCard: React.FC<ContractionHistoryCardProps> = ({
                 ...typo.body2,
               }}
             >
-              {entry.date}
+              {formatDate(entry.timestamp)}
             </Text>
           </View>
           <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -79,16 +89,12 @@ const ContractionHistoryCard: React.FC<ContractionHistoryCardProps> = ({
                 ...typo.body2,
               }}
             >
-              {entry.timeRange}
+              {formatTimeRange(entry.timestamp)}
             </Text>
           </View>
         </View>
 
-        <View
-          style={{
-            marginBottom: layout.spacing.sm,
-          }}
-        >
+        <View style={{ marginBottom: layout.spacing.sm }}>
           <View
             style={{
               flexDirection: "row",
@@ -135,36 +141,6 @@ const ContractionHistoryCard: React.FC<ContractionHistoryCardProps> = ({
                 ...typo.body2,
               }}
             >
-              Avg. Contraction
-            </Text>
-            <Text
-              style={{
-                fontSize: typo.body2.fontSize,
-                color: colors.primary,
-                fontWeight: "600",
-                ...typo.body2,
-              }}
-            >
-              {entry.avgContraction}
-            </Text>
-          </View>
-
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              paddingVertical: layout.spacing.xs,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: typo.body2.fontSize,
-                color: colors.text,
-                fontWeight: "500",
-                ...typo.body2,
-              }}
-            >
               Interval
             </Text>
             <Text
@@ -180,34 +156,31 @@ const ContractionHistoryCard: React.FC<ContractionHistoryCardProps> = ({
           </View>
         </View>
 
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "flex-start",
-          }}
-        >
-          <Text
-            style={{
-              fontSize: typo.body2.fontSize,
-              color: colors.text,
-              fontWeight: "500",
-              ...typo.body2,
-            }}
-          >
-            Notes:{" "}
-          </Text>
-          <Text
-            style={{
-              fontSize: typo.body2.fontSize,
-              color: colors.text,
-              flex: 1,
-              marginLeft: layout.spacing.xs,
-              ...typo.body2,
-            }}
-          >
-            {entry.notes}
-          </Text>
-        </View>
+        {entry.notes && (
+          <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
+            <Text
+              style={{
+                fontSize: typo.body2.fontSize,
+                color: colors.text,
+                fontWeight: "500",
+                ...typo.body2,
+              }}
+            >
+              Notes:{" "}
+            </Text>
+            <Text
+              style={{
+                fontSize: typo.body2.fontSize,
+                color: colors.text,
+                flex: 1,
+                marginLeft: layout.spacing.xs,
+                ...typo.body2,
+              }}
+            >
+              {entry.notes}
+            </Text>
+          </View>
+        )}
       </Card.Content>
     </Card>
   );

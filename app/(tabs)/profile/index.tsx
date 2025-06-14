@@ -1,138 +1,266 @@
 import React, { useState } from "react";
 import {
-  View,
-  ScrollView,
+  Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
-  Alert,
+  ScrollView,
+  View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
-  Text,
-  TextInput,
   Button,
-  Avatar,
-  Menu,
   Divider,
   IconButton,
+  Menu,
+  Text,
+  TextInput,
 } from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
-import * as ImagePicker from "expo-image-picker";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
-import CustomAppBar from "@/components/utils/CustomAppBar";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import * as ImagePicker from "expo-image-picker";
+import { z } from "zod";
+
 import { useTheme } from "@/lib/hooks/useTheme";
+import { useAuth } from "@/lib/hooks/useAuth";
+import CustomAppBar from "@/components/utils/CustomAppBar";
+import { profileSchema } from "@/lib/schemas/profileSchema";
+import { userSchema } from "@/lib/schemas/userSchema";
+import {
+  useGetProfileQuery,
+  useUpdateProfileMutation,
+  useUploadProfileImageMutation,
+} from "@/lib/features/profile/profileService";
+import {
+  useGetUserProfileQuery,
+  useUpdateUserProfileMutation,
+} from "@/lib/features/user/userService";
+import { Typo } from "@/lib/constants/Typo";
 
-interface ProfileData {
-  fullName: string;
-  email: string;
-  dateOfBirth: Date | null;
-  height: string;
-  heightUnit: "cm" | "ft";
-  weight: string;
-  weightUnit: "kg" | "lbs";
-  phoneNumber: string;
-  conceivedDate: Date | null;
-  dueDate: Date | null;
-  profileImage?: string;
-}
+// Combine schemas, excluding password
+const combinedProfileSchema = z.object({
+  userId: userSchema.shape.userId,
+  fullname: userSchema.shape.fullname,
+  email: userSchema.shape.email,
+  dateOfBirth: profileSchema.shape.dateOfBirth,
+  height: profileSchema.shape.height,
+  heightUnit: profileSchema.shape.heightUnit,
+  weight: profileSchema.shape.weight,
+  weightUnit: profileSchema.shape.weightUnit,
+  phoneNumber: profileSchema.shape.phoneNumber,
+  countryCode: profileSchema.shape.countryCode,
+  conceivedDate: profileSchema.shape.conceivedDate,
+  dueDate: profileSchema.shape.dueDate,
+  profileImage: profileSchema.shape.profileImage,
+});
 
-const initialData: ProfileData = {
-  fullName: "John Doe",
-  email: "john.doe@example.com",
-  dateOfBirth: new Date("1990-01-01"),
-  height: "175",
-  heightUnit: "cm",
-  weight: "75",
-  weightUnit: "kg",
-  phoneNumber: "1234567890",
-  conceivedDate: null,
-  dueDate: null,
-  profileImage: undefined,
-};
+type CombinedProfile = z.infer<typeof combinedProfileSchema>;
 
 export default function ProfileSettingsScreen() {
-  const { colors, typo, layout } = useTheme();
   const router = useRouter();
+  const { colors, typo, layout } = useTheme();
+  const { user, isActionQueued } = useAuth();
+  const { data: userData } = useGetUserProfileQuery(user?.userId as string);
+  const { data: profileData } = useGetProfileQuery(user?.userId as string);
+  const [updateUser, { isLoading: isUpdatingUser }] =
+    useUpdateUserProfileMutation();
+  const [updateProfile, { isLoading: isUpdatingProfile }] =
+    useUpdateProfileMutation();
+  const [uploadProfileImage, { isLoading: isUploadingImage }] =
+    useUploadProfileImageMutation();
 
-  const [profileData, setProfileData] = useState<ProfileData>({
-    fullName: initialData?.fullName || "",
-    email: initialData?.email || "",
-    dateOfBirth: initialData?.dateOfBirth || null,
-    height: initialData?.height || "",
-    heightUnit: initialData?.heightUnit || "cm",
-    weight: initialData?.weight || "",
-    weightUnit: initialData?.weightUnit || "kg",
-    phoneNumber: initialData?.phoneNumber || "",
-    conceivedDate: initialData?.conceivedDate || null,
-    dueDate: initialData?.dueDate || null,
-    profileImage: initialData?.profileImage,
+  const [pickerState, setPickerState] = useState({
+    datePicker: {
+      field: null as "dateOfBirth" | "conceivedDate" | "dueDate" | null,
+      show: false,
+    },
+    heightMenuVisible: false,
+    weightMenuVisible: false,
   });
 
-  const [showDatePicker, setShowDatePicker] = useState<{
-    field: "dateOfBirth" | "conceivedDate" | "dueDate" | null;
-    show: boolean;
-  }>({ field: null, show: false });
+  const {
+    control,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<CombinedProfile>({
+    resolver: zodResolver(combinedProfileSchema),
+    defaultValues: {
+      userId: user?.userId as string,
+      fullname: userData?.fullname || "",
+      email: userData?.email || "",
+      dateOfBirth: profileData?.dateOfBirth
+        ? new Date(profileData.dateOfBirth)
+        : undefined,
+      height: profileData?.height || "",
+      heightUnit: profileData?.heightUnit || "cm",
+      weight: profileData?.weight || "",
+      weightUnit: profileData?.weightUnit || "kg",
+      phoneNumber: profileData?.phoneNumber || "",
+      countryCode: profileData?.countryCode || "+237",
+      conceivedDate: profileData?.conceivedDate
+        ? new Date(profileData.conceivedDate)
+        : undefined,
+      dueDate: profileData?.dueDate ? new Date(profileData.dueDate) : undefined,
+      profileImage: profileData?.profileImage || undefined,
+    },
+  });
 
-  const [heightMenuVisible, setHeightMenuVisible] = useState(false);
-  const [weightMenuVisible, setWeightMenuVisible] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const inputStyle = {
+    backgroundColor: colors.card,
+    fontSize: typo.body1.fontSize,
+    ...typo.body1,
+  };
 
-  const handleImagePicker = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  const outlineStyle = {
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: layout.borderRadius.medium,
+  };
 
+  const labelStyle = {
+    ...typo.label,
+    color: colors.text,
+    fontWeight: Typo.label.fontWeight,
+  };
+
+  const errorStyle = {
+    color: colors.error,
+    ...typo.caption,
+  };
+
+  const handleImagePicker = async (type: "camera" | "library") => {
+    if (isActionQueued) return;
+
+    const permissionFn =
+      type === "camera"
+        ? ImagePicker.requestCameraPermissionsAsync
+        : ImagePicker.requestMediaLibraryPermissionsAsync;
+    const { status } = await permissionFn();
     if (status !== "granted") {
       Alert.alert(
-        "Permission needed",
-        "Camera roll permission is required to change profile photo"
+        "Permission Denied",
+        `Please allow ${type} access in settings.`
       );
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
+    const pickerFn =
+      type === "camera"
+        ? ImagePicker.launchCameraAsync
+        : ImagePicker.launchImageLibraryAsync;
+    const result = await pickerFn({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
+      base64: true,
     });
 
-    if (!result.canceled && result.assets[0]) {
-      setProfileData((prev) => ({
-        ...prev,
-        profileImage: result.assets[0].uri,
-      }));
+    if (!result.canceled && result.assets[0].base64) {
+      setValue("profileImage", result.assets[0].base64);
     }
-  };
-
-  const handleDateChange = (event: any, selectedDate?: Date) => {
-    if (selectedDate && showDatePicker.field) {
-      setProfileData((prev) => ({
-        ...prev,
-        [showDatePicker.field!]: selectedDate,
-      }));
-    }
-    setShowDatePicker({ field: null, show: false });
   };
 
   const showDatePickerFor = (
     field: "dateOfBirth" | "conceivedDate" | "dueDate"
   ) => {
-    setShowDatePicker({ field, show: true });
-  };
-
-  const formatDate = (date: Date | null) => {
-    if (!date) return "Select date";
-    return date.toLocaleDateString();
-  };
-
-  const handleSave = async () => {
-    setLoading(true);
-    try {
-      console.log("Profile data saved:", profileData);
-    } catch (error) {
-      Alert.alert("Error", "Failed to save profile changes" + error);
-    } finally {
-      setLoading(false);
+    if (!isActionQueued) {
+      setPickerState((prev) => ({
+        ...prev,
+        datePicker: { field, show: true },
+      }));
     }
+  };
+
+  const handleDateChange =
+    (field: "dateOfBirth" | "conceivedDate" | "dueDate") =>
+    (event: any, selectedDate?: Date) => {
+      if (selectedDate) setValue(field, selectedDate);
+      setPickerState((prev) => ({
+        ...prev,
+        datePicker: { field: null, show: false },
+      }));
+    };
+
+  const formatDate = (date: Date | undefined) =>
+    date?.toLocaleDateString() || "Select date";
+
+  const onSubmit = async (data: CombinedProfile) => {
+    Alert.alert("Confirm Changes", "Save changes to your profile?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Save",
+        onPress: async () => {
+          try {
+            // Update user data
+            const userResult = await updateUser({
+              userId: user?.userId as string,
+              data: {
+                fullname: data.fullname as string,
+                email: data.email,
+              },
+            }).unwrap();
+
+            if ("queued" in userResult && userResult.queued) {
+              return; // Queued actions handled by Toast and SyncStatus
+            }
+
+            // Update profile data
+            const profileUpdates = {
+              dateOfBirth: data.dateOfBirth,
+              height: data.height,
+              heightUnit: data.heightUnit,
+              weight: data.weight,
+              weightUnit: data.weightUnit,
+              phoneNumber: data.phoneNumber,
+              countryCode: data.countryCode,
+              conceivedDate: data.conceivedDate,
+              dueDate: data.dueDate,
+            };
+            const profileResult = await updateProfile({
+              userId: user?.userId as string,
+              data: profileUpdates,
+            }).unwrap();
+
+            if ("queued" in profileResult && profileResult.queued) {
+              return; // Queued actions handled by Toast and SyncStatus
+            }
+
+            // Upload profile image if changed
+            if (
+              data.profileImage &&
+              data.profileImage !== profileData?.profileImage
+            ) {
+              const imageResult = await uploadProfileImage({
+                userId: user?.userId as string,
+                image: data.profileImage,
+              }).unwrap();
+
+              if ("queued" in imageResult && imageResult.queued) {
+                return; // Queued actions handled by Toast and SyncStatus
+              }
+            }
+
+            Alert.alert("Success", "Profile updated successfully!", [
+              { text: "OK" },
+            ]);
+          } catch (error: any) {
+            if (error.message === "ACTION_QUEUED") {
+              return; // Queued actions handled by Toast and SyncStatus
+            }
+            Alert.alert(
+              "Error",
+              error?.data?.message || "Failed to update profile.",
+              [{ text: "OK" }]
+            );
+          }
+        },
+      },
+    ]);
   };
 
   const handleDeleteAccount = () => {
@@ -144,21 +272,14 @@ export default function ProfileSettingsScreen() {
         {
           text: "Delete",
           style: "destructive",
-          onPress: () => {
-            router.push("/profile/delete-account");
-          },
+          onPress: () => router.push("/profile/delete-account"),
         },
       ]
     );
   };
 
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: colors.background,
-      }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <CustomAppBar
         title="Profile Settings"
         rightAction="more"
@@ -167,31 +288,22 @@ export default function ProfileSettingsScreen() {
           {
             title: "Notifications",
             icon: "bell",
-            onPress: () => {
-              router.push("/notifications");
-            },
+            onPress: () => router.push("/notifications"),
           },
           {
             title: "Settings",
             icon: "shield",
-            onPress: () => {
-              router.push("/settings");
-            },
+            onPress: () => router.push("/settings"),
           },
           {
             title: "Help",
             icon: "help-circle",
-            onPress: () => {
-              router.push("/help");
-            },
+            onPress: () => router.push("/help"),
           },
           {
             title: "Logout",
             icon: "logout",
-            onPress: () => {
-              console.log("User logged out");
-              router.push("/auth/login");
-            },
+            onPress: () => router.replace("/auth/login"),
           },
           {
             title: "Delete Account",
@@ -200,13 +312,11 @@ export default function ProfileSettingsScreen() {
           },
         ]}
       />
-
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
       >
         <ScrollView
-          style={{ flex: 1 }}
           contentContainerStyle={{
             paddingHorizontal: layout.spacing.lg,
             paddingTop: layout.spacing.md,
@@ -214,7 +324,6 @@ export default function ProfileSettingsScreen() {
           }}
           showsVerticalScrollIndicator={false}
         >
-          {/* Profile Photo */}
           <View
             style={{
               alignItems: "center",
@@ -222,383 +331,425 @@ export default function ProfileSettingsScreen() {
               position: "relative",
             }}
           >
-            {/* <Avatar.Image
-              size={layout.spacing.xl * 2.5} // 80px approximation
-              source={
-                profileData.profileImage
-                  ? { uri: profileData.profileImage }
-                  : require("./default-avatar.png")
-              }
-              style={{ backgroundColor: colors.card }}
-            /> */}
+            {watch("profileImage") ? (
+              <Image
+                source={{
+                  uri: `data:image/jpeg;base64,${watch("profileImage")}`,
+                }}
+                style={{
+                  width: layout.spacing.xl * 2.5,
+                  height: layout.spacing.xl * 2.5,
+                  borderRadius: layout.spacing.xl * 1.25,
+                  backgroundColor: colors.card,
+                }}
+              />
+            ) : (
+              <View
+                style={{
+                  width: layout.spacing.xl * 2.5,
+                  height: layout.spacing.xl * 2.5,
+                  borderRadius: layout.spacing.xl * 1.25,
+                  backgroundColor: colors.card,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text style={{ color: colors.text, ...typo.body2 }}>
+                  No Image
+                </Text>
+              </View>
+            )}
             <IconButton
               icon="camera"
               mode="contained"
               size={20}
               style={{
                 position: "absolute",
-                // bottom: layout.spacing.md,
-                // right: layout.spacing.xl * 1.25, // Approx 40% of screen
+                bottom: 0,
+                right: layout.spacing.sm,
                 backgroundColor: colors.primary,
               }}
-              onPress={handleImagePicker}
+              iconColor="#fff"
+              onPress={() => handleImagePicker("library")}
+              disabled={isActionQueued}
             />
             <Text
-              style={{
-                ...typo.body2,
-                color: colors.text,
-                marginTop: layout.spacing.sm,
-              }}
+              style={{ color: colors.text, marginTop: 10, ...typo.body2 }}
+              onPress={() => !isActionQueued && handleImagePicker("library")}
             >
               Change Photo
             </Text>
           </View>
-
-          <View
-            style={{
-              gap: layout.spacing.md,
-              paddingBottom: layout.spacing.lg,
-            }}
-          >
+          <View style={{ gap: layout.spacing.md }}>
             {/* Full Name */}
-            <View
-              style={{
-                gap: layout.spacing.sm,
-              }}
-            >
-              <Text
-                style={{
-                  ...typo.label,
-                  color: colors.text,
-                  fontWeight: "600",
-                }}
-              >
-                Full Name
-              </Text>
-              <TextInput
-                mode="outlined"
-                placeholder="Enter your full name"
-                value={profileData.fullName}
-                onChangeText={(text) =>
-                  setProfileData((prev) => ({ ...prev, fullName: text }))
-                }
-                style={{ backgroundColor: colors.card }}
-                outlineStyle={{
-                  borderColor: colors.border,
-                  borderWidth: 1,
-                }}
+            <View style={{ gap: layout.spacing.sm }}>
+              <Text style={labelStyle}>Full Name</Text>
+              <Controller
+                control={control}
+                name="fullname"
+                render={({ field: { onChange, value } }) => (
+                  <>
+                    <TextInput
+                      mode="outlined"
+                      placeholder="Enter your full name"
+                      value={value}
+                      onChangeText={onChange}
+                      style={inputStyle}
+                      outlineStyle={outlineStyle}
+                      disabled={isActionQueued}
+                    />
+                    {errors.fullname && (
+                      <Text style={errorStyle}>{errors.fullname.message}</Text>
+                    )}
+                  </>
+                )}
               />
             </View>
 
             {/* Email */}
-            <View
-              style={{
-                gap: layout.spacing.sm,
-              }}
-            >
-              <Text
-                style={{
-                  ...typo.label,
-                  color: colors.text,
-                  fontWeight: "600",
-                }}
-              >
-                Email Address
-              </Text>
-              <TextInput
-                mode="outlined"
-                placeholder="Enter your email"
-                value={profileData.email}
-                onChangeText={(text) =>
-                  setProfileData((prev) => ({ ...prev, email: text }))
-                }
-                keyboardType="email-address"
-                style={{ backgroundColor: colors.card }}
-                outlineStyle={{
-                  borderColor: colors.border,
-                  borderWidth: 1,
-                }}
+            <View style={{ gap: layout.spacing.sm }}>
+              <Text style={labelStyle}>Email</Text>
+              <Controller
+                control={control}
+                name="email"
+                render={({ field: { onChange, value } }) => (
+                  <>
+                    <TextInput
+                      mode="outlined"
+                      placeholder="Enter your email"
+                      value={value}
+                      onChangeText={onChange}
+                      keyboardType="email-address"
+                      style={inputStyle}
+                      outlineStyle={outlineStyle}
+                      disabled={isActionQueued}
+                    />
+                    {errors.email && (
+                      <Text style={errorStyle}>{errors.email.message}</Text>
+                    )}
+                  </>
+                )}
               />
             </View>
 
             {/* Date of Birth */}
-            <View
-              style={{
-                gap: layout.spacing.sm,
-              }}
-            >
-              <Text
-                style={{
-                  ...typo.label,
-                  color: colors.text,
-                  fontWeight: "600",
-                }}
-              >
-                Date of Birth
-              </Text>
-              <TextInput
-                mode="outlined"
-                placeholder="Select date"
-                value={formatDate(profileData.dateOfBirth)}
-                onPressIn={() => showDatePickerFor("dateOfBirth")}
-                showSoftInputOnFocus={false}
-                right={<TextInput.Icon icon="calendar" />}
-                style={{ backgroundColor: colors.card }}
-                outlineStyle={{
-                  borderColor: colors.border,
-                  borderWidth: 1,
-                }}
+            <View style={{ gap: layout.spacing.sm }}>
+              <Text style={labelStyle}>Date of Birth</Text>
+              <Controller
+                control={control}
+                name="dateOfBirth"
+                render={({ field: { value } }) => (
+                  <>
+                    <TextInput
+                      mode="outlined"
+                      placeholder="Select date"
+                      value={formatDate(value)}
+                      onPressIn={() => showDatePickerFor("dateOfBirth")}
+                      showSoftInputOnFocus={false}
+                      right={<TextInput.Icon icon="calendar" />}
+                      style={inputStyle}
+                      outlineStyle={outlineStyle}
+                      disabled={isActionQueued}
+                    />
+                    {errors.dateOfBirth && (
+                      <Text style={errorStyle}>
+                        {errors.dateOfBirth.message}
+                      </Text>
+                    )}
+                  </>
+                )}
               />
             </View>
 
             {/* Height */}
-            <View
-              style={{
-                gap: layout.spacing.sm,
-              }}
-            >
-              <Text
-                style={{
-                  ...typo.label,
-                  color: colors.text,
-                  fontWeight: "600",
-                }}
-              >
-                Height
-              </Text>
-              <View
-                style={{
-                  flexDirection: "row",
-                  gap: layout.spacing.sm,
-                }}
-              >
-                <TextInput
-                  mode="outlined"
-                  placeholder="Enter height"
-                  value={profileData.height}
-                  onChangeText={(text) =>
-                    setProfileData((prev) => ({ ...prev, height: text }))
-                  }
-                  keyboardType="numeric"
-                  style={{ flex: 1, backgroundColor: colors.card }}
-                  outlineStyle={{
-                    borderColor: colors.border,
-                    borderWidth: 1,
-                  }}
+            <View style={{ gap: layout.spacing.sm }}>
+              <Text style={labelStyle}>Height</Text>
+              <View style={{ flexDirection: "row", gap: layout.spacing.sm }}>
+                <Controller
+                  control={control}
+                  name="height"
+                  render={({ field: { onChange, value } }) => (
+                    <View style={{ flex: 1 }}>
+                      <TextInput
+                        mode="outlined"
+                        placeholder="Enter height"
+                        value={value}
+                        onChangeText={onChange}
+                        keyboardType="numeric"
+                        style={[inputStyle, { flex: 1 }]}
+                        outlineStyle={outlineStyle}
+                        disabled={isActionQueued}
+                      />
+                      {errors.height && (
+                        <Text style={errorStyle}>{errors.height.message}</Text>
+                      )}
+                    </View>
+                  )}
                 />
-                <Menu
-                  visible={heightMenuVisible}
-                  onDismiss={() => setHeightMenuVisible(false)}
-                  anchor={
-                    <Button
-                      mode="outlined"
-                      onPress={() => setHeightMenuVisible(true)}
-                      style={{
-                        borderColor: colors.border,
-                        backgroundColor: colors.card,
-                        minWidth: layout.spacing.md * 1.875, // 60px approximation
-                      }}
-                      labelStyle={{
-                        ...typo.body2,
-                        color: colors.text,
-                      }}
+                <Controller
+                  control={control}
+                  name="heightUnit"
+                  render={({ field: { onChange, value } }) => (
+                    <Menu
+                      visible={pickerState.heightMenuVisible}
+                      onDismiss={() =>
+                        setPickerState((prev) => ({
+                          ...prev,
+                          heightMenuVisible: false,
+                        }))
+                      }
+                      anchor={
+                        <Button
+                          mode="outlined"
+                          onPress={() =>
+                            !isActionQueued &&
+                            setPickerState((prev) => ({
+                              ...prev,
+                              heightMenuVisible: true,
+                            }))
+                          }
+                          style={{
+                            borderColor: colors.border,
+                            backgroundColor: colors.card,
+                            minWidth: 100,
+                          }}
+                          labelStyle={{ ...typo.body2, color: colors.text }}
+                          disabled={isActionQueued}
+                        >
+                          {value}
+                        </Button>
+                      }
                     >
-                      {profileData.heightUnit}
-                    </Button>
-                  }
-                >
-                  <Menu.Item
-                    onPress={() => {
-                      setProfileData((prev) => ({ ...prev, heightUnit: "cm" }));
-                      setHeightMenuVisible(false);
-                    }}
-                    title="cm"
-                  />
-                  <Menu.Item
-                    onPress={() => {
-                      setProfileData((prev) => ({ ...prev, heightUnit: "ft" }));
-                      setHeightMenuVisible(false);
-                    }}
-                    title="ft"
-                  />
-                </Menu>
+                      <Menu.Item
+                        onPress={() => {
+                          onChange("cm");
+                          setPickerState((prev) => ({
+                            ...prev,
+                            heightMenuVisible: false,
+                          }));
+                        }}
+                        title="cm"
+                      />
+                      <Menu.Item
+                        onPress={() => {
+                          onChange("ft");
+                          setPickerState((prev) => ({
+                            ...prev,
+                            heightMenuVisible: false,
+                          }));
+                        }}
+                        title="ft"
+                      />
+                    </Menu>
+                  )}
+                />
               </View>
             </View>
 
             {/* Weight */}
-            <View
-              style={{
-                gap: layout.spacing.sm,
-              }}
-            >
-              <Text
-                style={{
-                  ...typo.label,
-                  color: colors.text,
-                  fontWeight: "600",
-                }}
-              >
-                Weight (optional)
-              </Text>
-              <View
-                style={{
-                  flexDirection: "row",
-                  gap: layout.spacing.sm,
-                }}
-              >
-                <TextInput
-                  mode="outlined"
-                  placeholder="Enter weight"
-                  value={profileData.weight}
-                  onChangeText={(text) =>
-                    setProfileData((prev) => ({ ...prev, weight: text }))
-                  }
-                  keyboardType="numeric"
-                  style={{ flex: 1, backgroundColor: colors.card }}
-                  outlineStyle={{
-                    borderColor: colors.border,
-                    borderWidth: 1,
-                  }}
+            <View style={{ gap: layout.spacing.sm }}>
+              <Text style={labelStyle}>Weight (optional)</Text>
+              <View style={{ flexDirection: "row", gap: layout.spacing.sm }}>
+                <Controller
+                  control={control}
+                  name="weight"
+                  render={({ field: { onChange, value } }) => (
+                    <View style={{ flex: 1 }}>
+                      <TextInput
+                        mode="outlined"
+                        placeholder="Enter weight"
+                        value={value}
+                        onChangeText={onChange}
+                        keyboardType="numeric"
+                        style={[inputStyle, { flex: 1 }]}
+                        outlineStyle={outlineStyle}
+                        disabled={isActionQueued}
+                      />
+                      {errors.weight && (
+                        <Text style={errorStyle}>{errors.weight.message}</Text>
+                      )}
+                    </View>
+                  )}
                 />
-                <Menu
-                  visible={weightMenuVisible}
-                  onDismiss={() => setWeightMenuVisible(false)}
-                  anchor={
-                    <Button
-                      mode="outlined"
-                      onPress={() => setWeightMenuVisible(true)}
-                      style={{
-                        borderColor: colors.border,
-                        backgroundColor: colors.card,
-                        minWidth: layout.spacing.md * 1.875, // 60px approximation
-                      }}
-                      labelStyle={{
-                        ...typo.body2,
-                        color: colors.text,
-                      }}
+                <Controller
+                  control={control}
+                  name="weightUnit"
+                  render={({ field: { onChange, value } }) => (
+                    <Menu
+                      visible={pickerState.weightMenuVisible}
+                      onDismiss={() =>
+                        setPickerState((prev) => ({
+                          ...prev,
+                          weightMenuVisible: false,
+                        }))
+                      }
+                      anchor={
+                        <Button
+                          mode="outlined"
+                          onPress={() =>
+                            !isActionQueued &&
+                            setPickerState((prev) => ({
+                              ...prev,
+                              weightMenuVisible: true,
+                            }))
+                          }
+                          style={{
+                            borderColor: colors.border,
+                            backgroundColor: colors.card,
+                            minWidth: 100,
+                          }}
+                          labelStyle={{ ...typo.body2, color: colors.text }}
+                          disabled={isActionQueued}
+                        >
+                          {value}
+                        </Button>
+                      }
                     >
-                      {profileData.weightUnit}
-                    </Button>
-                  }
-                >
-                  <Menu.Item
-                    onPress={() => {
-                      setProfileData((prev) => ({ ...prev, weightUnit: "kg" }));
-                      setWeightMenuVisible(false);
-                    }}
-                    title="kg"
-                  />
-                  <Menu.Item
-                    onPress={() => {
-                      setProfileData((prev) => ({
-                        ...prev,
-                        weightUnit: "lbs",
-                      }));
-                      setWeightMenuVisible(false);
-                    }}
-                    title="lbs"
-                  />
-                </Menu>
+                      <Menu.Item
+                        onPress={() => {
+                          onChange("kg");
+                          setPickerState((prev) => ({
+                            ...prev,
+                            weightMenuVisible: false,
+                          }));
+                        }}
+                        title="kg"
+                      />
+                      <Menu.Item
+                        onPress={() => {
+                          onChange("lbs");
+                          setPickerState((prev) => ({
+                            ...prev,
+                            weightMenuVisible: false,
+                          }));
+                        }}
+                        title="lbs"
+                      />
+                    </Menu>
+                  )}
+                />
               </View>
             </View>
 
             {/* Phone Number */}
-            <View
-              style={{
-                gap: layout.spacing.sm,
-              }}
-            >
-              <Text
-                style={{
-                  ...typo.label,
-                  color: colors.text,
-                  fontWeight: "600",
-                }}
-              >
-                Telephone Number
-              </Text>
-              <TextInput
-                mode="outlined"
-                placeholder="Enter phone number"
-                value={profileData.phoneNumber}
-                onChangeText={(text) =>
-                  setProfileData((prev) => ({ ...prev, phoneNumber: text }))
-                }
-                keyboardType="phone-pad"
-                style={{ backgroundColor: colors.card }}
-                outlineStyle={{
-                  borderColor: colors.border,
-                  borderWidth: 1,
-                }}
-              />
+            <View style={{ gap: layout.spacing.sm }}>
+              <Text style={labelStyle}>Phone Number</Text>
+              <View style={{ flexDirection: "row", gap: layout.spacing.sm }}>
+                <Controller
+                  control={control}
+                  name="countryCode"
+                  render={({ field: { onChange, value } }) => (
+                    <View>
+                      <TextInput
+                        mode="outlined"
+                        placeholder="+1"
+                        value={value}
+                        onChangeText={onChange}
+                        style={[inputStyle, { width: layout.spacing.xl * 2 }]}
+                        outlineStyle={outlineStyle}
+                        disabled={isActionQueued}
+                      />
+                      {errors.countryCode && (
+                        <Text style={errorStyle}>
+                          {errors.countryCode.message}
+                        </Text>
+                      )}
+                    </View>
+                  )}
+                />
+                <Controller
+                  control={control}
+                  name="phoneNumber"
+                  render={({ field: { onChange, value } }) => (
+                    <View style={{ flex: 1 }}>
+                      <TextInput
+                        mode="outlined"
+                        placeholder="Enter phone number"
+                        value={value}
+                        onChangeText={onChange}
+                        keyboardType="phone-pad"
+                        style={[inputStyle, { flex: 1 }]}
+                        outlineStyle={outlineStyle}
+                        disabled={isActionQueued}
+                      />
+                      {errors.phoneNumber && (
+                        <Text style={errorStyle}>
+                          {errors.phoneNumber.message}
+                        </Text>
+                      )}
+                    </View>
+                  )}
+                />
+              </View>
             </View>
 
             {/* Conceived Date */}
-            <View
-              style={{
-                gap: layout.spacing.sm,
-              }}
-            >
-              <Text
-                style={{
-                  ...typo.label,
-                  color: colors.text,
-                  fontWeight: "600",
-                }}
-              >
-                Conceived Date
-              </Text>
-              <TextInput
-                mode="outlined"
-                placeholder="Select date"
-                value={formatDate(profileData.conceivedDate)}
-                onPressIn={() => showDatePickerFor("conceivedDate")}
-                showSoftInputOnFocus={false}
-                right={<TextInput.Icon icon="calendar" />}
-                style={{ backgroundColor: colors.card }}
-                outlineStyle={{
-                  borderColor: colors.border,
-                  borderWidth: 1,
-                }}
+            <View style={{ gap: layout.spacing.sm }}>
+              <Text style={labelStyle}>Conceived Date</Text>
+              <Controller
+                control={control}
+                name="conceivedDate"
+                render={({ field: { value } }) => (
+                  <>
+                    <TextInput
+                      mode="outlined"
+                      placeholder="Select date"
+                      value={formatDate(value)}
+                      onPressIn={() => showDatePickerFor("conceivedDate")}
+                      showSoftInputOnFocus={false}
+                      right={<TextInput.Icon icon="calendar" />}
+                      style={inputStyle}
+                      outlineStyle={outlineStyle}
+                      disabled={isActionQueued}
+                    />
+                    {errors.conceivedDate && (
+                      <Text style={errorStyle}>
+                        {errors.conceivedDate.message}
+                      </Text>
+                    )}
+                  </>
+                )}
               />
             </View>
 
             {/* Due Date */}
-            <View
-              style={{
-                gap: layout.spacing.sm,
-              }}
-            >
-              <Text
-                style={{
-                  ...typo.label,
-                  color: colors.text,
-                  fontWeight: "600",
-                }}
-              >
-                Due Date (EDD)
-              </Text>
-              <TextInput
-                mode="outlined"
-                placeholder="Select date"
-                value={formatDate(profileData.dueDate)}
-                onPressIn={() => showDatePickerFor("dueDate")}
-                showSoftInputOnFocus={false}
-                right={<TextInput.Icon icon="calendar" />}
-                style={{ backgroundColor: colors.card }}
-                outlineStyle={{
-                  borderColor: colors.border,
-                  borderWidth: 1,
-                }}
+            <View style={{ gap: layout.spacing.sm }}>
+              <Text style={labelStyle}>Due Date (EDD)</Text>
+              <Controller
+                control={control}
+                name="dueDate"
+                render={({ field: { value } }) => (
+                  <>
+                    <TextInput
+                      mode="outlined"
+                      placeholder="Select date"
+                      value={formatDate(value)}
+                      onPressIn={() => showDatePickerFor("dueDate")}
+                      showSoftInputOnFocus={false}
+                      right={<TextInput.Icon icon="calendar" />}
+                      style={inputStyle}
+                      outlineStyle={outlineStyle}
+                      disabled={isActionQueued}
+                    />
+                    {errors.dueDate && (
+                      <Text style={errorStyle}>{errors.dueDate.message}</Text>
+                    )}
+                  </>
+                )}
               />
             </View>
 
             {/* Save Button */}
             <Button
               mode="contained"
-              onPress={handleSave}
-              loading={loading}
-              disabled={loading}
+              onPress={handleSubmit(onSubmit)}
+              loading={isUpdatingUser || isUpdatingProfile || isUploadingImage}
+              disabled={
+                isUpdatingUser ||
+                isUpdatingProfile ||
+                isUploadingImage ||
+                isActionQueued
+              }
               style={{
                 backgroundColor: colors.primary,
                 marginTop: layout.spacing.sm,
@@ -627,9 +778,8 @@ export default function ProfileSettingsScreen() {
               icon="delete"
               onPress={handleDeleteAccount}
               textColor={colors.error}
-              style={{
-                alignSelf: "center",
-              }}
+              style={{ alignSelf: "center" }}
+              disabled={isActionQueued}
             >
               Delete Account
             </Button>
@@ -638,12 +788,18 @@ export default function ProfileSettingsScreen() {
       </KeyboardAvoidingView>
 
       {/* Date Picker */}
-      {showDatePicker.show && (
-        <DateTimePicker
-          value={profileData[showDatePicker.field!] || new Date()}
-          mode="date"
-          display="default"
-          onChange={handleDateChange}
+      {pickerState.datePicker.show && (
+        <Controller
+          control={control}
+          name={pickerState.datePicker.field!}
+          render={({ field: { value } }) => (
+            <DateTimePicker
+              value={value || new Date()}
+              mode="date"
+              display="default"
+              onChange={handleDateChange(pickerState.datePicker.field!)}
+            />
+          )}
         />
       )}
     </SafeAreaView>

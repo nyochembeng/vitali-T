@@ -1,90 +1,148 @@
 import ContractionHistoryCard from "@/components/history/ContractionHistoryCard";
-import ContractionOverviewCard from "@/components/history/ContractionOverviewCard";
 import CustomAppBar from "@/components/utils/CustomAppBar";
 import FilterTabs from "@/components/utils/FilterTabs";
+import { useTheme } from "@/lib/hooks/useTheme";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { Contraction } from "@/lib/schemas/contractionSchema";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { FlatList, SafeAreaView, View } from "react-native";
-import { Button } from "react-native-paper";
-import { useTheme } from "@/lib/hooks/useTheme";
-
-interface ContractionOverview {
-  averageInterval: string;
-  totalContractions: number;
-}
-
-interface ContractionEntry {
-  id: string;
-  date: string;
-  timeRange: string;
-  duration: string;
-  avgContraction: string;
-  interval: string;
-  notes: string;
-}
+import { Button, Text } from "react-native-paper";
+import { useGetContractionsQuery } from "@/lib/features/contractions/contractionsService";
 
 export default function ContractionHistoryScreen() {
   const [selectedFilter, setSelectedFilter] = useState<string>("All Time");
   const router = useRouter();
   const { colors, typo, layout } = useTheme();
+  const { user, isActionQueued } = useAuth();
+  const {
+    data: contractions = [],
+    isLoading,
+    isFetching,
+  } = useGetContractionsQuery(user?.userId as string, {
+    skip: !user?.userId,
+  });
 
   const filterOptions = ["All Time", "Today", "Yesterday", "Last Week"];
 
-  const todaysOverview: ContractionOverview = {
-    averageInterval: "3.5 min",
-    totalContractions: 12,
+  const today = new Date();
+  const todaysContractions = contractions.filter((contraction) => {
+    const contractionDate = new Date(contraction.timestamp);
+    return contractionDate.toDateString() === today.toDateString();
+  });
+
+  const todaysOverview = {
+    averageInterval: todaysContractions.length
+      ? (() => {
+          const totalSeconds = todaysContractions.reduce((sum, c) => {
+            const [minutes, seconds] = c.interval.split(":").map(Number);
+            return sum + minutes * 60 + seconds;
+          }, 0);
+          const avgSeconds = totalSeconds / todaysContractions.length;
+          const minutes = Math.floor(avgSeconds / 60);
+          const seconds = Math.round(avgSeconds % 60);
+          return `${minutes}:${seconds.toString().padStart(2, "0")} min`;
+        })()
+      : "0:00 min",
+    totalContractions: todaysContractions.length,
   };
 
-  const contractionEntries: ContractionEntry[] = [
-    {
-      id: "1",
-      date: "July 15, 2023",
-      timeRange: "04:22 PM - 04:50 PM",
-      duration: "28 minutes",
-      avgContraction: "45 seconds",
-      interval: "2 minutes",
-      notes: "Mild discomfort",
-    },
-    {
-      id: "2",
-      date: "July 15, 2023",
-      timeRange: "02:15 PM - 02:45 PM",
-      duration: "30 minutes",
-      avgContraction: "40 seconds",
-      interval: "2.5 minutes",
-      notes: "Regular pattern",
-    },
-    {
-      id: "3",
-      date: "July 14, 2023",
-      timeRange: "08:30 PM - 09:15 PM",
-      duration: "45 minutes",
-      avgContraction: "50 seconds",
-      interval: "1.5 minutes",
-      notes: "Strong contractions",
-    },
-  ];
+  const filteredContractions = contractions.filter((contraction) => {
+    const contractionDate = new Date(contraction.timestamp);
+    const today = new Date();
+    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+    const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    switch (selectedFilter) {
+      case "Today":
+        return contractionDate.toDateString() === today.toDateString();
+      case "Yesterday":
+        return contractionDate.toDateString() === yesterday.toDateString();
+      case "Last Week":
+        return contractionDate >= lastWeek && contractionDate <= today;
+      default:
+        return true;
+    }
+  });
 
   const handleLogNewContraction = () => {
+    if (isActionQueued) return;
     router.push("/log-contractions");
   };
 
-  const renderContractionCard = ({ item }: { item: ContractionEntry }) => (
+  const renderContractionCard = ({ item }: { item: Contraction }) => (
     <ContractionHistoryCard entry={item} />
   );
 
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: colors.background,
-      }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <CustomAppBar title="Contractions History" rightAction="notifications" />
-
-      <View style={{ paddingHorizontal: layout.spacing.md }}>
-        <ContractionOverviewCard overview={todaysOverview} />
-
+      <View style={{ paddingHorizontal: layout.spacing.sm }}>
+        <View style={{ marginBottom: layout.spacing.sm }}>
+          <Text
+            style={{
+              fontSize: typo.h6.fontSize,
+              fontWeight: "600",
+              color: colors.text,
+              marginBottom: layout.spacing.xs,
+              ...typo.h6,
+            }}
+          >
+            {`Today's Overview`}
+          </Text>
+          <View
+            style={{
+              backgroundColor: colors.card,
+              padding: layout.spacing.lg,
+              borderRadius: layout.borderRadius.medium,
+              flexDirection: "row",
+              justifyContent: "space-between",
+            }}
+          >
+            <View>
+              <Text
+                style={{
+                  fontSize: typo.body2.fontSize,
+                  color: colors.text,
+                  ...typo.body2,
+                }}
+              >
+                Average Interval
+              </Text>
+              <Text
+                style={{
+                  fontSize: typo.body1.fontSize,
+                  fontWeight: "600",
+                  color: colors.primary,
+                  ...typo.body1,
+                }}
+              >
+                {todaysOverview.averageInterval}
+              </Text>
+            </View>
+            <View>
+              <Text
+                style={{
+                  fontSize: typo.body2.fontSize,
+                  color: colors.text,
+                  ...typo.body2,
+                }}
+              >
+                Total Contractions
+              </Text>
+              <Text
+                style={{
+                  fontSize: typo.body1.fontSize,
+                  fontWeight: "600",
+                  color: colors.primary,
+                  ...typo.body1,
+                }}
+              >
+                {todaysOverview.totalContractions}
+              </Text>
+            </View>
+          </View>
+        </View>
         <View
           style={{
             backgroundColor: colors.card,
@@ -97,18 +155,52 @@ export default function ContractionHistoryScreen() {
             options={filterOptions}
           />
         </View>
-
-        <FlatList
-          data={contractionEntries}
-          renderItem={renderContractionCard}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            paddingBottom: layout.spacing.xxl, // Space for floating button
-            paddingHorizontal: layout.spacing.xs, // Space for floating button
-          }}
-        />
-
+        {isLoading || isFetching ? (
+          <View
+            style={{
+              alignItems: "center",
+              marginVertical: layout.spacing.lg,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: typo.body2.fontSize,
+                color: colors.text,
+                ...typo.body2,
+              }}
+            >
+              Loading contractions history...
+            </Text>
+          </View>
+        ) : filteredContractions.length === 0 ? (
+          <View
+            style={{
+              alignItems: "center",
+              marginVertical: layout.spacing.lg,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: typo.body2.fontSize,
+                color: colors.text,
+                ...typo.body2,
+              }}
+            >
+              No contractions history available
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={filteredContractions}
+            renderItem={renderContractionCard}
+            keyExtractor={(item) => item.contractionId}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingBottom: layout.spacing.xxl,
+              paddingHorizontal: layout.spacing.sm,
+            }}
+          />
+        )}
         <View
           style={{
             position: "absolute",
@@ -140,6 +232,8 @@ export default function ContractionHistoryScreen() {
               ...typo.button,
             }}
             icon="plus"
+            disabled={isActionQueued}
+            loading={isLoading}
           >
             Log New Contraction
           </Button>

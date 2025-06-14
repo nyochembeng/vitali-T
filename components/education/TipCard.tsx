@@ -1,23 +1,17 @@
+import { useTheme } from "@/lib/hooks/useTheme";
+import { PregnancyTip } from "@/lib/schemas/pregnancyTipSchema";
+import { MaterialIcons } from "@expo/vector-icons";
 import React from "react";
 import { View } from "react-native";
 import { Surface, Text } from "react-native-paper";
-import { MaterialIcons } from "@expo/vector-icons";
-import { useTheme } from "@/lib/hooks/useTheme";
-
-interface Tip {
-  id: string;
-  category: "development" | "nutrition" | "exercise" | "wellness";
-  title: string;
-  description: string;
-  week: number;
-  icon: string;
-}
 
 interface TipCardProps {
-  tip: Tip;
+  tip: PregnancyTip;
 }
 
-const getCategoryIcon = (category: string): string => {
+const getCategoryIcon = (
+  category: string
+): keyof typeof MaterialIcons.glyphMap => {
   switch (category) {
     case "development":
       return "child-care";
@@ -65,7 +59,7 @@ export const TipCard: React.FC<TipCardProps> = ({ tip }) => {
         >
           Week {tip.week}
         </Text>
-        <MaterialIcons name={iconName as any} size={20} color={iconColor} />
+        <MaterialIcons name={iconName} size={20} color={iconColor} />
       </View>
       <Text
         variant="titleLarge"
@@ -86,7 +80,7 @@ export const TipCard: React.FC<TipCardProps> = ({ tip }) => {
           ...typo.body1,
         }}
       >
-        {tip.description}
+        {tip.content}
       </Text>
     </Surface>
   );

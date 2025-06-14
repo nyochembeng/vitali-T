@@ -1,64 +1,41 @@
-import React from "react";
-import { View, ScrollView } from "react-native";
-import { Text, Card, Button, Chip, ProgressBar } from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
 import CustomAppBar from "@/components/utils/CustomAppBar";
 import { useTheme } from "@/lib/hooks/useTheme";
+import { useAuth } from "@/lib/hooks/useAuth";
+import {
+  NextStep,
+  Pattern,
+  Prediction,
+  Trend,
+  WeeklySummary,
+} from "@/lib/schemas/insightsSchema";
+import { useGetInsightsQuery } from "@/lib/features/insights/insightsService";
+import { MaterialIcons } from "@expo/vector-icons";
+import React from "react";
+import { ScrollView, View } from "react-native";
+import { Button, Card, Chip, ProgressBar, Text } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 
-interface TrendCardProps {
-  title: string;
-  duration: string;
-  lastUpdated: string;
-  icon: "trending-up" | "favorite";
-}
-
-interface PatternCardProps {
-  title: string;
-  description: string;
-  confidence: number;
-  icon: "timeline" | "directions-run";
-}
-
-interface PredictionCardProps {
-  title: string;
-  description: string;
-  confidence: "High" | "Medium" | "Low";
-  icon: "warning" | "child-care";
-}
-
-interface WeeklySummaryItem {
-  label: string;
-  value: string;
-}
-
-interface NextStepItem {
-  title: string;
-  description: string;
-  icon: "water-drop" | "monitor-heart";
-}
-
-const TrendCard: React.FC<TrendCardProps> = ({
+const TrendCard: React.FC<Trend> = ({
   title,
   duration,
   lastUpdated,
   icon,
+  source,
+  category,
+  metadata,
 }) => {
   const { colors, typo, layout } = useTheme();
   return (
     <Card
       style={{
-        width: layout.spacing.xxl * 4.5, // 180px approximation
+        width: layout.spacing.xxl * 4.5,
         marginRight: layout.spacing.sm,
         backgroundColor: colors.card,
         borderRadius: layout.borderRadius.medium,
       }}
     >
-      <Card.Content
-        style={{
-          paddingVertical: layout.spacing.sm,
-        }}
-      >
+      <Card.Content style={{ paddingVertical: layout.spacing.sm }}>
         <View
           style={{
             flexDirection: "row",
@@ -69,10 +46,11 @@ const TrendCard: React.FC<TrendCardProps> = ({
         >
           <Text
             style={{
-              ...typo.subtitle3,
+              fontSize: typo.subtitle3.fontSize,
               color: colors.text,
               fontWeight: "600",
               flex: 1,
+              ...typo.subtitle3,
             }}
           >
             {title}
@@ -81,25 +59,22 @@ const TrendCard: React.FC<TrendCardProps> = ({
         </View>
         <Text
           style={{
-            ...typo.body2,
+            fontSize: typo.body2.fontSize,
             color: colors.text,
             marginBottom: layout.spacing.md,
+            ...typo.body2,
           }}
         >
           {duration}
         </Text>
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-          }}
-        >
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
           <MaterialIcons name="schedule" size={14} color={colors.text + "99"} />
           <Text
             style={{
-              ...typo.caption,
+              fontSize: typo.caption.fontSize,
               color: colors.text + "99",
               marginLeft: layout.spacing.xs,
+              ...typo.caption,
             }}
           >
             {lastUpdated}
@@ -110,11 +85,14 @@ const TrendCard: React.FC<TrendCardProps> = ({
   );
 };
 
-const PatternCard: React.FC<PatternCardProps> = ({
+const PatternCard: React.FC<Pattern> = ({
   title,
   description,
   confidence,
   icon,
+  source,
+  category,
+  metadata,
 }) => {
   const { colors, typo, layout } = useTheme();
   return (
@@ -136,10 +114,11 @@ const PatternCard: React.FC<PatternCardProps> = ({
         >
           <Text
             style={{
-              ...typo.subtitle2,
+              fontSize: typo.subtitle2.fontSize,
               color: colors.text,
               fontWeight: "600",
               flex: 1,
+              ...typo.subtitle2,
             }}
           >
             {title}
@@ -148,27 +127,19 @@ const PatternCard: React.FC<PatternCardProps> = ({
         </View>
         <Text
           style={{
-            ...typo.body2,
+            fontSize: typo.body2.fontSize,
             color: colors.text,
             marginBottom: layout.spacing.md,
             lineHeight: typo.body2.lineHeight,
+            ...typo.body2,
           }}
         >
           {description}
         </Text>
         <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            width: "100%", // Ensure container takes full width
-          }}
+          style={{ flexDirection: "row", alignItems: "center", width: "100%" }}
         >
-          <View
-            style={{
-              flex: 1,
-              marginRight: layout.spacing.sm,
-            }}
-          >
+          <View style={{ flex: 1, marginRight: layout.spacing.sm }}>
             <ProgressBar
               progress={confidence / 100}
               color={colors.accent}
@@ -181,10 +152,11 @@ const PatternCard: React.FC<PatternCardProps> = ({
           </View>
           <Text
             style={{
-              ...typo.caption,
+              fontSize: typo.caption.fontSize,
               color: colors.accent,
               fontWeight: "500",
-              minWidth: 80, // Prevent text from wrapping and affecting layout
+              minWidth: 80,
+              ...typo.caption,
             }}
           >
             {confidence}% confidence
@@ -195,11 +167,14 @@ const PatternCard: React.FC<PatternCardProps> = ({
   );
 };
 
-const PredictionCard: React.FC<PredictionCardProps> = ({
+const PredictionCard: React.FC<Prediction> = ({
   title,
   description,
   confidence,
   icon,
+  source,
+  category,
+  metadata,
 }) => {
   const { colors, typo, layout } = useTheme();
   return (
@@ -221,26 +196,30 @@ const PredictionCard: React.FC<PredictionCardProps> = ({
           <MaterialIcons name={icon} size={24} color={colors.primary} />
           <Text
             style={{
-              ...typo.subtitle2,
+              fontSize: typo.subtitle2.fontSize,
               color: colors.text,
               marginLeft: layout.spacing.sm,
               flex: 1,
               lineHeight: typo.subtitle2.lineHeight,
+              ...typo.subtitle2,
             }}
           >
             {title}
           </Text>
         </View>
-        <Text
-          style={{
-            ...typo.body2,
-            color: colors.text,
-            marginLeft: layout.spacing.xl,
-            marginBottom: layout.spacing.sm,
-          }}
-        >
-          {description}
-        </Text>
+        {description && (
+          <Text
+            style={{
+              fontSize: typo.body2.fontSize,
+              color: colors.text,
+              marginLeft: layout.spacing.xl,
+              marginBottom: layout.spacing.sm,
+              ...typo.body2,
+            }}
+          >
+            {description}
+          </Text>
+        )}
         <Chip
           mode="outlined"
           style={{
@@ -250,8 +229,9 @@ const PredictionCard: React.FC<PredictionCardProps> = ({
             borderColor: colors.border,
           }}
           textStyle={{
-            ...typo.caption,
+            fontSize: typo.caption.fontSize,
             color: colors.primary,
+            ...typo.caption,
           }}
         >
           {confidence} Confidence
@@ -261,7 +241,12 @@ const PredictionCard: React.FC<PredictionCardProps> = ({
   );
 };
 
-const WeeklySummaryRow: React.FC<WeeklySummaryItem> = ({ label, value }) => {
+const WeeklySummaryRow: React.FC<WeeklySummary> = ({
+  label,
+  value,
+  source,
+  category,
+}) => {
   const { colors, typo, layout } = useTheme();
   return (
     <View
@@ -276,17 +261,19 @@ const WeeklySummaryRow: React.FC<WeeklySummaryItem> = ({ label, value }) => {
     >
       <Text
         style={{
-          ...typo.body2,
+          fontSize: typo.body2.fontSize,
           color: colors.text,
+          ...typo.body2,
         }}
       >
         {label}
       </Text>
       <Text
         style={{
-          ...typo.subtitle2,
+          fontSize: typo.subtitle2.fontSize,
           color: colors.text,
           fontWeight: "600",
+          ...typo.subtitle2,
         }}
       >
         {value}
@@ -295,7 +282,14 @@ const WeeklySummaryRow: React.FC<WeeklySummaryItem> = ({ label, value }) => {
   );
 };
 
-const NextStepCard: React.FC<NextStepItem> = ({ title, description, icon }) => {
+const NextStepCard: React.FC<NextStep> = ({
+  title,
+  description,
+  icon,
+  source,
+  category,
+  metadata,
+}) => {
   const { colors, typo, layout } = useTheme();
   return (
     <Card
@@ -329,24 +323,28 @@ const NextStepCard: React.FC<NextStepItem> = ({ title, description, icon }) => {
         <View style={{ flex: 1 }}>
           <Text
             style={{
-              ...typo.body1,
+              fontSize: typo.body1.fontSize,
               color: colors.text,
               fontWeight: "500",
               lineHeight: typo.body1.lineHeight,
+              ...typo.body1,
             }}
           >
             {title}
           </Text>
-          <Text
-            style={{
-              ...typo.caption,
-              color: colors.text,
-              marginTop: layout.spacing.xs,
-              lineHeight: typo.caption.lineHeight,
-            }}
-          >
-            {description}
-          </Text>
+          {description && (
+            <Text
+              style={{
+                fontSize: typo.caption.fontSize,
+                color: colors.text,
+                marginTop: layout.spacing.xs,
+                lineHeight: typo.caption.lineHeight,
+                ...typo.caption,
+              }}
+            >
+              {description}
+            </Text>
+          )}
         </View>
         <MaterialIcons
           name="chevron-right"
@@ -360,84 +358,66 @@ const NextStepCard: React.FC<NextStepItem> = ({ title, description, icon }) => {
 
 export default function AIInsightsScreen() {
   const { colors, typo, layout } = useTheme();
-  const trendData = [
-    {
-      title: "Blood Pressure Stable",
-      duration: "14 Days",
-      lastUpdated: "Last updated 2 days ago",
-      icon: "trending-up" as const,
-    },
-    {
-      title: "Heart Rate Consistent",
-      duration: "7 Days",
-      lastUpdated: "Last updated 1 day ago",
-      icon: "favorite" as const,
-    },
-  ];
+  const { user, isActionQueued } = useAuth();
 
-  const patternData = [
+  const {
+    data: insights = [],
+    isLoading,
+    isFetching,
+  } = useGetInsightsQuery(
     {
-      title: "Respiratory Rate",
-      description:
-        "Mild increase in respiratory rate during sleep in past 5 days.",
-      confidence: 85,
-      icon: "timeline" as const,
+      userId: user?.userId as string,
+      params: {
+        startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // Last 7 days
+      },
     },
-    {
-      title: "Activity Patterns",
-      description:
-        "Increased physical activity levels correlate with improved sleep quality.",
-      confidence: 92,
-      icon: "directions-run" as const,
-    },
-  ];
+    { skip: !user?.userId }
+  );
 
-  const predictions = [
-    {
-      title: "You may experience increased fatigue around Week 28",
-      description: "",
-      confidence: "High" as const,
-      icon: "warning" as const,
-    },
-    {
-      title: "Fetal movements likely to peak in the next 3 days",
-      description: "",
-      confidence: "Medium" as const,
-      icon: "child-care" as const,
-    },
-  ];
+  // Get the latest insight (most recent timestamp)
+  const latestInsight = insights.sort(
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  )[0] || {
+    trends: [],
+    patterns: [],
+    predictions: [],
+    weeklySummary: [],
+    nextSteps: [],
+  };
 
-  const weeklySummary = [
-    { label: "Average Heart Rate", value: "72 bpm" },
-    { label: "Sleep Duration", value: "7.5 hours" },
-    { label: "Steps", value: "8,547" },
-  ];
+  const handleExportInsights = () => {
+    if (isActionQueued) return;
+    Toast.show({
+      type: "info",
+      text1: "Export Insights",
+      text2: "Export functionality not implemented yet.",
+    });
+  };
 
-  const nextSteps = [
-    {
-      title: "Track hydration daily to improve prediction accuracy",
-      description: "",
-      icon: "water-drop" as const,
-    },
-    {
-      title: "Check SpO₂ after mild activity",
-      description: "",
-      icon: "monitor-heart" as const,
-    },
-  ];
+  const handleShareWithDoctor = () => {
+    if (isActionQueued) return;
+    Toast.show({
+      type: "info",
+      text1: "Share with Doctor",
+      text2: "Sharing functionality not implemented yet.",
+    });
+  };
+
+  const handleViewFullReport = () => {
+    if (isActionQueued) return;
+    Toast.show({
+      type: "info",
+      text1: "View Full Report",
+      text2: "Full report functionality not implemented yet.",
+    });
+  };
 
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: colors.background,
-      }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <CustomAppBar
         title="Insights & Predictions"
         rightAction="notifications"
       />
-
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
@@ -447,194 +427,216 @@ export default function AIInsightsScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View
-          style={{
-            paddingVertical: layout.spacing.md,
-          }}
-        >
+        <View style={{ paddingVertical: layout.spacing.md }}>
           <Text
             style={{
-              ...typo.h3,
+              fontSize: typo.h3.fontSize,
               color: colors.text,
               textAlign: "center",
               marginBottom: layout.spacing.xs,
               fontWeight: "700",
+              ...typo.h3,
             }}
           >
             AI Insights
           </Text>
           <Text
             style={{
-              ...typo.body2,
+              fontSize: typo.body2.fontSize,
               color: colors.text,
               textAlign: "center",
               lineHeight: typo.body2.lineHeight,
+              ...typo.body2,
             }}
           >
             These trends, predictions, and insights are generated based on your
             health history.
           </Text>
         </View>
-
-        {/* Recent Trends */}
-        <View
-          style={{
-            marginBottom: layout.spacing.lg,
-          }}
-        >
-          <Text
-            style={{
-              ...typo.subtitle1,
-              color: colors.text,
-              fontWeight: "600",
-              marginBottom: layout.spacing.sm,
-            }}
-          >
-            Recent Trends
-          </Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingRight: layout.spacing.sm }}
-          >
-            {trendData.map((trend, index) => (
-              <TrendCard key={index} {...trend} />
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Pattern Recognition */}
-        <View
-          style={{
-            marginBottom: layout.spacing.lg,
-          }}
-        >
-          <Text
-            style={{
-              ...typo.subtitle1,
-              color: colors.text,
-              fontWeight: "600",
-              marginBottom: layout.spacing.sm,
-            }}
-          >
-            Pattern Recognition
-          </Text>
-          {patternData.map((pattern, index) => (
-            <PatternCard key={index} {...pattern} />
-          ))}
-        </View>
-
-        {/* What to Expect */}
-        <View
-          style={{
-            marginBottom: layout.spacing.lg,
-          }}
-        >
-          <Text
-            style={{
-              ...typo.subtitle1,
-              color: colors.text,
-              fontWeight: "600",
-              marginBottom: layout.spacing.sm,
-            }}
-          >
-            What to Expect
-          </Text>
-          {predictions.map((prediction, index) => (
-            <PredictionCard key={index} {...prediction} />
-          ))}
-        </View>
-
-        {/* This Week's Summary */}
-        <View
-          style={{
-            marginBottom: layout.spacing.lg,
-          }}
-        >
-          <Text
-            style={{
-              ...typo.subtitle1,
-              color: colors.text,
-              fontWeight: "600",
-              marginBottom: layout.spacing.sm,
-            }}
-          >
-            {`This Week's Summary`}
-          </Text>
-          <Card
-            style={{
-              backgroundColor: colors.card,
-              borderRadius: layout.borderRadius.medium,
-            }}
-          >
-            <Card.Content>
-              {weeklySummary.map((item, index) => (
-                <WeeklySummaryRow key={index} {...item} />
-              ))}
-              <Button
-                mode="outlined"
-                style={{
-                  marginTop: layout.spacing.sm,
-                  borderColor: colors.primary,
-                }}
-                textColor={colors.primary}
-              >
-                View Full Weekly Report
-              </Button>
-            </Card.Content>
-          </Card>
-        </View>
-
-        {/* Next Best Steps */}
-        <View
-          style={{
-            marginBottom: layout.spacing.lg,
-          }}
-        >
-          <Text
-            style={{
-              ...typo.subtitle1,
-              color: colors.text,
-              fontWeight: "600",
-              marginBottom: layout.spacing.sm,
-            }}
-          >
-            Next Best Steps
-          </Text>
-          {nextSteps.map((step, index) => (
-            <NextStepCard key={index} {...step} />
-          ))}
-        </View>
-
-        {/* Action Buttons */}
-        <View
-          style={{
-            flexDirection: "row",
-            gap: layout.spacing.sm,
-            marginBottom: layout.spacing.lg,
-          }}
-        >
-          <Button
-            mode="outlined"
+        {isLoading || isFetching ? (
+          <View
             style={{
               flex: 1,
-              borderColor: colors.primary,
+              justifyContent: "center",
+              alignItems: "center",
+              paddingTop: layout.spacing.xl * 2,
             }}
-            textColor={colors.primary}
-            icon="download"
           >
-            Export Insights
-          </Button>
-          <Button
-            mode="contained"
-            style={{ flex: 1 }}
-            buttonColor={colors.primary}
-            icon="share"
+            <Text
+              style={{
+                fontSize: typo.body1.fontSize,
+                color: colors.text,
+                textAlign: "center",
+                ...typo.body1,
+              }}
+            >
+              Loading insights...
+            </Text>
+          </View>
+        ) : latestInsight.trends?.length === 0 &&
+          latestInsight.patterns?.length === 0 &&
+          latestInsight.predictions?.length === 0 &&
+          latestInsight.weeklySummary?.length === 0 &&
+          latestInsight.nextSteps?.length === 0 ? (
+          <View
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
+              paddingTop: layout.spacing.xl * 2,
+            }}
           >
-            Share with Doctor
-          </Button>
-        </View>
+            <Text
+              style={{
+                fontSize: typo.body1.fontSize,
+                color: colors.text,
+                textAlign: "center",
+                opacity: 0.6,
+                ...typo.body1,
+              }}
+            >
+              No insights available
+            </Text>
+          </View>
+        ) : (
+          <>
+            <View style={{ marginBottom: layout.spacing.lg }}>
+              <Text
+                style={{
+                  fontSize: typo.subtitle1.fontSize,
+                  color: colors.text,
+                  fontWeight: "600",
+                  marginBottom: layout.spacing.sm,
+                  ...typo.subtitle1,
+                }}
+              >
+                Recent Trends
+              </Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingRight: layout.spacing.sm }}
+              >
+                {latestInsight.trends?.map((trend, index) => (
+                  <TrendCard key={index} {...trend} />
+                ))}
+              </ScrollView>
+            </View>
+            <View style={{ marginBottom: layout.spacing.lg }}>
+              <Text
+                style={{
+                  fontSize: typo.subtitle1.fontSize,
+                  color: colors.text,
+                  fontWeight: "600",
+                  marginBottom: layout.spacing.sm,
+                  ...typo.subtitle1,
+                }}
+              >
+                Pattern Recognition
+              </Text>
+              {latestInsight.patterns?.map((pattern, index) => (
+                <PatternCard key={index} {...pattern} />
+              ))}
+            </View>
+            <View style={{ marginBottom: layout.spacing.lg }}>
+              <Text
+                style={{
+                  fontSize: typo.subtitle1.fontSize,
+                  color: colors.text,
+                  fontWeight: "600",
+                  marginBottom: layout.spacing.sm,
+                  ...typo.subtitle1,
+                }}
+              >
+                What to Expect
+              </Text>
+              {latestInsight.predictions?.map((prediction, index) => (
+                <PredictionCard key={index} {...prediction} />
+              ))}
+            </View>
+            <View style={{ marginBottom: layout.spacing.lg }}>
+              <Text
+                style={{
+                  fontSize: typo.subtitle1.fontSize,
+                  color: colors.text,
+                  fontWeight: "600",
+                  marginBottom: layout.spacing.sm,
+                  ...typo.subtitle1,
+                }}
+              >
+                {`This Week's Summary`}
+              </Text>
+              <Card
+                style={{
+                  backgroundColor: colors.card,
+                  borderRadius: layout.borderRadius.medium,
+                }}
+              >
+                <Card.Content>
+                  {latestInsight.weeklySummary?.map((item, index) => (
+                    <WeeklySummaryRow key={index} {...item} />
+                  ))}
+                  <Button
+                    mode="outlined"
+                    style={{
+                      marginTop: layout.spacing.sm,
+                      borderColor: colors.primary,
+                    }}
+                    textColor={colors.primary}
+                    onPress={handleViewFullReport}
+                    disabled={isActionQueued}
+                  >
+                    View Full Weekly Report
+                  </Button>
+                </Card.Content>
+              </Card>
+            </View>
+            <View style={{ marginBottom: layout.spacing.lg }}>
+              <Text
+                style={{
+                  fontSize: typo.subtitle1.fontSize,
+                  color: colors.text,
+                  fontWeight: "600",
+                  marginBottom: layout.spacing.sm,
+                  ...typo.subtitle1,
+                }}
+              >
+                Next Best Steps
+              </Text>
+              {latestInsight.nextSteps?.map((step, index) => (
+                <NextStepCard key={index} {...step} />
+              ))}
+            </View>
+            <View
+              style={{
+                flexDirection: "row",
+                gap: layout.spacing.sm,
+                marginBottom: layout.spacing.lg,
+              }}
+            >
+              <Button
+                mode="outlined"
+                style={{ flex: 1, borderColor: colors.primary }}
+                textColor={colors.primary}
+                icon="download"
+                onPress={handleExportInsights}
+                disabled={isActionQueued}
+              >
+                Export Insights
+              </Button>
+              <Button
+                mode="contained"
+                style={{ flex: 1 }}
+                buttonColor={colors.primary}
+                icon="share"
+                onPress={handleShareWithDoctor}
+                disabled={isActionQueued}
+              >
+                Share with Doctor
+              </Button>
+            </View>
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

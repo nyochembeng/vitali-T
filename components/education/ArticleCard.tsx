@@ -1,15 +1,8 @@
-import React from "react";
-import { View, TouchableOpacity, Image } from "react-native";
-import { Text, Surface } from "react-native-paper";
 import { useTheme } from "@/lib/hooks/useTheme";
-
-interface Article {
-  id: string;
-  title: string;
-  description: string;
-  readTime: string;
-  image?: string;
-}
+import { Article } from "@/lib/schemas/healthEducationSchema";
+import React from "react";
+import { TouchableOpacity, View } from "react-native";
+import { Surface, Text } from "react-native-paper";
 
 interface ArticleCardProps {
   article: Article;
@@ -33,7 +26,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
           elevation: layout.elevation,
         }}
       >
-        {/* <Image source={{ uri: article.image }} style={styles.image} /> */}
+        {/* <Image source={{ uri: article.mediaUrl }} style={{ width: 100, height: 100 }} /> */}
         <View
           style={{
             flex: 1,

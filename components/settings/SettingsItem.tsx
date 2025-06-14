@@ -24,15 +24,15 @@ export const SettingsItem: React.FC<SettingsItemProps> = ({ item }) => {
   return (
     <Pressable
       style={{
-        marginHorizontal: layout.spacing.sm,
+        marginHorizontal: layout.spacing.lg,
         marginVertical: layout.spacing.xs,
-        borderRadius: layout.borderRadius.large,
+        borderRadius: layout.borderRadius.small,
         overflow: "hidden",
         backgroundColor: colors.card,
         padding: layout.spacing.md,
       }}
       onPress={item.onPress}
-      android_ripple={{ color: colors.primary + "20" }} // Adjusted to use primary with 20% opacity
+      android_ripple={{ color: colors.primary + "20" }}
     >
       <View
         style={{
@@ -49,23 +49,18 @@ export const SettingsItem: React.FC<SettingsItemProps> = ({ item }) => {
             justifyContent: "center",
             alignItems: "center",
             marginRight: layout.spacing.sm,
-            backgroundColor: item.iconColor + "20", // Keeping iconColor as per your design
+            backgroundColor: item.iconColor + "20",
           }}
         >
           <MaterialCommunityIcons
             name={item.icon as any}
             size={20}
-            color={item.iconColor} // Keeping iconColor as per your design
+            color={item.iconColor}
           />
         </View>
-
         <View style={{ flex: 1 }}>
           <Text
-            style={{
-              ...typo.body1,
-              color: colors.text,
-              fontWeight: "500",
-            }}
+            style={{ ...typo.body1, color: colors.text, fontWeight: "500" }}
           >
             {item.title}
           </Text>
@@ -82,7 +77,6 @@ export const SettingsItem: React.FC<SettingsItemProps> = ({ item }) => {
             </Text>
           )}
         </View>
-
         {item.showChevron !== false && (
           <MaterialCommunityIcons
             name="chevron-right"

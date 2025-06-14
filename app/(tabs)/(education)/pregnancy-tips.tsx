@@ -2,63 +2,44 @@ import { TipCard } from "@/components/education/TipCard";
 import { WeekHeader } from "@/components/education/WeekHeader";
 import CustomAppBar from "@/components/utils/CustomAppBar";
 import FilterTabs from "@/components/utils/FilterTabs";
-import React, { useState, useMemo } from "react";
-import { View, ScrollView } from "react-native";
-import { Button } from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "@/lib/hooks/useTheme";
-
-interface Tip {
-  id: string;
-  category: "development" | "nutrition" | "exercise" | "wellness";
-  title: string;
-  description: string;
-  week: number;
-  icon: string;
-}
-
-const mockTips: Tip[] = [
-  {
-    id: "1",
-    category: "development",
-    title: "Baby's Development",
-    description:
-      "Your baby is now the size of an ear of corn. The inner ear is now developed enough for your baby to start hearing sounds.",
-    week: 24,
-    icon: "child-care",
-  },
-  {
-    id: "2",
-    category: "nutrition",
-    title: "Nutrition Tips",
-    description:
-      "Include more iron-rich foods in your diet to support your baby's growth. Foods like spinach, lentils, and lean meats are excellent choices.",
-    week: 24,
-    icon: "restaurant",
-  },
-  {
-    id: "3",
-    category: "exercise",
-    title: "Exercise Guide",
-    description:
-      "Try gentle prenatal yoga to help with flexibility and relaxation. Remember to stay hydrated and listen to your body.",
-    week: 24,
-    icon: "fitness-center",
-  },
-  {
-    id: "4",
-    category: "wellness",
-    title: "Wellness Focus",
-    description:
-      "Take time for yourself. Practice deep breathing or meditation to help manage pregnancy-related stress and anxiety.",
-    week: 24,
-    icon: "favorite",
-  },
-];
+import { useAuth } from "@/lib/hooks/useAuth";
+import { useGetPregnancyTipsQuery } from "@/lib/features/pregnancy-tips/pregnancyTipService";
+import { useGetProfileQuery } from "@/lib/features/profile/profileService";
+import React, { useState, useEffect } from "react";
+import { ScrollView, View } from "react-native";
+import { Button, Text, Portal, Dialog, TextInput } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 
 export default function PregnancyTipsScreen() {
   const [activeCategory, setActiveCategory] = useState<string>("All Tips");
-  const { colors, layout } = useTheme();
+  const [currentWeek, setCurrentWeek] = useState<number>(1); // Default to week 1 until profile loads
+  const [showWeekDialog, setShowWeekDialog] = useState(false);
+  const [weekInput, setWeekInput] = useState<string>("1");
+  const { colors, layout, typo } = useTheme();
+  const { user, isActionQueued } = useAuth();
+
+  const {
+    data: profile,
+    isLoading: isProfileLoading,
+    isError: isProfileError,
+  } = useGetProfileQuery(user?.userId as string, { skip: !user?.userId });
+
+  // Calculate current week based on conception date
+  useEffect(() => {
+    if (profile?.conceivedDate && !isProfileError) {
+      const conceptionDate = new Date(profile.conceivedDate);
+      const currentDate = new Date();
+      if (!isNaN(conceptionDate.getTime())) {
+        const diffTime = currentDate.getTime() - conceptionDate.getTime();
+        const diffWeeks = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 7)) + 1; // Week 1 starts at conception
+        const cappedWeek = Math.min(Math.max(diffWeeks, 1), 40); // Ensure week is 1–40
+        setCurrentWeek(cappedWeek);
+        setWeekInput(cappedWeek.toString());
+      }
+    }
+  }, [profile, isProfileError]);
 
   const categories = [
     "All Tips",
@@ -68,56 +49,190 @@ export default function PregnancyTipsScreen() {
     "Wellness",
   ];
 
-  const filteredTips = useMemo(() => {
-    if (activeCategory === "All Tips") return mockTips;
-    return mockTips.filter(
-      (tip) => tip.category === activeCategory.toLowerCase()
-    );
-  }, [activeCategory]);
+  const trimester =
+    currentWeek <= 12 ? "First" : currentWeek <= 27 ? "Second" : "Third";
+  const progress = currentWeek / 40; // Simple progress calculation (week/40)
+
+  const {
+    data: tips = [],
+    isLoading: isTipsLoading,
+    isFetching: isTipsFetching,
+  } = useGetPregnancyTipsQuery(
+    {
+      category:
+        activeCategory === "All Tips"
+          ? undefined
+          : activeCategory.toLowerCase(),
+      week: currentWeek,
+      trimester: undefined,
+      keywords: undefined,
+    },
+    { skip: !user?.userId }
+  );
+
+  const sortedTips = tips.sort((a, b) => (b.priority || 1) - (a.priority || 1));
+
+  const handleWeekChange = () => {
+    if (isActionQueued) return;
+    setShowWeekDialog(true);
+  };
+
+  const handleWeekSubmit = () => {
+    if (isActionQueued) return;
+    const weekNum = parseInt(weekInput, 10);
+    if (isNaN(weekNum) || weekNum < 1 || weekNum > 40) {
+      Toast.show({
+        type: "error",
+        text1: "Invalid Week",
+        text2: "Please enter a week between 1 and 40.",
+      });
+      return;
+    }
+    setCurrentWeek(weekNum);
+    setShowWeekDialog(false);
+    setWeekInput(weekNum.toString());
+  };
+
+  const handleWeekCancel = () => {
+    if (isActionQueued) return;
+    setWeekInput(currentWeek.toString());
+    setShowWeekDialog(false);
+  };
 
   const handleLoadMore = () => {
-    console.log("Load more tips");
+    if (isActionQueued) return;
+    Toast.show({
+      type: "info",
+      text1: "Load More",
+      text2: "No additional tips available at this time.",
+    });
   };
 
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: colors.background,
-      }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <CustomAppBar title="Pregnancy Tips" rightAction="notifications" />
-
       <ScrollView
         style={{
           flex: 1,
           paddingHorizontal: layout.spacing.lg,
           paddingTop: layout.spacing.sm,
         }}
-        contentContainerStyle={{
-          paddingBottom: layout.spacing.xxl,
-        }}
+        contentContainerStyle={{ paddingBottom: layout.spacing.xxl }}
         showsVerticalScrollIndicator={false}
       >
-        <WeekHeader week={24} trimester="Second Trimester" progress={0.6} />
-
+        {isProfileLoading ? (
+          <View
+            style={{
+              alignItems: "center",
+              paddingVertical: layout.spacing.xl,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: typo.body2.fontSize,
+                color: colors.text,
+                ...typo.body2,
+              }}
+            >
+              Loading profile...
+            </Text>
+          </View>
+        ) : isProfileError || !profile?.conceivedDate ? (
+          <View
+            style={{
+              alignItems: "center",
+              paddingVertical: layout.spacing.xl,
+              paddingHorizontal: layout.spacing.sm,
+            }}
+          >
+            <Text
+              style={{
+                color: colors.text,
+                textAlign: "center",
+                fontSize: typo.body1.fontSize,
+                ...typo.body1,
+              }}
+            >
+              Unable to load pregnancy week. Please set your conception date in
+              your profile or select a week manually.
+            </Text>
+            <Button
+              mode="contained"
+              onPress={handleWeekChange}
+              style={{
+                marginTop: layout.spacing.sm,
+                backgroundColor: colors.primary,
+                borderRadius: layout.borderRadius.medium,
+              }}
+              labelStyle={{
+                fontSize: typo.body3.fontSize,
+                fontWeight: "600",
+                color: colors.textInverse,
+                ...typo.body3,
+              }}
+              disabled={isActionQueued}
+            >
+              Select Week
+            </Button>
+          </View>
+        ) : (
+          <WeekHeader
+            week={currentWeek}
+            trimester={`${trimester} Trimester`}
+            progress={progress}
+          />
+        )}
         <FilterTabs
           selectedFilter={activeCategory}
           onFilterChange={setActiveCategory}
           options={categories}
         />
-
         <View
           style={{
             paddingHorizontal: layout.spacing.sm,
             paddingBottom: layout.spacing.sm,
           }}
         >
-          {filteredTips.map((tip) => (
-            <TipCard key={tip.id} tip={tip} />
-          ))}
+          {isTipsLoading || isTipsFetching ? (
+            <View
+              style={{
+                alignItems: "center",
+                paddingVertical: layout.spacing.xl,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: typo.body2.fontSize,
+                  color: colors.text,
+                  ...typo.body2,
+                }}
+              >
+                Loading pregnancy tips...
+              </Text>
+            </View>
+          ) : sortedTips.length === 0 ? (
+            <View
+              style={{
+                alignItems: "center",
+                paddingVertical: layout.spacing.xl,
+                paddingHorizontal: layout.spacing.sm,
+              }}
+            >
+              <Text
+                style={{
+                  color: colors.text,
+                  textAlign: "center",
+                  fontSize: typo.body1.fontSize,
+                  ...typo.body1,
+                }}
+              >
+                No tips available for week {currentWeek}
+              </Text>
+            </View>
+          ) : (
+            sortedTips.map((tip) => <TipCard key={tip.tipId} tip={tip} />)
+          )}
         </View>
-
         <View
           style={{
             padding: layout.spacing.sm,
@@ -130,13 +245,85 @@ export default function PregnancyTipsScreen() {
             style={{
               margin: layout.spacing.sm,
               backgroundColor: colors.primary,
+              borderRadius: layout.borderRadius.medium,
+            }}
+            labelStyle={{
+              fontSize: typo.body3.fontSize,
+              fontWeight: "600",
+              color: colors.textInverse,
+              ...typo.body3,
             }}
             icon="plus"
+            disabled={isActionQueued || isTipsLoading || isTipsFetching}
           >
             Load More
           </Button>
         </View>
       </ScrollView>
+
+      <Portal>
+        <Dialog
+          visible={showWeekDialog}
+          onDismiss={handleWeekCancel}
+          style={{ backgroundColor: colors.card }}
+        >
+          <Dialog.Title
+            style={{
+              fontSize: typo.h5.fontSize,
+              fontWeight: "600",
+              color: colors.text,
+              ...typo.h5,
+            }}
+          >
+            Select Pregnancy Week
+          </Dialog.Title>
+          <Dialog.Content>
+            <Text
+              style={{
+                fontSize: typo.body1.fontSize,
+                color: colors.text,
+                marginBottom: layout.spacing.sm,
+                ...typo.body1,
+              }}
+            >
+              Enter the current week of your pregnancy (1–40).
+            </Text>
+            <TextInput
+              value={weekInput}
+              onChangeText={setWeekInput}
+              placeholder="Enter week (1–40)"
+              keyboardType="numeric"
+              style={{
+                backgroundColor: colors.surface,
+                borderRadius: layout.borderRadius.medium,
+                padding: layout.spacing.sm,
+                fontSize: typo.input.fontSize,
+                ...typo.input,
+              }}
+              placeholderTextColor="rgba(17, 12, 9, 0.6)"
+              disabled={isActionQueued}
+            />
+          </Dialog.Content>
+          <Dialog.Actions style={{ paddingTop: layout.spacing.sm }}>
+            <Button
+              onPress={handleWeekCancel}
+              textColor={colors.text}
+              disabled={isActionQueued}
+            >
+              Cancel
+            </Button>
+            <Button
+              onPress={handleWeekSubmit}
+              buttonColor={colors.primary}
+              mode="contained"
+              style={{ borderRadius: layout.borderRadius.small }}
+              disabled={isActionQueued}
+            >
+              Submit
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </SafeAreaView>
   );
 }

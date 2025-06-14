@@ -5,16 +5,20 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useTheme } from "@/lib/hooks/useTheme";
+import { useAuth } from "@/lib/hooks/useAuth";
 
 export default function LogoutConfirmationScreen() {
   const { colors, typo, layout, mode } = useTheme();
   const router = useRouter();
+  const { logout, isActionQueued } = useAuth();
 
-  const handleLogout = () => {
-    // Perform logout logic here, e.g., clear user session, tokens, etc.
-    console.log("User logged out");
-    // After logout, navigate to the login screen
-    router.replace("/auth/login");
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.replace("/auth/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
   const handleCancel = () => {
@@ -51,7 +55,6 @@ export default function LogoutConfirmationScreen() {
               width: 120,
               height: 120,
               borderRadius: 60,
-              // backgroundColor: colors.surfaceVariant,
               justifyContent: "center",
               alignItems: "center",
             }}
@@ -82,7 +85,6 @@ export default function LogoutConfirmationScreen() {
             paddingVertical: layout.spacing.md,
             borderRadius: layout.borderRadius.large,
             marginHorizontal: layout.spacing.sm,
-            // backgroundColor: colors.surfaceVariant,
           }}
         >
           <Text
@@ -107,6 +109,7 @@ export default function LogoutConfirmationScreen() {
         <Button
           mode="contained"
           onPress={handleLogout}
+          disabled={isActionQueued}
           style={{
             borderRadius: layout.borderRadius.large,
             paddingVertical: layout.spacing.sm,

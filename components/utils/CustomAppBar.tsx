@@ -19,6 +19,7 @@ interface CustomAppBarProps {
     title: string;
     icon: string;
     onPress: () => void;
+    disabled?: boolean;
   }[];
 }
 
@@ -193,6 +194,7 @@ const CustomAppBar: React.FC<CustomAppBarProps> = ({
                   ...typo.body2,
                   color: colors.text,
                 }}
+                disabled={item.disabled}
               />
             ))}
           </Menu>

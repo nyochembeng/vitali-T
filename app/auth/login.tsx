@@ -1,29 +1,56 @@
-import React, { useState } from "react";
+import { useTheme } from "@/lib/hooks/useTheme";
+import { Login, loginSchema } from "@/lib/schemas/userSchema";
+import { Ionicons } from "@expo/vector-icons";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "expo-router";
+import React from "react";
+import { Controller, useForm } from "react-hook-form";
 import {
-  View,
-  Text,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Text,
   TouchableOpacity,
+  View,
+  Alert,
 } from "react-native";
-import { TextInput, Button } from "react-native-paper";
+import { Button, TextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useTheme } from "@/lib/hooks/useTheme";
+import { useAuth } from "@/lib/hooks/useAuth";
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const { colors, typo, layout } = useTheme();
+  const { login, isLoggingIn, isActionQueued } = useAuth();
 
-  const handleLogin = () => {
-    // Perform login logic here
-    console.log("Logging in with:", { email, password });
-    router.push("/dashboard");
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<Login>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  const [showPassword, setShowPassword] = React.useState(false);
+
+  const onSubmit = async (data: Login) => {
+    try {
+      const result = await login(data);
+      if ("queued" in result && result.queued) {
+        return; // Queued actions handled by Toast and SyncStatus
+      }
+      router.replace("/dashboard");
+    } catch (error: any) {
+      Alert.alert(
+        "Login Failed",
+        error?.data?.message || "Invalid email or password. Please try again.",
+        [{ text: "OK" }]
+      );
+    }
   };
 
   const handleForgotPassword = () => {
@@ -35,17 +62,10 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: colors.background,
-      }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{
-          flex: 1,
-        }}
+        style={{ flex: 1 }}
       >
         <ScrollView
           contentContainerStyle={{
@@ -102,17 +122,9 @@ export default function LoginScreen() {
           </Text>
 
           {/* Form */}
-          <View
-            style={{
-              flex: 1,
-            }}
-          >
+          <View style={{ flex: 1 }}>
             {/* Email Input */}
-            <View
-              style={{
-                marginBottom: layout.spacing.lg,
-              }}
-            >
+            <View style={{ marginBottom: layout.spacing.lg }}>
               <Text
                 style={{
                   fontSize: typo.body3.fontSize,
@@ -122,41 +134,56 @@ export default function LoginScreen() {
                   ...typo.body3,
                 }}
               >
-                Email address
+                Email Address
               </Text>
-              <TextInput
-                mode="outlined"
-                placeholder="Enter your email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                left={<TextInput.Icon icon="email-outline" />}
-                style={{
-                  backgroundColor: colors.card,
-                  fontSize: typo.body1.fontSize,
-                  ...typo.body1,
-                }}
-                outlineStyle={{
-                  borderColor: colors.border,
-                  borderWidth: 1,
-                  borderRadius: layout.borderRadius.medium,
-                }}
-                theme={{
-                  colors: {
-                    outline: colors.border,
-                    outlineVariant: colors.border,
-                  },
-                }}
+              <Controller
+                control={control}
+                name="email"
+                render={({ field: { onChange, value } }) => (
+                  <TextInput
+                    mode="outlined"
+                    placeholder="Enter your email"
+                    value={value}
+                    onChangeText={onChange}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    left={<TextInput.Icon icon="email-outline" />}
+                    style={{
+                      backgroundColor: colors.card,
+                      fontSize: typo.body1.fontSize,
+                      ...typo.body1,
+                    }}
+                    outlineStyle={{
+                      borderColor: errors.email ? colors.error : colors.border,
+                      borderWidth: 1,
+                      borderRadius: layout.borderRadius.medium,
+                    }}
+                    theme={{
+                      colors: {
+                        outline: colors.border,
+                        outlineVariant: colors.border,
+                      },
+                    }}
+                    disabled={isActionQueued}
+                  />
+                )}
               />
+              {errors.email && (
+                <Text
+                  style={{
+                    color: colors.error,
+                    fontSize: typo.body4.fontSize,
+                    marginTop: layout.spacing.xs,
+                    ...typo.body4,
+                  }}
+                >
+                  {errors.email.message}
+                </Text>
+              )}
             </View>
 
             {/* Password Input */}
-            <View
-              style={{
-                marginBottom: layout.spacing.lg,
-              }}
-            >
+            <View style={{ marginBottom: layout.spacing.lg }}>
               <Text
                 style={{
                   fontSize: typo.body3.fontSize,
@@ -168,36 +195,57 @@ export default function LoginScreen() {
               >
                 Password
               </Text>
-              <TextInput
-                mode="outlined"
-                placeholder="Enter your password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                left={<TextInput.Icon icon="lock-outline" />}
-                right={
-                  <TextInput.Icon
-                    icon={showPassword ? "eye-off" : "eye"}
-                    onPress={() => setShowPassword(!showPassword)}
+              <Controller
+                control={control}
+                name="password"
+                render={({ field: { onChange, value } }) => (
+                  <TextInput
+                    mode="outlined"
+                    placeholder="Enter your password"
+                    value={value}
+                    onChangeText={onChange}
+                    secureTextEntry={!showPassword}
+                    left={<TextInput.Icon icon="lock-outline" />}
+                    right={
+                      <TextInput.Icon
+                        icon={showPassword ? "eye-off" : "eye"}
+                        onPress={() => setShowPassword(!showPassword)}
+                      />
+                    }
+                    style={{
+                      backgroundColor: colors.card,
+                      fontSize: typo.body1.fontSize,
+                      ...typo.body1,
+                    }}
+                    outlineStyle={{
+                      borderColor: errors.password
+                        ? colors.error
+                        : colors.border,
+                      borderWidth: 1,
+                      borderRadius: layout.borderRadius.medium,
+                    }}
+                    theme={{
+                      colors: {
+                        outline: colors.border,
+                        outlineVariant: colors.border,
+                      },
+                    }}
+                    disabled={isActionQueued}
                   />
-                }
-                style={{
-                  backgroundColor: colors.card,
-                  fontSize: typo.body1.fontSize,
-                  ...typo.body1,
-                }}
-                outlineStyle={{
-                  borderColor: colors.border,
-                  borderWidth: 1,
-                  borderRadius: layout.borderRadius.medium,
-                }}
-                theme={{
-                  colors: {
-                    outline: colors.border,
-                    outlineVariant: colors.border,
-                  },
-                }}
+                )}
               />
+              {errors.password && (
+                <Text
+                  style={{
+                    color: colors.error,
+                    fontSize: typo.body4.fontSize,
+                    marginTop: layout.spacing.xs,
+                    ...typo.body4,
+                  }}
+                >
+                  {errors.password.message}
+                </Text>
+              )}
             </View>
 
             {/* Forgot Password */}
@@ -223,7 +271,9 @@ export default function LoginScreen() {
             {/* Login Button */}
             <Button
               mode="contained"
-              onPress={handleLogin}
+              onPress={handleSubmit(onSubmit)}
+              disabled={isLoggingIn || isActionQueued}
+              loading={isLoggingIn}
               style={{
                 borderRadius: layout.borderRadius.medium,
                 paddingVertical: layout.spacing.sm,

@@ -1,190 +1,186 @@
-import React, { useState, useEffect } from "react";
-import { View, ScrollView, Alert } from "react-native";
-import { Text, Button, TextInput, Card, IconButton } from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
-import * as Haptics from "expo-haptics";
 import CustomAppBar from "@/components/utils/CustomAppBar";
-import { useRouter } from "expo-router";
 import { useTheme } from "@/lib/hooks/useTheme";
+import { useAuth } from "@/lib/hooks/useAuth";
+import {
+  Contraction,
+  contractionSchema,
+} from "@/lib/schemas/contractionSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as Haptics from "expo-haptics";
+import { useRouter } from "expo-router";
+import React, { useState, useEffect } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { ScrollView, View, TouchableOpacity } from "react-native";
+import { Button, Text, TextInput, Portal, Dialog } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useCreateContractionMutation } from "@/lib/features/contractions/contractionsService";
+import Toast from "react-native-toast-message";
 
-// Types
-interface ContractionData {
-  duration: string;
-  interval: string;
-  totalTime: string;
-  notes: string;
-}
-
-// Components
-const TimerDisplay: React.FC<{ time: string }> = ({ time }) => {
+const ContractionTimer: React.FC<{
+  onDurationChange: (duration: string) => void;
+  onIntervalChange: (interval: string) => void;
+  disabled: boolean;
+}> = ({ onDurationChange, onIntervalChange, disabled }) => {
   const { colors, typo, layout } = useTheme();
+  const [isTiming, setIsTiming] = useState(false);
+  const [startTime, setStartTime] = useState<number | null>(null);
+  const [lastEndTime, setLastEndTime] = useState<number | null>(null);
+  const [duration, setDuration] = useState("00:00");
+  const [interval, setInterval] = useState("00:00");
+
+  useEffect(() => {
+    let timer: any = null;
+    if (isTiming && startTime) {
+      timer = global.setInterval(() => {
+        const now = Date.now();
+        const elapsed = Math.floor((now - startTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        setDuration(
+          `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+        );
+        onDurationChange(
+          `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+        );
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [isTiming, startTime, onDurationChange]);
+
+  const handleToggle = () => {
+    if (disabled) return;
+    if (!isTiming) {
+      setIsTiming(true);
+      setStartTime(Date.now());
+      if (lastEndTime) {
+        const intervalSeconds = Math.floor((Date.now() - lastEndTime) / 1000);
+        const minutes = Math.floor(intervalSeconds / 60);
+        const seconds = intervalSeconds % 60;
+        setInterval(
+          `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+        );
+        onIntervalChange(
+          `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+        );
+      } else {
+        setInterval("00:00");
+        onIntervalChange("00:00");
+      }
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } else {
+      setIsTiming(false);
+      setLastEndTime(Date.now());
+      setStartTime(null);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+  };
 
   return (
-    <View
-      style={{
-        alignItems: "center",
-        marginBottom: layout.spacing.lg,
-      }}
-    >
-      <View
-        style={{
-          width: layout.spacing.xl * 3.5,
-          height: layout.spacing.xl * 3.5,
-          borderRadius: layout.borderRadius.full,
-          backgroundColor: colors.surface,
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <Text
-          style={{
-            fontSize: typo.h3.fontSize,
-            fontWeight: "600",
-            color: colors.text,
-            ...typo.h3,
-          }}
-        >
-          {time}
-        </Text>
-      </View>
-    </View>
-  );
-};
-
-const TimerControls: React.FC<{
-  isActive: boolean;
-  onStart: () => void;
-  onStop: () => void;
-}> = ({ isActive, onStart, onStop }) => {
-  const { colors, typo, layout } = useTheme();
-
-  return (
-    <View
-      style={{
-        flexDirection: "row",
-        justifyContent: "space-between",
-        marginBottom: layout.spacing.lg,
-        gap: layout.spacing.sm,
-      }}
-    >
-      <Button
-        mode="contained-tonal"
-        onPress={onStart}
-        disabled={isActive}
-        icon="play"
-        style={{
-          flex: 1,
-          borderRadius: layout.borderRadius.medium,
-        }}
-        labelStyle={{
-          fontSize: typo.body1.fontSize,
-          color: colors.text,
-          ...typo.body1,
-        }}
-        buttonColor={colors.primaryLight}
-      >
-        Start Timer
-      </Button>
-      <Button
-        mode="contained-tonal"
-        onPress={onStop}
-        disabled={!isActive}
-        icon="stop"
-        style={{
-          flex: 1,
-          borderRadius: layout.borderRadius.medium,
-        }}
-        labelStyle={{
-          fontSize: typo.body1.fontSize,
-          color: colors.text,
-          ...typo.body1,
-        }}
-        buttonColor={colors.primaryLight}
-      >
-        Stop Timer
-      </Button>
-    </View>
-  );
-};
-
-const TimeInput: React.FC<{
-  label: string;
-  value: string;
-  onChangeText: (text: string) => void;
-  placeholder?: string;
-  description?: string;
-}> = ({ label, value, onChangeText, placeholder = "00:00", description }) => {
-  const { colors, typo, layout } = useTheme();
-
-  return (
-    <View
-      style={{
-        marginBottom: layout.spacing.sm,
-      }}
-    >
+    <View style={{ marginBottom: layout.spacing.lg }}>
       <Text
         style={{
           fontSize: typo.body1.fontSize,
           fontWeight: "500",
-          marginBottom: layout.spacing.xs,
+          marginBottom: layout.spacing.sm,
           color: colors.text,
           ...typo.body1,
         }}
       >
-        {label}
+        Contraction Timer
       </Text>
       <View
         style={{
-          position: "relative",
+          flexDirection: "row",
+          justifyContent: "space-between",
+          marginBottom: layout.spacing.sm,
         }}
       >
-        <TextInput
-          value={value}
-          onChangeText={onChangeText}
-          placeholder={placeholder}
-          style={{
-            backgroundColor: colors.surface,
-            borderRadius: layout.borderRadius.medium,
-          }}
-          mode="outlined"
-          outlineColor={colors.border}
-          activeOutlineColor={colors.primary}
-          right={<TextInput.Icon icon="clock-outline" color={colors.text} />}
-        />
+        <View>
+          <Text
+            style={{
+              fontSize: typo.body2.fontSize,
+              color: colors.text,
+              ...typo.body2,
+            }}
+          >
+            Duration
+          </Text>
+          <Text
+            style={{
+              fontSize: typo.h4.fontSize,
+              fontWeight: "600",
+              color: colors.primary,
+              ...typo.h4,
+            }}
+          >
+            {duration}
+          </Text>
+        </View>
+        <View>
+          <Text
+            style={{
+              fontSize: typo.body2.fontSize,
+              color: colors.text,
+              ...typo.body2,
+            }}
+          >
+            Interval
+          </Text>
+          <Text
+            style={{
+              fontSize: typo.h4.fontSize,
+              fontWeight: "600",
+              color: colors.primary,
+              ...typo.h4,
+            }}
+          >
+            {interval}
+          </Text>
+        </View>
       </View>
-      {description && (
+      <TouchableOpacity
+        onPress={handleToggle}
+        style={{
+          backgroundColor: isTiming ? colors.error : colors.success,
+          borderRadius: layout.borderRadius.medium,
+          padding: layout.spacing.lg,
+          alignItems: "center",
+          opacity: disabled ? 0.6 : 1,
+        }}
+        disabled={disabled}
+      >
         <Text
           style={{
-            fontSize: typo.caption.fontSize,
-            color: colors.text,
-            marginTop: layout.spacing.xs,
-            ...typo.caption,
+            fontSize: typo.button.fontSize,
+            fontWeight: "600",
+            color: colors.textInverse,
+            ...typo.button,
           }}
         >
-          {description}
+          {isTiming ? "Stop Contraction" : "Start Contraction"}
         </Text>
-      )}
+      </TouchableOpacity>
     </View>
   );
 };
 
 const NotesInput: React.FC<{
-  value: string;
-  onChangeText: (text: string) => void;
-}> = ({ value, onChangeText }) => {
+  notes: string;
+  onNotesChange: (text: string) => void;
+  error?: string;
+  disabled: boolean;
+}> = ({ notes, onNotesChange, error, disabled }) => {
   const { colors, typo, layout } = useTheme();
 
   return (
-    <View
-      style={{
-        marginBottom: layout.spacing.lg,
-      }}
-    >
+    <View style={{ marginBottom: layout.spacing.lg }}>
       <Text
         style={{
           fontSize: typo.body1.fontSize,
           fontWeight: "500",
-          marginBottom: layout.spacing.xs,
+          marginBottom: layout.spacing.sm,
           color: colors.text,
           ...typo.body1,
         }}
@@ -192,202 +188,171 @@ const NotesInput: React.FC<{
         Additional Notes (Optional)
       </Text>
       <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder="Describe pain level, intensity, position, or any other observations..."
+        value={notes}
+        onChangeText={onNotesChange}
+        placeholder="Add any details about the contraction..."
         multiline
         numberOfLines={4}
         style={{
           backgroundColor: colors.surface,
-          minHeight: layout.spacing.xl * 4,
+          minHeight: layout.spacing.xl * 5,
         }}
         mode="outlined"
-        outlineColor={colors.border}
+        outlineColor={error ? colors.error : colors.border}
         activeOutlineColor={colors.primary}
+        error={!!error}
+        disabled={disabled}
       />
+      {error && (
+        <Text
+          style={{
+            fontSize: typo.caption.fontSize,
+            color: colors.error,
+            marginTop: layout.spacing.xs,
+          }}
+        >
+          {error}
+        </Text>
+      )}
     </View>
   );
 };
 
-const MedicalAlert: React.FC = () => {
-  const { colors, typo, layout } = useTheme();
-
-  return (
-    <Card
-      style={{
-        backgroundColor: colors.card,
-        marginBottom: layout.spacing.lg,
-        elevation: 0,
-        borderWidth: 1,
-        borderColor: colors.border,
-      }}
-    >
-      <Card.Content
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          paddingVertical: layout.spacing.sm,
-        }}
-      >
-        <IconButton icon="information" size={20} iconColor={colors.accent} />
-        <Text
-          style={{
-            flex: 1,
-            fontSize: typo.body2.fontSize,
-            color: colors.text,
-            marginLeft: layout.spacing.sm,
-            ...typo.body2,
-          }}
-        >
-          Seek medical attention if contractions are less than 5 minutes apart
-        </Text>
-      </Card.Content>
-    </Card>
-  );
-};
-
-// Main Screen Component
 export default function LogContractionScreen() {
   const router = useRouter();
   const { colors, typo, layout } = useTheme();
-  const [isTimerActive, setIsTimerActive] = useState(false);
-  const [currentTime, setCurrentTime] = useState("00:00");
-  const [contractionData, setContractionData] = useState<ContractionData>({
-    duration: "",
-    interval: "",
-    totalTime: "",
-    notes: "",
+  const { user, isActionQueued } = useAuth();
+  const [createContraction, { isLoading }] = useCreateContractionMutation();
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<Contraction>({
+    resolver: zodResolver(contractionSchema),
+    defaultValues: {
+      contractionId: "",
+      userId: user?.userId || "",
+      deviceId: "VT-001",
+      duration: "00:00",
+      interval: "00:00",
+      totalTime: undefined,
+      notes: "",
+      timestamp: new Date().toISOString(),
+    },
   });
 
-  // Timer logic
-  useEffect(() => {
-    let interval: number | undefined;
+  const onSubmit = async (data: Contraction) => {
+    if (isActionQueued) return;
+    try {
+      const validatedData = contractionSchema.parse({
+        ...data,
+        userId: user?.userId,
+        timestamp: new Date().toISOString(),
+      });
 
-    if (isTimerActive) {
-      let seconds = 0;
-      interval = setInterval(() => {
-        seconds++;
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        setCurrentTime(
-          `${mins.toString().padStart(2, "0")}:${secs
-            .toString()
-            .padStart(2, "0")}`
-        );
-      }, 1000);
+      await createContraction({
+        userId: validatedData.userId,
+        deviceId: validatedData.deviceId,
+        duration: validatedData.duration,
+        interval: validatedData.interval,
+        totalTime: validatedData.totalTime,
+        notes: validatedData.notes,
+        timestamp: validatedData.timestamp,
+      }).unwrap();
+
+      reset({
+        contractionId: "",
+        userId: user?.userId || "",
+        deviceId: "VT-001",
+        duration: "00:00",
+        interval: "00:00",
+        totalTime: undefined,
+        notes: "",
+        timestamp: new Date().toISOString(),
+      });
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setShowSuccessDialog(true);
+    } catch (error: any) {
+      if (error.message === "ACTION_QUEUED") {
+        reset({
+          contractionId: "",
+          userId: user?.userId || "",
+          deviceId: "VT-001",
+          duration: "00:00",
+          interval: "00:00",
+          totalTime: undefined,
+          notes: "",
+          timestamp: new Date().toISOString(),
+        });
+        setShowSuccessDialog(true);
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: "Failed to save contraction log.",
+        });
+      }
     }
-
-    return () => clearInterval(interval);
-  }, [isTimerActive]);
-
-  const handleStartTimer = () => {
-    setIsTimerActive(true);
-    setCurrentTime("00:00");
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
-  const handleStopTimer = () => {
-    setIsTimerActive(false);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-  };
-
-  const handleSaveContraction = () => {
-    // Validate required fields
-    if (!contractionData.duration || !contractionData.interval) {
-      Alert.alert(
-        "Missing Information",
-        "Please fill in the duration and interval fields."
-      );
-      return;
-    }
-
-    // Save logic here
-    Alert.alert("Success", "Contraction log saved successfully!");
-
-    // Reset form
-    setContractionData({
-      duration: "",
-      interval: "",
-      totalTime: "",
-      notes: "",
-    });
-    setCurrentTime("00:00");
-
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  };
-
-  const updateContractionData = (
-    field: keyof ContractionData,
-    value: string
-  ) => {
-    setContractionData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  const handleDialogDismiss = () => {
+    setShowSuccessDialog(false);
+    router.push("/contractions-history");
   };
 
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: colors.background,
-      }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <CustomAppBar
-        title="Log Uterine Contractions"
+        title="Log Contraction"
         rightAction="info"
-        onInfoPress={() => {
-          router.push("/vital-signs-education");
-        }}
+        onInfoPress={() =>
+          !isActionQueued && router.push("/vital-signs-education")
+        }
       />
-
       <ScrollView
-        style={{
-          flex: 1,
-        }}
-        contentContainerStyle={{
-          padding: layout.spacing.lg,
-        }}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: layout.spacing.sm }}
         showsVerticalScrollIndicator={false}
       >
         <View>
-          <TimerDisplay time={currentTime} />
-
-          <TimerControls
-            isActive={isTimerActive}
-            onStart={handleStartTimer}
-            onStop={handleStopTimer}
+          <Controller
+            control={control}
+            name="duration"
+            render={({ field: { value, onChange } }) => (
+              <Controller
+                control={control}
+                name="interval"
+                render={({
+                  field: { value: intervalValue, onChange: onIntervalChange },
+                }) => (
+                  <ContractionTimer
+                    onDurationChange={onChange}
+                    onIntervalChange={onIntervalChange}
+                    disabled={isActionQueued}
+                  />
+                )}
+              />
+            )}
           />
-
-          <TimeInput
-            label="How long did one contraction last?"
-            value={contractionData.duration}
-            onChangeText={(text) => updateContractionData("duration", text)}
+          <Controller
+            control={control}
+            name="notes"
+            render={({ field: { value, onChange }, fieldState: { error } }) => (
+              <NotesInput
+                notes={value || ""}
+                onNotesChange={onChange}
+                error={error?.message}
+                disabled={isActionQueued}
+              />
+            )}
           />
-
-          <TimeInput
-            label="Interval between contractions"
-            value={contractionData.interval}
-            onChangeText={(text) => updateContractionData("interval", text)}
-            description="Time from start of one to start of next"
-          />
-
-          <TimeInput
-            label="How long have contractions been occurring?"
-            value={contractionData.totalTime}
-            onChangeText={(text) => updateContractionData("totalTime", text)}
-          />
-
-          <NotesInput
-            value={contractionData.notes}
-            onChangeText={(text) => updateContractionData("notes", text)}
-          />
-
-          <MedicalAlert />
-
           <Button
             mode="contained"
-            onPress={handleSaveContraction}
+            onPress={handleSubmit(onSubmit)}
             style={{
               backgroundColor: colors.primary,
               borderRadius: layout.borderRadius.medium,
@@ -400,11 +365,54 @@ export default function LogContractionScreen() {
               ...typo.button,
             }}
             icon="content-save"
+            disabled={isActionQueued || isLoading}
+            loading={isLoading}
           >
             Save Contraction Log
           </Button>
         </View>
       </ScrollView>
+      <Portal>
+        <Dialog
+          visible={showSuccessDialog}
+          onDismiss={handleDialogDismiss}
+          style={{ backgroundColor: colors.card }}
+        >
+          <Dialog.Title
+            style={{
+              fontSize: typo.h4.fontSize,
+              fontWeight: "600",
+              color: colors.text,
+              ...typo.h4,
+            }}
+          >
+            Success
+          </Dialog.Title>
+          <Dialog.Content>
+            <Text
+              style={{
+                fontSize: typo.body1.fontSize,
+                color: colors.text,
+                lineHeight: typo.body1.lineHeight,
+                ...typo.body1,
+              }}
+            >
+              {isActionQueued
+                ? "Your contraction log has been queued and will be saved when you're back online."
+                : "Your contraction log has been saved successfully!"}
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button
+              onPress={handleDialogDismiss}
+              textColor={colors.primary}
+              disabled={isActionQueued}
+            >
+              OK
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </SafeAreaView>
   );
 }

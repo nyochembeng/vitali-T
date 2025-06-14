@@ -4,7 +4,7 @@ import { Text, Switch } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTheme } from "@/lib/hooks/useTheme";
 
-interface NotificationSetting {
+interface NotificationSettingItemType {
   id: string;
   title: string;
   description: string;
@@ -13,13 +13,16 @@ interface NotificationSetting {
 }
 
 interface NotificationSettingItemProps {
-  setting: NotificationSetting;
+  setting: NotificationSettingItemType;
   onToggle: (id: string, enabled: boolean) => void;
+  disabled?: boolean;
 }
 
-export const NotificationSettingItem: React.FC<
-  NotificationSettingItemProps
-> = ({ setting, onToggle }) => {
+export default function NotificationSettingItem({
+  setting,
+  onToggle,
+  disabled = false,
+}: NotificationSettingItemProps) {
   const { colors, typo, layout } = useTheme();
 
   return (
@@ -31,27 +34,17 @@ export const NotificationSettingItem: React.FC<
         marginVertical: layout.spacing.sm,
         marginHorizontal: layout.spacing.md,
         borderRadius: layout.borderRadius.medium,
-        backgroundColor: colors.card,
+        backgroundColor: colors.accent,
       }}
     >
-      <View
-        style={{
-          marginRight: layout.spacing.md,
-        }}
-      >
+      <View style={{ marginRight: layout.spacing.md }}>
         <MaterialCommunityIcons
           name={setting.icon as any}
           size={24}
           color={colors.primary}
         />
       </View>
-
-      <View
-        style={{
-          flex: 1,
-          marginRight: layout.spacing.sm,
-        }}
-      >
+      <View style={{ flex: 1, marginRight: layout.spacing.sm }}>
         <Text
           style={{
             ...typo.body1,
@@ -73,13 +66,13 @@ export const NotificationSettingItem: React.FC<
           {setting.description}
         </Text>
       </View>
-
       <Switch
         value={setting.enabled}
         onValueChange={(enabled) => onToggle(setting.id, enabled)}
         thumbColor={setting.enabled ? colors.primary : colors.border}
         trackColor={{ false: colors.border, true: colors.primary + "50" }}
+        disabled={disabled}
       />
     </View>
   );
-};
+}

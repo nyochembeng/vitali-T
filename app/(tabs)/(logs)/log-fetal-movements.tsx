@@ -1,22 +1,29 @@
-import React, { useState, useEffect } from "react";
-import { View, ScrollView, Alert, Pressable } from "react-native";
-import { Text, Button, TextInput, Card, IconButton } from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Image } from "expo-image";
-import * as Haptics from "expo-haptics";
 import CustomAppBar from "@/components/utils/CustomAppBar";
-import { useRouter } from "expo-router";
 import { useTheme } from "@/lib/hooks/useTheme";
+import { useAuth } from "@/lib/hooks/useAuth";
+import {
+  FetalMovement,
+  fetalMovementSchema,
+} from "@/lib/schemas/fetalMovementSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as Haptics from "expo-haptics";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { Pressable, ScrollView, View } from "react-native";
+import {
+  Button,
+  Card,
+  IconButton,
+  Text,
+  TextInput,
+  Portal,
+  Dialog,
+} from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useCreateFetalMovementMutation } from "@/lib/features/fetal-movements/fetalMovementsService";
+import Toast from "react-native-toast-message";
 
-// Types
-interface FetalMovementSession {
-  kickCount: number;
-  sessionDuration: string;
-  notes: string;
-  startTime: Date | null;
-}
-
-// Components
 const HeroImage: React.FC = () => {
   const { layout } = useTheme();
 
@@ -27,13 +34,7 @@ const HeroImage: React.FC = () => {
         borderRadius: layout.borderRadius.medium,
         overflow: "hidden",
       }}
-    >
-      {/* <Image
-        source={require('./assets/fetal-movement-hero.jpg')} // Replace with your image
-        style={{ width: "100%", height: layout.spacing.xxl * 10 }}
-        contentFit="cover"
-      /> */}
-    </View>
+    ></View>
   );
 };
 
@@ -41,19 +42,17 @@ const KickCounter: React.FC<{
   count: number;
   onPress: () => void;
   isActive: boolean;
-}> = ({ count, onPress, isActive }) => {
+  disabled: boolean;
+}> = ({ count, onPress, isActive, disabled }) => {
   const { colors, typo, layout } = useTheme();
 
   return (
     <Pressable
       onPress={onPress}
-      disabled={!isActive}
+      disabled={!isActive || disabled}
       style={[
-        {
-          alignItems: "center",
-          marginBottom: layout.spacing.lg,
-        },
-        !isActive && { opacity: 0.6 },
+        { alignItems: "center", marginBottom: layout.spacing.lg },
+        (!isActive || disabled) && { opacity: 0.6 },
       ]}
     >
       <View
@@ -96,16 +95,12 @@ const SessionStatus: React.FC<{
   isActive: boolean;
   duration: string;
   onToggle: () => void;
-}> = ({ isActive, duration, onToggle }) => {
+  disabled: boolean;
+}> = ({ isActive, duration, onToggle, disabled }) => {
   const { colors, typo, layout } = useTheme();
 
   return (
-    <View
-      style={{
-        alignItems: "center",
-        marginBottom: layout.spacing.lg,
-      }}
-    >
+    <View style={{ alignItems: "center", marginBottom: layout.spacing.lg }}>
       <Button
         mode="contained"
         onPress={onToggle}
@@ -122,21 +117,12 @@ const SessionStatus: React.FC<{
           color: colors.textInverse,
           ...typo.button,
         }}
+        disabled={disabled}
       >
         {isActive ? "Stop Counting" : "Start Counting"}
       </Button>
-
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-        }}
-      >
-        <IconButton
-          icon="clock-outline"
-          size={16}
-          iconColor={colors.text}
-        />
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <IconButton icon="clock-outline" size={16} iconColor={colors.text} />
         <Text
           style={{
             fontSize: typo.body2.fontSize,
@@ -153,31 +139,28 @@ const SessionStatus: React.FC<{
 };
 
 const NotesSection: React.FC<{
-  notes: string;
-  onChangeNotes: (text: string) => void;
-}> = ({ notes, onChangeNotes }) => {
+  value: string;
+  onChange: (value: string) => void;
+  error?: string;
+  disabled: boolean;
+}> = ({ value, onChange, error, disabled }) => {
   const { colors, typo, layout } = useTheme();
 
   return (
-    <View
-      style={{
-        marginBottom: layout.spacing.lg,
-      }}
-    >
+    <View style={{ marginBottom: layout.spacing.lg }}>
       <Text
         style={{
           fontSize: typo.body1.fontSize,
           fontWeight: "500",
-          marginBottom: layout.spacing.sm,
           color: colors.text,
-          ...typo.body1,
+          marginBottom: layout.spacing.sm,
         }}
       >
         Add any notes (optional)
       </Text>
       <TextInput
-        value={notes}
-        onChangeText={onChangeNotes}
+        value={value}
+        onChangeText={onChange}
         placeholder="How are you feeling? Any patterns noticed?"
         multiline
         numberOfLines={4}
@@ -186,9 +169,22 @@ const NotesSection: React.FC<{
           minHeight: layout.spacing.xl * 4,
         }}
         mode="outlined"
-        outlineColor={colors.border}
+        outlineColor={error ? colors.error : colors.border}
         activeOutlineColor={colors.primary}
+        error={!!error}
+        disabled={disabled}
       />
+      {error && (
+        <Text
+          style={{
+            fontSize: typo.caption.fontSize,
+            color: colors.error,
+            marginTop: layout.spacing.sm,
+          }}
+        >
+          {error}
+        </Text>
+      )}
     </View>
   );
 };
@@ -229,11 +225,7 @@ const TipCard: React.FC = () => {
           }}
         >
           <Text
-            style={{
-              fontWeight: "600",
-              color: colors.primary,
-              ...typo.body2,
-            }}
+            style={{ fontWeight: "600", color: colors.primary, ...typo.body2 }}
           >
             Tip:
           </Text>{" "}
@@ -245,146 +237,208 @@ const TipCard: React.FC = () => {
   );
 };
 
-// Main Screen Component
 export default function LogFetalMovementScreen() {
   const router = useRouter();
   const { colors, typo, layout } = useTheme();
-  const [session, setSession] = useState<FetalMovementSession>({
-    kickCount: 0,
-    sessionDuration: "00:00",
-    notes: "",
-    startTime: null,
-  });
+  const { user, isActionQueued } = useAuth();
+  const [createFetalMovement, { isLoading }] = useCreateFetalMovementMutation();
   const [isSessionActive, setIsSessionActive] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
-  // Timer effect
+  const {
+    control,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+    reset,
+  } = useForm<FetalMovement>({
+    resolver: zodResolver(fetalMovementSchema),
+    defaultValues: {
+      sessionId: "",
+      userId: user?.userId || "",
+      deviceId: "VT-001",
+      kickCount: 0,
+      sessionDuration: "00:00",
+      notes: "",
+      startTime: undefined,
+      timestamp: new Date().toISOString(),
+    },
+  });
+
   useEffect(() => {
     let interval: number | undefined;
 
-    if (isSessionActive && session.startTime) {
+    if (isSessionActive) {
       interval = setInterval(() => {
-        const now = new Date();
-        const diff = Math.floor(
-          (now.getTime() - session.startTime!.getTime()) / 1000
-        );
-        const mins = Math.floor(diff / 60);
-        const secs = diff % 60;
-
-        setSession((prev) => ({
-          ...prev,
-          sessionDuration: `${mins.toString().padStart(2, "0")}:${secs
-            .toString()
-            .padStart(2, "0")}`,
-        }));
+        const startTime = control._formValues.startTime;
+        if (startTime) {
+          const now = new Date();
+          const diff = Math.floor(
+            (now.getTime() - new Date(startTime).getTime()) / 1000
+          );
+          const mins = Math.floor(diff / 60);
+          const secs = diff % 60;
+          setValue(
+            "sessionDuration",
+            `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
+          );
+        }
       }, 1000);
     }
 
-    return () => clearInterval(interval);
-  }, [isSessionActive, session.startTime]);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isSessionActive, setValue, control._formValues.startTime]);
 
   const handleToggleSession = () => {
+    if (isActionQueued) return;
     if (isSessionActive) {
-      // Stop session
       setIsSessionActive(false);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } else {
-      // Start session
       setIsSessionActive(true);
-      setSession((prev) => ({
-        ...prev,
-        startTime: new Date(),
-        kickCount: 0,
-        sessionDuration: "00:00",
-      }));
+      setValue("startTime", new Date().toISOString());
+      setValue("kickCount", 0);
+      setValue("sessionDuration", "00:00");
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
 
   const handleKickCount = () => {
-    if (!isSessionActive) return;
-
-    setSession((prev) => ({
-      ...prev,
-      kickCount: prev.kickCount + 1,
-    }));
-
+    if (!isSessionActive || isActionQueued) return;
+    setValue("kickCount", control._formValues.kickCount + 1);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
   };
 
-  const handleSaveSession = () => {
-    if (session.kickCount === 0) {
-      Alert.alert("No Movements", "Please count some movements before saving.");
-      return;
+  const onSubmit = async (data: FetalMovement) => {
+    if (isActionQueued) return;
+    try {
+      if (data.kickCount === 0) {
+        Toast.show({
+          type: "error",
+          text1: "No Movements",
+          text2: "Please count some movements before saving.",
+        });
+        return;
+      }
+
+      const validatedData = fetalMovementSchema.parse({
+        ...data,
+        userId: user?.userId,
+        timestamp: new Date().toISOString(),
+      });
+
+      await createFetalMovement({
+        userId: validatedData.userId,
+        deviceId: validatedData.deviceId,
+        kickCount: validatedData.kickCount,
+        sessionDuration: validatedData.sessionDuration,
+        notes: validatedData.notes,
+        startTime: validatedData.startTime,
+        timestamp: validatedData.timestamp,
+      }).unwrap();
+
+      reset({
+        sessionId: "",
+        userId: user?.userId || "",
+        deviceId: "VT-001",
+        kickCount: 0,
+        sessionDuration: "00:00",
+        notes: "",
+        startTime: undefined,
+        timestamp: new Date().toISOString(),
+      });
+      setIsSessionActive(false);
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setShowSuccessDialog(true);
+    } catch (error: any) {
+      if (error.message === "ACTION_QUEUED") {
+        reset({
+          sessionId: "",
+          userId: user?.userId || "",
+          deviceId: "VT-001",
+          kickCount: 0,
+          sessionDuration: "00:00",
+          notes: "",
+          startTime: undefined,
+          timestamp: new Date().toISOString(),
+        });
+        setIsSessionActive(false);
+        setShowSuccessDialog(true);
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: "Failed to save fetal movement session.",
+        });
+      }
     }
-
-    // Save logic here
-    Alert.alert("Success", "Fetal movement session saved successfully!");
-
-    // Reset session
-    setSession({
-      kickCount: 0,
-      sessionDuration: "00:00",
-      notes: "",
-      startTime: null,
-    });
-    setIsSessionActive(false);
-
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   };
 
-  const updateNotes = (text: string) => {
-    setSession((prev) => ({
-      ...prev,
-      notes: text,
-    }));
+  const handleDialogDismiss = () => {
+    setShowSuccessDialog(false);
+    router.push("/fetal-movements-history");
   };
 
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: colors.background,
-      }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <CustomAppBar
         title="Log Fetal Movements"
         rightAction="info"
-        onInfoPress={() => {
-          router.push("/vital-signs-education");
-        }}
+        onInfoPress={() =>
+          !isActionQueued && router.push("/vital-signs-education")
+        }
       />
-
       <ScrollView
-        style={{
-          flex: 1,
-        }}
-        contentContainerStyle={{
-          padding: layout.spacing.lg,
-        }}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: layout.spacing.sm }}
         showsVerticalScrollIndicator={false}
       >
         <View>
           <HeroImage />
-
-          <KickCounter
-            count={session.kickCount}
-            onPress={handleKickCount}
-            isActive={isSessionActive}
+          <Controller
+            control={control}
+            name="kickCount"
+            render={({ field: { value } }) => (
+              <KickCounter
+                count={value}
+                onPress={handleKickCount}
+                isActive={isSessionActive}
+                disabled={isActionQueued}
+              />
+            )}
           />
-
-          <SessionStatus
-            isActive={isSessionActive}
-            duration={session.sessionDuration}
-            onToggle={handleToggleSession}
+          <Controller
+            control={control}
+            name="sessionDuration"
+            render={({ field: { value } }) => (
+              <SessionStatus
+                isActive={isSessionActive}
+                duration={value}
+                onToggle={handleToggleSession}
+                disabled={isActionQueued}
+              />
+            )}
           />
-
-          <NotesSection notes={session.notes} onChangeNotes={updateNotes} />
-
+          <Controller
+            control={control}
+            name="notes"
+            render={({ field: { value, onChange }, fieldState: { error } }) => (
+              <NotesSection
+                value={value || ""}
+                onChange={onChange}
+                error={error?.message}
+                disabled={isActionQueued}
+              />
+            )}
+          />
           <Button
-            mode="outlined"
-            onPress={handleSaveSession}
+            mode="contained"
+            onPress={handleSubmit(onSubmit)}
             style={{
-              borderColor: colors.primary,
+              backgroundColor: colors.primary,
               borderRadius: layout.borderRadius.medium,
               paddingVertical: layout.spacing.xs,
               marginBottom: layout.spacing.lg,
@@ -392,17 +446,59 @@ export default function LogFetalMovementScreen() {
             labelStyle={{
               fontSize: typo.button.fontSize,
               fontWeight: "600",
-              color: colors.primary,
+              color: colors.textInverse,
               ...typo.button,
             }}
             icon="content-save"
+            disabled={isActionQueued || isLoading}
+            loading={isLoading}
           >
             Save Session
           </Button>
-
           <TipCard />
         </View>
       </ScrollView>
+      <Portal>
+        <Dialog
+          visible={showSuccessDialog}
+          onDismiss={handleDialogDismiss}
+          style={{ backgroundColor: colors.card }}
+        >
+          <Dialog.Title
+            style={{
+              fontSize: typo.h4.fontSize,
+              fontWeight: "600",
+              color: colors.text,
+              ...typo.h4,
+            }}
+          >
+            Success
+          </Dialog.Title>
+          <Dialog.Content>
+            <Text
+              style={{
+                fontSize: typo.body1.fontSize,
+                color: colors.text,
+                lineHeight: typo.body1.lineHeight,
+                ...typo.body1,
+              }}
+            >
+              {isActionQueued
+                ? "Your fetal movement session has been queued and will be saved when you're back online."
+                : "Your fetal movement session has been saved successfully!"}
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button
+              onPress={handleDialogDismiss}
+              textColor={colors.primary}
+              disabled={isActionQueued}
+            >
+              OK
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </SafeAreaView>
   );
 }

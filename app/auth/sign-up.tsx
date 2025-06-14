@@ -1,36 +1,57 @@
+import { useTheme } from "@/lib/hooks/useTheme";
+import { SignUp, signUpSchema } from "@/lib/schemas/userSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React from "react";
+import { Controller, useForm } from "react-hook-form";
 import {
-  View,
-  Text,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Text,
   TouchableOpacity,
+  View,
+  Alert,
 } from "react-native";
-import { TextInput, Button } from "react-native-paper";
+import { Button, TextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTheme } from "@/lib/hooks/useTheme";
+import { useAuth } from "@/lib/hooks/useAuth";
 
 export default function SignUpScreen() {
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
   const { colors, typo, layout } = useTheme();
+  const { signUp, isSigningUp, isActionQueued } = useAuth();
 
-  const handleSignUp = () => {
-    if (password === confirmPassword) {
-      // Perform sign-up logic here
-      console.log("Sign-up with:", {
-        fullName,
-        email,
-        password,
-      });
-      router.push("/profile-setup");
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<SignUp>({
+    resolver: zodResolver(signUpSchema),
+    defaultValues: {
+      fullname: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
+  });
+
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+
+  const onSubmit = async (data: SignUp) => {
+    try {
+      const result = await signUp(data);
+      if ("queued" in result && result.queued) {
+        return; // Queued actions handled by Toast and SyncStatus
+      }
+      router.replace("/profile-setup");
+    } catch (error: any) {
+      Alert.alert(
+        "Sign Up Failed",
+        error?.data?.message || "Unable to create account. Please try again.",
+        [{ text: "OK" }]
+      );
     }
   };
 
@@ -39,17 +60,10 @@ export default function SignUpScreen() {
   };
 
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: colors.background,
-      }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{
-          flex: 1,
-        }}
+        style={{ flex: 1 }}
       >
         <ScrollView
           contentContainerStyle={{
@@ -86,17 +100,9 @@ export default function SignUpScreen() {
           </Text>
 
           {/* Form */}
-          <View
-            style={{
-              flex: 1,
-            }}
-          >
+          <View style={{ flex: 1 }}>
             {/* Full Name Input */}
-            <View
-              style={{
-                marginBottom: layout.spacing.md,
-              }}
-            >
+            <View style={{ marginBottom: layout.spacing.md }}>
               <Text
                 style={{
                   fontSize: typo.body3.fontSize,
@@ -108,36 +114,53 @@ export default function SignUpScreen() {
               >
                 Full Name
               </Text>
-              <TextInput
-                mode="outlined"
-                placeholder="Enter your full name"
-                value={fullName}
-                onChangeText={setFullName}
-                style={{
-                  backgroundColor: colors.card,
-                  fontSize: typo.body1.fontSize,
-                  ...typo.body1,
-                }}
-                outlineStyle={{
-                  borderColor: colors.border,
-                  borderWidth: 1,
-                  borderRadius: layout.borderRadius.medium,
-                }}
-                theme={{
-                  colors: {
-                    outline: colors.border,
-                    outlineVariant: colors.border,
-                  },
-                }}
+              <Controller
+                control={control}
+                name="fullname"
+                render={({ field: { onChange, value } }) => (
+                  <TextInput
+                    mode="outlined"
+                    placeholder="Enter your full name"
+                    value={value}
+                    onChangeText={onChange}
+                    style={{
+                      backgroundColor: colors.card,
+                      fontSize: typo.body1.fontSize,
+                      ...typo.body1,
+                    }}
+                    outlineStyle={{
+                      borderColor: errors.fullname
+                        ? colors.error
+                        : colors.border,
+                      borderWidth: 1,
+                      borderRadius: layout.borderRadius.medium,
+                    }}
+                    theme={{
+                      colors: {
+                        outline: colors.border,
+                        outlineVariant: colors.border,
+                      },
+                    }}
+                    disabled={isActionQueued}
+                  />
+                )}
               />
+              {errors.fullname && (
+                <Text
+                  style={{
+                    color: colors.error,
+                    fontSize: typo.body4.fontSize,
+                    marginTop: layout.spacing.xs,
+                    ...typo.body4,
+                  }}
+                >
+                  {errors.fullname.message}
+                </Text>
+              )}
             </View>
 
             {/* Email Input */}
-            <View
-              style={{
-                marginBottom: layout.spacing.md,
-              }}
-            >
+            <View style={{ marginBottom: layout.spacing.md }}>
               <Text
                 style={{
                   fontSize: typo.body3.fontSize,
@@ -149,38 +172,53 @@ export default function SignUpScreen() {
               >
                 Email Address
               </Text>
-              <TextInput
-                mode="outlined"
-                placeholder="Enter your email address"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                style={{
-                  backgroundColor: colors.card,
-                  fontSize: typo.body1.fontSize,
-                  ...typo.body1,
-                }}
-                outlineStyle={{
-                  borderColor: colors.border,
-                  borderWidth: 1,
-                  borderRadius: layout.borderRadius.medium,
-                }}
-                theme={{
-                  colors: {
-                    outline: colors.border,
-                    outlineVariant: colors.border,
-                  },
-                }}
+              <Controller
+                control={control}
+                name="email"
+                render={({ field: { onChange, value } }) => (
+                  <TextInput
+                    mode="outlined"
+                    placeholder="Enter your email address"
+                    value={value}
+                    onChangeText={onChange}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    style={{
+                      backgroundColor: colors.card,
+                      fontSize: typo.body1.fontSize,
+                      ...typo.body1,
+                    }}
+                    outlineStyle={{
+                      borderColor: errors.email ? colors.error : colors.border,
+                      borderWidth: 1,
+                      borderRadius: layout.borderRadius.medium,
+                    }}
+                    theme={{
+                      colors: {
+                        outline: colors.border,
+                        outlineVariant: colors.border,
+                      },
+                    }}
+                    disabled={isActionQueued}
+                  />
+                )}
               />
+              {errors.email && (
+                <Text
+                  style={{
+                    color: colors.error,
+                    fontSize: typo.body4.fontSize,
+                    marginTop: layout.spacing.xs,
+                    ...typo.body4,
+                  }}
+                >
+                  {errors.email.message}
+                </Text>
+              )}
             </View>
 
             {/* Password Input */}
-            <View
-              style={{
-                marginBottom: layout.spacing.md,
-              }}
-            >
+            <View style={{ marginBottom: layout.spacing.md }}>
               <Text
                 style={{
                   fontSize: typo.body3.fontSize,
@@ -192,43 +230,61 @@ export default function SignUpScreen() {
               >
                 Password
               </Text>
-              <TextInput
-                mode="outlined"
-                placeholder="Create a password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                right={
-                  <TextInput.Icon
-                    icon={showPassword ? "eye-off" : "eye"}
-                    onPress={() => setShowPassword(!showPassword)}
+              <Controller
+                control={control}
+                name="password"
+                render={({ field: { onChange, value } }) => (
+                  <TextInput
+                    mode="outlined"
+                    placeholder="Create a password"
+                    value={value}
+                    onChangeText={onChange}
+                    secureTextEntry={!showPassword}
+                    right={
+                      <TextInput.Icon
+                        icon={showPassword ? "eye-off" : "eye"}
+                        onPress={() => setShowPassword(!showPassword)}
+                      />
+                    }
+                    style={{
+                      backgroundColor: colors.card,
+                      fontSize: typo.body1.fontSize,
+                      ...typo.body1,
+                    }}
+                    outlineStyle={{
+                      borderColor: errors.password
+                        ? colors.error
+                        : colors.border,
+                      borderWidth: 1,
+                      borderRadius: layout.borderRadius.medium,
+                    }}
+                    theme={{
+                      colors: {
+                        outline: colors.border,
+                        outlineVariant: colors.border,
+                      },
+                    }}
+                    disabled={isActionQueued}
                   />
-                }
-                style={{
-                  backgroundColor: colors.card,
-                  fontSize: typo.body1.fontSize,
-                  ...typo.body1,
-                }}
-                outlineStyle={{
-                  borderColor: colors.border,
-                  borderWidth: 1,
-                  borderRadius: layout.borderRadius.medium,
-                }}
-                theme={{
-                  colors: {
-                    outline: colors.border,
-                    outlineVariant: colors.border,
-                  },
-                }}
+                )}
               />
+              {errors.password && (
+                <Text
+                  style={{
+                    color: colors.error,
+                    fontSize: typo.body4.fontSize,
+                    marginTop: layout.spacing.xs,
+                    ...typo.body4,
+                    maxWidth: "90%",
+                  }}
+                >
+                  {errors.password.message}
+                </Text>
+              )}
             </View>
 
             {/* Confirm Password Input */}
-            <View
-              style={{
-                marginBottom: layout.spacing.md,
-              }}
-            >
+            <View style={{ marginBottom: layout.spacing.md }}>
               <Text
                 style={{
                   fontSize: typo.body3.fontSize,
@@ -240,41 +296,66 @@ export default function SignUpScreen() {
               >
                 Confirm Password
               </Text>
-              <TextInput
-                mode="outlined"
-                placeholder="Confirm your password"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry={!showConfirmPassword}
-                right={
-                  <TextInput.Icon
-                    icon={showConfirmPassword ? "eye-off" : "eye"}
-                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+              <Controller
+                control={control}
+                name="confirmPassword"
+                render={({ field: { onChange, value } }) => (
+                  <TextInput
+                    mode="outlined"
+                    placeholder="Confirm your password"
+                    value={value}
+                    onChangeText={onChange}
+                    secureTextEntry={!showConfirmPassword}
+                    right={
+                      <TextInput.Icon
+                        icon={showConfirmPassword ? "eye-off" : "eye"}
+                        onPress={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
+                      />
+                    }
+                    style={{
+                      backgroundColor: colors.card,
+                      fontSize: typo.body1.fontSize,
+                      ...typo.body1,
+                    }}
+                    outlineStyle={{
+                      borderColor: errors.confirmPassword
+                        ? colors.error
+                        : colors.border,
+                      borderWidth: 1,
+                      borderRadius: layout.borderRadius.medium,
+                    }}
+                    theme={{
+                      colors: {
+                        outline: colors.border,
+                        outlineVariant: colors.border,
+                      },
+                    }}
+                    disabled={isActionQueued}
                   />
-                }
-                style={{
-                  backgroundColor: colors.card,
-                  fontSize: typo.body1.fontSize,
-                  ...typo.body1,
-                }}
-                outlineStyle={{
-                  borderColor: colors.border,
-                  borderWidth: 1,
-                  borderRadius: layout.borderRadius.medium,
-                }}
-                theme={{
-                  colors: {
-                    outline: colors.border,
-                    outlineVariant: colors.border,
-                  },
-                }}
+                )}
               />
+              {errors.confirmPassword && (
+                <Text
+                  style={{
+                    color: colors.error,
+                    fontSize: typo.body4.fontSize,
+                    marginTop: layout.spacing.xs,
+                    ...typo.body4,
+                  }}
+                >
+                  {errors.confirmPassword.message}
+                </Text>
+              )}
             </View>
 
             {/* Sign Up Button */}
             <Button
               mode="contained"
-              onPress={handleSignUp}
+              onPress={handleSubmit(onSubmit)}
+              disabled={isSigningUp || isActionQueued}
+              loading={isSigningUp}
               style={{
                 borderRadius: layout.borderRadius.medium,
                 paddingVertical: layout.spacing.sm,

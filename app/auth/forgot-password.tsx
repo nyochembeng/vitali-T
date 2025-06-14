@@ -1,28 +1,64 @@
-import React, { useState } from "react";
+import { useTheme } from "@/lib/hooks/useTheme";
+import { ForgotPassword, forgotPasswordSchema } from "@/lib/schemas/userSchema";
+import { Ionicons } from "@expo/vector-icons";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "expo-router";
+import React from "react";
+import { Controller, useForm } from "react-hook-form";
 import {
-  View,
-  Text,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Text,
   TouchableOpacity,
+  View,
+  Alert,
 } from "react-native";
-import { TextInput, Button } from "react-native-paper";
+import { Button, TextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useTheme } from "@/lib/hooks/useTheme";
+import { useForgotPasswordMutation } from "@/lib/features/user/userService";
 
 export default function ForgotPasswordScreen() {
-  const [email, setEmail] = useState("");
   const router = useRouter();
   const { colors, typo, layout } = useTheme();
+  const [forgotPassword, { isLoading: isSubmitting }] =
+    useForgotPasswordMutation();
 
-  const handleSendResetLink = () => {
-    // Implement your logic to send the reset link here
-    // You can use a library like axios to make an API request to your backend
-    // For simplicity, we'll just log the email to the console
-    console.log("Reset link sent to:", email);
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ForgotPassword>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
+
+  const onSubmit = async (data: ForgotPassword) => {
+    try {
+      const response = await forgotPassword(data).unwrap();
+      Alert.alert(
+        "Success",
+        response.message ||
+          "A password reset link has been sent to your email.",
+        [
+          {
+            text: "OK",
+            onPress: () => router.replace("/auth/login"),
+          },
+        ]
+      );
+    } catch (error: any) {
+      if (error.message === "ACTION_QUEUED") {
+        return; // Queued actions handled by Toast and SyncStatus
+      }
+      Alert.alert(
+        "Error",
+        error?.data?.message || "Failed to send reset link. Please try again.",
+        [{ text: "OK" }]
+      );
+    }
   };
 
   const handleBackToLogin = () => {
@@ -30,17 +66,10 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: colors.background,
-      }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{
-          flex: 1,
-        }}
+        style={{ flex: 1 }}
       >
         <ScrollView
           contentContainerStyle={{
@@ -52,10 +81,7 @@ export default function ForgotPasswordScreen() {
         >
           {/* Lock Icon */}
           <View
-            style={{
-              alignItems: "center",
-              marginBottom: layout.spacing.xl,
-            }}
+            style={{ alignItems: "center", marginBottom: layout.spacing.xl }}
           >
             <View
               style={{
@@ -102,17 +128,9 @@ export default function ForgotPasswordScreen() {
           </Text>
 
           {/* Form */}
-          <View
-            style={{
-              flex: 1,
-            }}
-          >
+          <View style={{ flex: 1 }}>
             {/* Email Input */}
-            <View
-              style={{
-                marginBottom: layout.spacing.xl,
-              }}
-            >
+            <View style={{ marginBottom: layout.spacing.xl }}>
               <Text
                 style={{
                   fontSize: typo.body3.fontSize,
@@ -124,37 +142,58 @@ export default function ForgotPasswordScreen() {
               >
                 Email Address
               </Text>
-              <TextInput
-                mode="outlined"
-                placeholder="Enter your email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                right={<TextInput.Icon icon="email-outline" />}
-                style={{
-                  backgroundColor: colors.card,
-                  fontSize: typo.body1.fontSize,
-                  ...typo.body1,
-                }}
-                outlineStyle={{
-                  borderColor: colors.border,
-                  borderWidth: 1,
-                  borderRadius: layout.borderRadius.medium,
-                }}
-                theme={{
-                  colors: {
-                    outline: colors.border,
-                    outlineVariant: colors.border,
-                  },
-                }}
+              <Controller
+                control={control}
+                name="email"
+                render={({ field: { onChange, value } }) => (
+                  <TextInput
+                    mode="outlined"
+                    placeholder="Enter your email"
+                    value={value}
+                    onChangeText={onChange}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    right={<TextInput.Icon icon="email-outline" />}
+                    style={{
+                      backgroundColor: colors.card,
+                      fontSize: typo.body1.fontSize,
+                      ...typo.body1,
+                    }}
+                    outlineStyle={{
+                      borderColor: errors.email ? colors.error : colors.border,
+                      borderWidth: 1,
+                      borderRadius: layout.borderRadius.medium,
+                    }}
+                    theme={{
+                      colors: {
+                        outline: colors.border,
+                        outlineVariant: colors.border,
+                      },
+                    }}
+                    disabled={isSubmitting}
+                  />
+                )}
               />
+              {errors.email && (
+                <Text
+                  style={{
+                    color: colors.error,
+                    fontSize: typo.body4.fontSize,
+                    marginTop: layout.spacing.xs,
+                    ...typo.body4,
+                  }}
+                >
+                  {errors.email.message}
+                </Text>
+              )}
             </View>
 
             {/* Send Reset Link Button */}
             <Button
               mode="contained"
-              onPress={handleSendResetLink}
+              onPress={handleSubmit(onSubmit)}
+              disabled={isSubmitting}
+              loading={isSubmitting}
               style={{
                 borderRadius: layout.borderRadius.medium,
                 paddingVertical: layout.spacing.sm,
@@ -174,9 +213,7 @@ export default function ForgotPasswordScreen() {
             {/* Back to Login Link */}
             <TouchableOpacity
               onPress={handleBackToLogin}
-              style={{
-                alignItems: "center",
-              }}
+              style={{ alignItems: "center" }}
             >
               <Text
                 style={{

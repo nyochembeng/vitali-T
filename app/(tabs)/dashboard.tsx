@@ -1,22 +1,17 @@
-import React, { useState } from "react";
-import { View, ScrollView, SafeAreaView, Pressable } from "react-native";
-import { Text, Button, Card, Portal, Dialog } from "react-native-paper";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import VitalCard from "@/components/dashboard/VitalCard";
 import QuickActionButton from "@/components/dashboard/QuickActionButton";
-import { useRouter } from "expo-router";
+import VitalCard from "@/components/dashboard/VitalCard";
 import CustomAppBar from "@/components/utils/CustomAppBar";
 import { useTheme } from "@/lib/hooks/useTheme";
-
-interface VitalMetric {
-  id: string;
-  title: string;
-  value: string | number;
-  unit: string;
-  icon: string;
-  chartData?: number[];
-  color?: string;
-}
+import { useAuth } from "@/lib/hooks/useAuth";
+import { Alert } from "@/lib/schemas/alertSchema";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import { Pressable, SafeAreaView, ScrollView, View } from "react-native";
+import { Button, Card, Dialog, Portal, Text } from "react-native-paper";
+import { useGetVitalsQuery } from "@/lib/features/vitals/vitalsService";
+import { useGetAlertsQuery } from "@/lib/features/alerts/alertService";
+import Toast from "react-native-toast-message";
 
 interface QuickAction {
   id: string;
@@ -26,202 +21,131 @@ interface QuickAction {
 }
 
 export default function DashboardScreen() {
-  // State to track monitoring status
   const [isMonitoring, setIsMonitoring] = useState(false);
   const [showStopDialog, setShowStopDialog] = useState(false);
   const router = useRouter();
   const { colors, typo, layout } = useTheme();
-  const chartColor = colors.accent;
-
-  // Mock data - replace with actual data from your state management
-  const vitals: VitalMetric[] = [
-    {
-      id: "1",
-      title: "Fetal Heart Rate",
-      value: "142",
-      unit: "BPM",
-      icon: "heart",
-      chartData: [138, 140, 142, 144, 141, 143, 142],
-      color: chartColor,
-    },
-    {
-      id: "2",
-      title: "Maternal Heart Rate",
-      value: "82",
-      unit: "BPM",
-      icon: "heart-pulse",
-      chartData: [80, 82, 84, 81, 83, 82, 84],
-      color: chartColor,
-    },
-    {
-      id: "3",
-      title: "Blood Pressure",
-      value: "120/80",
-      unit: "mmHg",
-      icon: "water",
-      chartData: [118, 120, 122, 119, 121, 120, 123],
-      color: chartColor,
-    },
-    {
-      id: "4",
-      title: "Oxygen Saturation",
-      value: "98",
-      unit: "%",
-      icon: "lungs",
-      chartData: [97, 98, 99, 98, 97, 98, 99],
-      color: chartColor,
-    },
-    {
-      id: "5",
-      title: "Body Temperature",
-      value: "37.2",
-      unit: "°C",
-      icon: "thermometer",
-      chartData: [36.8, 37.0, 37.2, 37.1, 37.3, 37.2, 37.0],
-      color: chartColor,
-    },
-    {
-      id: "6",
-      title: "Respiratory Rate",
-      value: "16",
-      unit: "BPM",
-      icon: "lungs",
-      chartData: [14, 15, 16, 17, 15, 16, 18],
-      color: chartColor,
-    },
-    {
-      id: "7",
-      title: "Heart Rate Variability",
-      value: "65",
-      unit: "ms",
-      icon: "chart-line-variant",
-      chartData: [62, 64, 65, 67, 64, 66, 65],
-      color: chartColor,
-    },
-    {
-      id: "8",
-      title: "Shock Index",
-      value: "0.68",
-      unit: "SI",
-      icon: "chart-timeline-variant",
-      chartData: [0.65, 0.67, 0.68, 0.7, 0.66, 0.69, 0.68],
-      color: chartColor,
-    },
-  ];
+  const { user, isActionQueued } = useAuth();
+  const {
+    data: vitals = [],
+    isLoading: isVitalsLoading,
+    isFetching: isVitalsFetching,
+  } = useGetVitalsQuery(user?.userId as string, {
+    skip: !user?.userId,
+    pollingInterval: 1000, // Poll every 1 second for real-time updates
+  });
+  const {
+    data: alerts = [],
+    isLoading: isAlertsLoading,
+    isFetching: isAlertsFetching,
+    isError: isAlertsError,
+  } = useGetAlertsQuery(user?.userId as string, {
+    skip: !user?.userId,
+    pollingInterval: 5000, // Poll every 5 seconds for alerts
+  });
 
   const quickActions: QuickAction[] = [
     {
       id: "1",
       title: "Symptoms",
       icon: "alert-circle-outline",
-      onPress: () => {
-        console.log("Symptoms pressed");
-        router.push("/log-symptoms");
-      },
+      onPress: () => router.push("/log-symptoms"),
     },
     {
       id: "2",
       title: "Movement",
       icon: "run",
-      onPress: () => {
-        console.log("Movement pressed");
-        router.push("/log-fetal-movements");
-      },
+      onPress: () => router.push("/log-fetal-movements"),
     },
     {
       id: "3",
       title: "Activity",
       icon: "heart",
-      onPress: () => {
-        console.log("Activity pressed");
-        router.push("/log-activity");
-      },
+      onPress: () => router.push("/log-activity"),
     },
     {
       id: "4",
       title: "Sleep",
       icon: "moon-waning-crescent",
-      onPress: () => {
-        console.log("Sleep pressed");
-        router.push("/log-sleep");
-      },
+      onPress: () => router.push("/log-sleep"),
     },
     {
       id: "5",
       title: "Contractions",
       icon: "pulse",
-      onPress: () => {
-        console.log("Contractions pressed");
-        router.push("/log-contractions");
-      },
+      onPress: () => router.push("/log-contractions"),
     },
   ];
 
   const handleStartMonitoring = () => {
-    // Logic to start monitoring goes here
-    // For example, connect to the Bluetooth device or start the session
-    console.log("Start monitoring pressed");
+    if (isActionQueued) return;
     router.push("/bluetooth-connection");
     setIsMonitoring(true);
   };
 
   const handleStopMonitoring = () => {
+    if (isActionQueued) return;
     setShowStopDialog(true);
   };
 
   const handleViewVitalsDetails = () => {
-    console.log("View vitals details pressed");
+    if (isActionQueued) return;
     router.push("/vitals-details");
   };
 
   const confirmStopMonitoring = () => {
-    // Logic to stop monitoring goes here
-    // For example, disconnect from the device or stop the session
+    if (isActionQueued) return;
     setIsMonitoring(false);
     setShowStopDialog(false);
-    console.log("Monitoring stopped");
+    // Disconnect device and stop monitoring (implement actual disconnection logic if needed)
+    Toast.show({
+      type: "success",
+      text1: "Monitoring Stopped",
+      text2: "Device monitoring has been stopped.",
+    });
   };
 
   const cancelStopMonitoring = () => {
+    if (isActionQueued) return;
     setShowStopDialog(false);
   };
 
-  const handleAlertPress = () => {
-    console.log("Alert pressed");
-    router.push("/alert-details");
-
-    // Navigate to alert details screen with sample data
+  const handleAlertPress = (alert: Alert) => {
+    if (isActionQueued) return;
     router.push({
       pathname: "/alert-details",
       params: {
-        alertType: "Normal Range Alert",
-        value: "All vitals normal",
-        timestamp: new Date().toLocaleString(),
-        safeRange: "Within expected parameters",
-        riskLevel: "Low",
-        recommendedAction:
-          "Continue monitoring as usual. Maintain current health routine and regular check-ups.",
+        ...alert,
+        acknowledged: alert.acknowledged.toString(), // Serialize boolean to string
       },
     });
   };
 
+  if (isAlertsError) {
+    Toast.show({
+      type: "error",
+      text1: "Error",
+      text2: "Failed to load alerts.",
+    });
+  }
+
+  // Get the latest unacknowledged alert (if any)
+  const latestAlert = alerts
+    .filter((alert) => !alert.acknowledged)
+    .sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    )[0];
+
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: colors.background,
-      }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <CustomAppBar title="Dashboard" isHome />
 
       <ScrollView
-        style={{
-          flex: 1,
-          paddingHorizontal: layout.spacing.sm,
-        }}
+        style={{ flex: 1, paddingHorizontal: layout.spacing.sm }}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: layout.spacing.lg }}
       >
-        {/* Status Banner - Only show when monitoring is active */}
         {isMonitoring && (
           <View
             style={{
@@ -230,12 +154,7 @@ export default function DashboardScreen() {
               marginBottom: layout.spacing.xs,
             }}
           >
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-              }}
-            >
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
               <MaterialCommunityIcons
                 name="circle"
                 size={8}
@@ -256,28 +175,47 @@ export default function DashboardScreen() {
           </View>
         )}
 
-        {/* Alert Card - Only show when monitoring is active */}
-        {isMonitoring && (
+        {isMonitoring && (isAlertsLoading || isAlertsFetching) && (
+          <View
+            style={{
+              alignItems: "center",
+              marginVertical: layout.spacing.sm,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: typo.body2.fontSize,
+                color: colors.text,
+                ...typo.body2,
+              }}
+            >
+              Loading alerts...
+            </Text>
+          </View>
+        )}
+
+        {isMonitoring && latestAlert && (
           <Pressable
-            onPress={handleAlertPress}
+            onPress={() => handleAlertPress(latestAlert)}
+            disabled={isActionQueued}
             style={({ pressed }) => [
               {
                 marginBottom: layout.spacing.sm,
                 paddingVertical: layout.spacing.sm,
-                backgroundColor: colors.warningLight,
+                backgroundColor:
+                  latestAlert.riskLevel === "High"
+                    ? colors.errorLight
+                    : latestAlert.riskLevel === "Moderate"
+                      ? colors.warningLight
+                      : colors.successLight,
                 elevation: 2,
               },
-              pressed && {
-                opacity: 0.7,
-                transform: [{ scale: 0.98 }],
-              },
+              pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] },
+              isActionQueued && { opacity: 0.6 },
             ]}
           >
             <Card
-              style={{
-                backgroundColor: "transparent",
-                elevation: 0,
-              }}
+              style={{ backgroundColor: "transparent", elevation: 0 }}
               mode="contained"
             >
               <Card.Content
@@ -290,7 +228,13 @@ export default function DashboardScreen() {
                 <MaterialCommunityIcons
                   name="alert-outline"
                   size={20}
-                  color={colors.warning}
+                  color={
+                    latestAlert.riskLevel === "High"
+                      ? colors.error
+                      : latestAlert.riskLevel === "Moderate"
+                        ? colors.warning
+                        : colors.success
+                  }
                 />
                 <Text
                   style={{
@@ -302,25 +246,21 @@ export default function DashboardScreen() {
                     ...typo.body3,
                   }}
                 >
-                  All vital signs are within normal range
+                  {latestAlert.alertType}: {latestAlert.value}
                 </Text>
                 <MaterialCommunityIcons
                   name="chevron-right"
                   size={20}
-                  color="rgba(17, 12, 9, 0.6)"
-                  style={{
-                    marginLeft: layout.spacing.sm,
-                  }}
+                  color={colors.text}
+                  style={{ marginLeft: layout.spacing.sm }}
                 />
               </Card.Content>
             </Card>
           </Pressable>
         )}
 
-        {/* Monitoring Control Buttons */}
         {isMonitoring ? (
           <View style={{ marginBottom: layout.spacing.lg }}>
-            {/* View Vitals Details Button */}
             <Button
               mode="outlined"
               style={{
@@ -328,28 +268,22 @@ export default function DashboardScreen() {
                 borderRadius: layout.borderRadius.medium,
                 borderColor: colors.primary,
               }}
-              contentStyle={{
-                paddingVertical: layout.spacing.sm,
-              }}
+              contentStyle={{ paddingVertical: layout.spacing.sm }}
               onPress={handleViewVitalsDetails}
               icon="chart-line"
               textColor={colors.primary}
+              disabled={isActionQueued}
             >
               View Details
             </Button>
-
-            {/* Stop Monitoring Button */}
             <Button
               mode="contained"
-              style={{
-                borderRadius: layout.borderRadius.medium,
-              }}
+              style={{ borderRadius: layout.borderRadius.medium }}
               buttonColor={colors.error}
-              contentStyle={{
-                paddingVertical: layout.spacing.sm,
-              }}
+              contentStyle={{ paddingVertical: layout.spacing.sm }}
               onPress={handleStopMonitoring}
               icon="bluetooth-off"
+              disabled={isActionQueued}
             >
               Stop Monitoring
             </Button>
@@ -358,41 +292,75 @@ export default function DashboardScreen() {
           <Button
             mode="contained"
             style={{
+              marginTop: layout.spacing.sm,
               marginBottom: layout.spacing.lg,
               borderRadius: layout.borderRadius.medium,
             }}
             buttonColor={colors.primary}
-            contentStyle={{
-              paddingVertical: layout.spacing.sm,
-            }}
+            contentStyle={{ paddingVertical: layout.spacing.sm }}
             onPress={handleStartMonitoring}
             icon="bluetooth"
+            disabled={isActionQueued}
+            loading={isVitalsLoading || isAlertsLoading}
           >
             Start Monitoring
           </Button>
         )}
 
-        {/* Vital Signs Grid */}
-        <View
-          style={{
-            flexDirection: "row",
-            flexWrap: "wrap",
-            marginHorizontal: -layout.spacing.xs,
-          }}
-        >
-          {vitals.map((vital, index) => (
-            <View
-              key={vital.id}
+        {(isVitalsLoading || isVitalsFetching) && (
+          <View
+            style={{
+              alignItems: "center",
+              marginVertical: layout.spacing.lg,
+            }}
+          >
+            <Text
               style={{
-                width: "50%",
+                fontSize: typo.body2.fontSize,
+                color: colors.text,
+                ...typo.body2,
               }}
             >
-              <VitalCard metric={vital} />
-            </View>
-          ))}
-        </View>
+              Loading vitals...
+            </Text>
+          </View>
+        )}
 
-        {/* Quick Actions */}
+        {!isVitalsLoading && !isVitalsFetching && vitals.length === 0 && (
+          <View
+            style={{
+              alignItems: "center",
+              marginVertical: layout.spacing.lg,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: typo.body2.fontSize,
+                color: colors.text,
+                ...typo.body2,
+              }}
+            >
+              No vitals data available
+            </Text>
+          </View>
+        )}
+
+        {!isVitalsLoading && !isVitalsFetching && vitals.length > 0 && (
+          <View
+            style={{
+              flexDirection: "row",
+              flexWrap: "wrap",
+              marginHorizontal: -layout.spacing.xs,
+            }}
+          >
+            {vitals.map((vital) => (
+              <View key={vital.vitalId} style={{ width: "50%" }}>
+                <VitalCard metric={vital} />
+              </View>
+            ))}
+          </View>
+        )}
+
         <View
           style={{
             marginTop: layout.spacing.lg,
@@ -403,7 +371,7 @@ export default function DashboardScreen() {
             style={{
               fontSize: typo.body2.fontSize,
               fontWeight: "600",
-              color: "rgba(17, 12, 9, 0.6)",
+              color: colors.text,
               marginBottom: layout.spacing.sm,
               ...typo.body2,
             }}
@@ -413,9 +381,7 @@ export default function DashboardScreen() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{
-              paddingHorizontal: layout.spacing.xs,
-            }}
+            contentContainerStyle={{ paddingHorizontal: layout.spacing.xs }}
             style={{
               backgroundColor: colors.card,
               borderRadius: layout.borderRadius.medium,
@@ -430,7 +396,13 @@ export default function DashboardScreen() {
               }}
             >
               {quickActions.map((action) => (
-                <QuickActionButton key={action.id} action={action} />
+                <QuickActionButton
+                  key={action.id}
+                  action={{
+                    ...action,
+                    onPress: () => !isActionQueued && action.onPress(),
+                  }}
+                />
               ))}
             </View>
           </ScrollView>
@@ -441,9 +413,7 @@ export default function DashboardScreen() {
         <Dialog
           visible={showStopDialog}
           onDismiss={cancelStopMonitoring}
-          style={{
-            backgroundColor: colors.card,
-          }}
+          style={{ backgroundColor: colors.card }}
         >
           <Dialog.Title
             style={{
@@ -459,7 +429,7 @@ export default function DashboardScreen() {
             <Text
               style={{
                 fontSize: typo.body1.fontSize,
-                color: "rgba(17, 12, 9, 0.6)",
+                color: colors.text,
                 lineHeight: typo.body1.lineHeight,
                 ...typo.body1,
               }}
@@ -468,14 +438,11 @@ export default function DashboardScreen() {
               your device and end the current session.
             </Text>
           </Dialog.Content>
-          <Dialog.Actions
-            style={{
-              paddingTop: layout.spacing.sm,
-            }}
-          >
+          <Dialog.Actions style={{ paddingTop: layout.spacing.sm }}>
             <Button
               onPress={cancelStopMonitoring}
-              textColor="rgba(17, 12, 9, 0.6)"
+              textColor={colors.text}
+              disabled={isActionQueued}
             >
               Cancel
             </Button>
@@ -483,9 +450,8 @@ export default function DashboardScreen() {
               onPress={confirmStopMonitoring}
               buttonColor={colors.error}
               mode="contained"
-              style={{
-                borderRadius: layout.borderRadius.small,
-              }}
+              style={{ borderRadius: layout.borderRadius.small }}
+              disabled={isActionQueued}
             >
               Stop
             </Button>
