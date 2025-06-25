@@ -5,12 +5,12 @@
   "scripts": {
     "start": "expo start",
     "tunnel": "expo start --tunnel",
-    "android": "expo start --android",
-    "device": "expo start --android --device",
+    "android": "expo run:android",
     "prebuild": "expo prebuild --clean",
     "eas": "eas build --platform android --profile development",
     "lint": "expo lint",
-    "test": "jest --watchAll"
+    "test": "jest --watchAll",
+    "ios": "expo run:ios"
   },
   "jest": {
     "preset": "jest-expo"
