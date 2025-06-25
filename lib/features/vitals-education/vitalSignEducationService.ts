@@ -13,6 +13,7 @@ const vitalSignEducationApi = vitalSignEducationSlice.injectEndpoints({
       query: (educationId) => ({
         url: `/vital-sign-education/${educationId}`,
         method: "GET",
+        service: "hes",
       }),
       providesTags: (result, error, educationId) => [
         { type: "VitalSignEducations", id: educationId },
@@ -44,6 +45,7 @@ const vitalSignEducationApi = vitalSignEducationSlice.injectEndpoints({
           type: params.type,
           keywords: params.keywords?.join(","),
         },
+        service: "hes",
       }),
       providesTags: (result) =>
         result

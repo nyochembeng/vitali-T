@@ -13,6 +13,7 @@ const pregnancyTipApi = pregnancyTipSlice.injectEndpoints({
       query: (tipId) => ({
         url: `/pregnancy-tips/${tipId}`,
         method: "GET",
+        service: "hes",
       }),
       providesTags: (result, error, tipId) => [
         { type: "PregnancyTips", id: tipId },
@@ -41,6 +42,7 @@ const pregnancyTipApi = pregnancyTipSlice.injectEndpoints({
           trimester: params.trimester,
           keywords: params.keywords?.join(","),
         },
+        service: "hes",
       }),
       providesTags: (result) =>
         result

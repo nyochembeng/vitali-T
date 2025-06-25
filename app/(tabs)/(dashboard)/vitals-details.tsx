@@ -7,20 +7,29 @@ import React, { useState } from "react";
 import { SafeAreaView, ScrollView, View } from "react-native";
 import { Button, Dialog, Portal, Text } from "react-native-paper";
 import { useGetVitalsQuery } from "@/lib/features/vitals/vitalsService";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "@/lib/store";
+import useBLE from "@/lib/hooks/useBLE";
+import { disconnected } from "@/lib/features/ble/bleSlice";
 
 export default function VitalsDetailsScreen() {
   const [showStopDialog, setShowStopDialog] = useState(false);
   const router = useRouter();
   const { colors, typo, layout } = useTheme();
   const { user, isActionQueued } = useAuth();
+  const dispatch = useDispatch();
+  const { disconnectFromDevice, connectedDevice } = useBLE();
+  const { latestVitals } = useSelector((state: RootState) => state.ble);
   const {
     data: vitals = [],
     isLoading,
     isFetching,
   } = useGetVitalsQuery(user?.userId as string, {
     skip: !user?.userId,
-    pollingInterval: 1000, // Poll every 1 second for real-time updates
+    pollingInterval: 1000,
   });
+
+  const displayedVitals = connectedDevice ? latestVitals || [] : vitals;
 
   const handleInfo = () => {
     if (isActionQueued) return;
@@ -35,7 +44,10 @@ export default function VitalsDetailsScreen() {
   const confirmStopMonitoring = () => {
     if (isActionQueued) return;
     setShowStopDialog(false);
-    console.log("Monitoring stopped");
+    if (connectedDevice) {
+      disconnectFromDevice();
+      dispatch(disconnected());
+    }
     router.push("/dashboard");
   };
 
@@ -60,7 +72,7 @@ export default function VitalsDetailsScreen() {
           paddingBottom: layout.spacing.xxl,
         }}
       >
-        {isLoading || isFetching ? (
+        {(isLoading || isFetching) && !connectedDevice ? (
           <View
             style={{
               alignItems: "center",
@@ -77,7 +89,7 @@ export default function VitalsDetailsScreen() {
               Loading vitals...
             </Text>
           </View>
-        ) : vitals.length === 0 ? (
+        ) : displayedVitals.length === 0 ? (
           <View
             style={{
               alignItems: "center",
@@ -95,7 +107,7 @@ export default function VitalsDetailsScreen() {
             </Text>
           </View>
         ) : (
-          vitals.map((vital) => (
+          displayedVitals.map((vital) => (
             <VitalDetailCard key={vital.vitalId} vital={vital} />
           ))
         )}
@@ -125,7 +137,7 @@ export default function VitalsDetailsScreen() {
           contentStyle={{ paddingVertical: layout.spacing.sm }}
           icon="stop-circle-outline"
           disabled={isActionQueued}
-          loading={isLoading}
+          loading={isLoading && !connectedDevice}
         >
           Stop Monitoring
         </Button>

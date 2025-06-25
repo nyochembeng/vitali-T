@@ -63,7 +63,7 @@ export default function ProfileSettingsScreen() {
   const { colors, typo, layout } = useTheme();
   const { user, isActionQueued } = useAuth();
   const { data: userData } = useGetUserProfileQuery(user?.userId as string);
-  const { data: profileData } = useGetProfileQuery(user?.userId as string);
+  const { data: profileData } = useGetProfileQuery();
   const [updateUser, { isLoading: isUpdatingUser }] =
     useUpdateUserProfileMutation();
   const [updateProfile, { isLoading: isUpdatingProfile }] =
@@ -222,7 +222,6 @@ export default function ProfileSettingsScreen() {
               dueDate: data.dueDate,
             };
             const profileResult = await updateProfile({
-              userId: user?.userId as string,
               data: profileUpdates,
             }).unwrap();
 
@@ -237,7 +236,11 @@ export default function ProfileSettingsScreen() {
             ) {
               const imageResult = await uploadProfileImage({
                 userId: user?.userId as string,
-                image: data.profileImage,
+                image: {
+                  uri: `data:image/jpeg;base64,${data.profileImage}`,
+                  type: "image/jpeg",
+                  name: "profile.jpg",
+                },
               }).unwrap();
 
               if ("queued" in imageResult && imageResult.queued) {

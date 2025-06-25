@@ -13,6 +13,7 @@ const emergencySymptomApi = emergencySymptomSlice.injectEndpoints({
       query: (emergencySymptomId) => ({
         url: `/emergency-symptoms/${emergencySymptomId}`,
         method: "GET",
+        service: "hes",
       }),
       providesTags: (result, error, emergencySymptomId) => [
         { type: "EmergencySymptoms", id: emergencySymptomId },
@@ -45,6 +46,7 @@ const emergencySymptomApi = emergencySymptomSlice.injectEndpoints({
           severity: params.severity,
           keywords: params.keywords?.join(","),
         },
+        service: "hes",
       }),
       providesTags: (result) =>
         result

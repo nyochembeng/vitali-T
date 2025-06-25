@@ -20,6 +20,7 @@ const sleepApi = sleepSlice.injectEndpoints({
         url: "/sleep",
         method: "POST",
         data,
+        service: "dps",
       }),
       async onQueryStarted(data, { queryFulfilled }) {
         const state = await NetInfo.fetch();
@@ -32,6 +33,7 @@ const sleepApi = sleepSlice.injectEndpoints({
               url: "/sleep",
               headers: { "Content-Type": "application/json" },
               data,
+              service: "dps",
             });
             if (queueResult.success) {
               Toast.show({
@@ -70,6 +72,7 @@ const sleepApi = sleepSlice.injectEndpoints({
       query: ({ userId, sleepId }) => ({
         url: `/sleep/${userId}/${sleepId}`,
         method: "GET",
+        service: "dps",
       }),
       providesTags: (result, error, { userId, sleepId }) => [
         { type: "Sleeps", id: userId },
@@ -81,6 +84,7 @@ const sleepApi = sleepSlice.injectEndpoints({
       query: (userId) => ({
         url: `/sleep/${userId}`,
         method: "GET",
+        service: "dps",
       }),
       providesTags: (result, error, userId) =>
         result
@@ -102,6 +106,7 @@ const sleepApi = sleepSlice.injectEndpoints({
         url: `/sleep/${userId}/${sleepId}`,
         method: "PATCH",
         data,
+        service: "dps",
       }),
       async onQueryStarted({ userId, sleepId, data }, { queryFulfilled }) {
         const state = await NetInfo.fetch();
@@ -114,6 +119,7 @@ const sleepApi = sleepSlice.injectEndpoints({
               url: `/sleep/${userId}/${sleepId}`,
               headers: { "Content-Type": "application/json" },
               data,
+              service: "dps",
             });
             if (queueResult.success) {
               Toast.show({
@@ -156,6 +162,7 @@ const sleepApi = sleepSlice.injectEndpoints({
       query: ({ userId, sleepId }) => ({
         url: `/sleep/${userId}/${sleepId}`,
         method: "DELETE",
+        service: "dps",
       }),
       async onQueryStarted({ userId, sleepId }, { queryFulfilled }) {
         const state = await NetInfo.fetch();
@@ -168,6 +175,7 @@ const sleepApi = sleepSlice.injectEndpoints({
               url: `/sleep/${userId}/${sleepId}`,
               headers: { "Content-Type": "application/json" },
               data: {},
+              service: "dps",
             });
             if (queueResult.success) {
               Toast.show({

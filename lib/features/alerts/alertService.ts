@@ -20,6 +20,7 @@ const alertApi = alertSlice.injectEndpoints({
         url: "/alerts",
         method: "POST",
         data,
+        service: "ans",
       }),
       async onQueryStarted(data, { queryFulfilled }) {
         const state = await NetInfo.fetch();
@@ -32,6 +33,7 @@ const alertApi = alertSlice.injectEndpoints({
               url: "/alerts",
               headers: { "Content-Type": "application/json" },
               data,
+              service: "ans",
             });
             if (queueResult.success) {
               Toast.show({
@@ -70,6 +72,7 @@ const alertApi = alertSlice.injectEndpoints({
       query: ({ userId, alertId }) => ({
         url: `/alerts/${userId}/${alertId}`,
         method: "GET",
+        service: "ans",
       }),
       providesTags: (result, error, { userId, alertId }) => [
         { type: "Alerts", id: userId },
@@ -81,6 +84,7 @@ const alertApi = alertSlice.injectEndpoints({
       query: (userId) => ({
         url: `/alerts/${userId}`,
         method: "GET",
+        service: "ans",
       }),
       providesTags: (result, error, userId) =>
         result
@@ -102,6 +106,7 @@ const alertApi = alertSlice.injectEndpoints({
         url: `/alerts/${userId}/${alertId}`,
         method: "PATCH",
         data,
+        service: "ans",
       }),
       async onQueryStarted({ userId, alertId, data }, { queryFulfilled }) {
         const state = await NetInfo.fetch();
@@ -114,6 +119,7 @@ const alertApi = alertSlice.injectEndpoints({
               url: `/alerts/${userId}/${alertId}`,
               headers: { "Content-Type": "application/json" },
               data,
+              service: "ans",
             });
             if (queueResult.success) {
               Toast.show({
@@ -156,6 +162,7 @@ const alertApi = alertSlice.injectEndpoints({
       query: ({ userId, alertId }) => ({
         url: `/alerts/${userId}/${alertId}`,
         method: "DELETE",
+        service: "ans",
       }),
       async onQueryStarted({ userId, alertId }, { queryFulfilled }) {
         const state = await NetInfo.fetch();
@@ -168,6 +175,7 @@ const alertApi = alertSlice.injectEndpoints({
               url: `/alerts/${userId}/${alertId}`,
               headers: { "Content-Type": "application/json" },
               data: {},
+              service: "ans",
             });
             if (queueResult.success) {
               Toast.show({

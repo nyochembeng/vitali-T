@@ -20,6 +20,7 @@ const symptomsApi = symptomsSlice.injectEndpoints({
         url: "/symptoms",
         method: "POST",
         data,
+        service: "dps",
       }),
       async onQueryStarted(data, { queryFulfilled }) {
         const state = await NetInfo.fetch();
@@ -32,6 +33,7 @@ const symptomsApi = symptomsSlice.injectEndpoints({
               url: "/symptoms",
               headers: { "Content-Type": "application/json" },
               data,
+              service: "dps",
             });
             if (queueResult.success) {
               Toast.show({
@@ -70,6 +72,7 @@ const symptomsApi = symptomsSlice.injectEndpoints({
       query: ({ userId, symptomId }) => ({
         url: `/symptoms/${userId}/${symptomId}`,
         method: "GET",
+        service: "dps",
       }),
       providesTags: (result, error, { userId, symptomId }) => [
         { type: "Symptoms", id: userId },
@@ -81,6 +84,7 @@ const symptomsApi = symptomsSlice.injectEndpoints({
       query: (userId) => ({
         url: `/symptoms/${userId}`,
         method: "GET",
+        service: "dps",
       }),
       providesTags: (result, error, userId) =>
         result
@@ -102,6 +106,7 @@ const symptomsApi = symptomsSlice.injectEndpoints({
         url: `/symptoms/${userId}/${symptomId}`,
         method: "PATCH",
         data,
+        service: "dps",
       }),
       async onQueryStarted({ userId, symptomId, data }, { queryFulfilled }) {
         const state = await NetInfo.fetch();
@@ -114,6 +119,7 @@ const symptomsApi = symptomsSlice.injectEndpoints({
               url: `/symptoms/${userId}/${symptomId}`,
               headers: { "Content-Type": "application/json" },
               data,
+              service: "dps",
             });
             if (queueResult.success) {
               Toast.show({
@@ -156,6 +162,7 @@ const symptomsApi = symptomsSlice.injectEndpoints({
       query: ({ userId, symptomId }) => ({
         url: `/symptoms/${userId}/${symptomId}`,
         method: "DELETE",
+        service: "dps",
       }),
       async onQueryStarted({ userId, symptomId }, { queryFulfilled }) {
         const state = await NetInfo.fetch();
@@ -168,6 +175,7 @@ const symptomsApi = symptomsSlice.injectEndpoints({
               url: `/symptoms/${userId}/${symptomId}`,
               headers: { "Content-Type": "application/json" },
               data: {},
+              service: "dps",
             });
             if (queueResult.success) {
               Toast.show({

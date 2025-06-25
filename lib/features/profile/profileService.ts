@@ -1,13 +1,8 @@
 import { profileSlice } from "@/lib/features/profile/profileSlice";
 import {
   CreateProfileRequest,
-  CreateProfileResponse,
-  ProfileResponse,
   UpdateProfileRequest,
-  UpdateProfileResponse,
-  DeleteProfileResponse,
   UploadProfileImageRequest,
-  UploadProfileImageResponse,
 } from "@/lib/features/profile/profileTypes";
 import { Profile } from "@/lib/schemas/profileSchema";
 import NetInfo from "@react-native-community/netinfo";
@@ -21,6 +16,7 @@ const profileApi = profileSlice.injectEndpoints({
         url: "/profiles",
         method: "POST",
         data,
+        service: "aas",
       }),
       async onQueryStarted(data, { queryFulfilled }) {
         const state = await NetInfo.fetch();
@@ -33,6 +29,7 @@ const profileApi = profileSlice.injectEndpoints({
               url: "/profiles",
               headers: { "Content-Type": "application/json" },
               data,
+              service: "aas",
             });
             if (queueResult.success) {
               Toast.show({
@@ -55,6 +52,11 @@ const profileApi = profileSlice.injectEndpoints({
 
         try {
           await queryFulfilled;
+          Toast.show({
+            type: "success",
+            text1: "Success",
+            text2: "Profile created successfully.",
+          });
         } catch (error) {
           console.error("Profile creation failed:", error);
           Toast.show({
@@ -65,31 +67,26 @@ const profileApi = profileSlice.injectEndpoints({
           throw error;
         }
       },
-      invalidatesTags: (result, error, arg) => [
-        { type: "Profile", id: result?.userId },
-      ],
-      transformResponse: (response: CreateProfileResponse) => response.profile,
+      invalidatesTags: (result) => [{ type: "Profile", id: result?.userId }],
+      transformResponse: (response: Profile) => response,
     }),
-    getProfile: builder.query<Profile, string>({
-      query: (userId) => ({
-        url: `/profiles/${userId}`,
+    getProfile: builder.query<Profile, void>({
+      query: () => ({
+        url: "/profiles",
         method: "GET",
+        service: "aas",
       }),
-      providesTags: (result, error, userId) => [
-        { type: "Profile", id: userId },
-      ],
-      transformResponse: (response: ProfileResponse) => response.profile,
+      providesTags: (result) => [{ type: "Profile", id: result?.userId }],
+      transformResponse: (response: Profile) => response,
     }),
-    updateProfile: builder.mutation<
-      Profile,
-      { userId: string; data: UpdateProfileRequest }
-    >({
-      query: ({ userId, data }) => ({
-        url: `/profiles/${userId}`,
+    updateProfile: builder.mutation<Profile, { data: UpdateProfileRequest }>({
+      query: ({ data }) => ({
+        url: "/profiles",
         method: "PATCH",
         data,
+        service: "aas",
       }),
-      async onQueryStarted({ userId, data }, { queryFulfilled }) {
+      async onQueryStarted({ data }, { queryFulfilled }) {
         const state = await NetInfo.fetch();
         const isOnline =
           !!state.isConnected && state.isInternetReachable !== false;
@@ -97,9 +94,10 @@ const profileApi = profileSlice.injectEndpoints({
           try {
             const queueResult = await offlineQueue.enqueueRequest({
               method: "PATCH",
-              url: `/profiles/${userId}`,
+              url: "/profiles",
               headers: { "Content-Type": "application/json" },
               data,
+              service: "aas",
             });
             if (queueResult.success) {
               Toast.show({
@@ -122,6 +120,11 @@ const profileApi = profileSlice.injectEndpoints({
 
         try {
           await queryFulfilled;
+          Toast.show({
+            type: "success",
+            text1: "Success",
+            text2: "Profile updated successfully.",
+          });
         } catch (error) {
           console.error("Profile update failed:", error);
           Toast.show({
@@ -132,17 +135,16 @@ const profileApi = profileSlice.injectEndpoints({
           throw error;
         }
       },
-      invalidatesTags: (result, error, { userId }) => [
-        { type: "Profile", id: userId },
-      ],
-      transformResponse: (response: UpdateProfileResponse) => response.profile,
+      invalidatesTags: (result) => [{ type: "Profile", id: result?.userId }],
+      transformResponse: (response: Profile) => response,
     }),
-    deleteProfile: builder.mutation<DeleteProfileResponse, string>({
-      query: (userId) => ({
-        url: `/profiles/${userId}`,
+    deleteProfile: builder.mutation<Profile, void>({
+      query: () => ({
+        url: "/profiles",
         method: "DELETE",
+        service: "aas",
       }),
-      async onQueryStarted(userId, { queryFulfilled }) {
+      async onQueryStarted(_, { queryFulfilled }) {
         const state = await NetInfo.fetch();
         const isOnline =
           !!state.isConnected && state.isInternetReachable !== false;
@@ -150,9 +152,10 @@ const profileApi = profileSlice.injectEndpoints({
           try {
             const queueResult = await offlineQueue.enqueueRequest({
               method: "DELETE",
-              url: `/profiles/${userId}`,
+              url: "/profiles",
               headers: { "Content-Type": "application/json" },
               data: {},
+              service: "aas",
             });
             if (queueResult.success) {
               Toast.show({
@@ -175,6 +178,11 @@ const profileApi = profileSlice.injectEndpoints({
 
         try {
           await queryFulfilled;
+          Toast.show({
+            type: "success",
+            text1: "Success",
+            text2: "Profile deleted successfully.",
+          });
         } catch (error) {
           console.error("Profile deletion failed:", error);
           Toast.show({
@@ -185,30 +193,44 @@ const profileApi = profileSlice.injectEndpoints({
           throw error;
         }
       },
-      invalidatesTags: (result, error, userId) => [
-        { type: "Profile", id: userId },
+      invalidatesTags: (result, error, _) => [
+        { type: "Profile", id: result?.userId },
       ],
     }),
-    uploadProfileImage: builder.mutation<
-      UploadProfileImageResponse,
-      UploadProfileImageRequest
-    >({
-      query: ({ userId, image }) => ({
-        url: `/profiles/${userId}/image`,
-        method: "POST",
-        data: { image },
-      }),
-      async onQueryStarted({ userId, image }, { queryFulfilled }) {
+    uploadProfileImage: builder.mutation<Profile, UploadProfileImageRequest>({
+      query: ({ image }) => {
+        const formData = new FormData();
+        formData.append("image", {
+          uri: image.uri,
+          type: image.type || "image/jpeg",
+          name: image.name || "profile.jpg",
+        } as any);
+        return {
+          url: "/profiles/upload-image",
+          method: "POST",
+          data: formData,
+          headers: { "Content-Type": "multipart/form-data" },
+          service: "aas",
+        };
+      },
+      async onQueryStarted({ image }, { queryFulfilled }) {
         const state = await NetInfo.fetch();
         const isOnline =
           !!state.isConnected && state.isInternetReachable !== false;
         if (!isOnline) {
           try {
+            const formData = new FormData();
+            formData.append("image", {
+              uri: image.uri,
+              type: image.type || "image/jpeg",
+              name: image.name || "profile.jpg",
+            } as any);
             const queueResult = await offlineQueue.enqueueRequest({
               method: "POST",
-              url: `/profiles/${userId}/image`,
-              headers: { "Content-Type": "application/json" },
-              data: { image },
+              url: "/profiles/upload-image",
+              headers: { "Content-Type": "multipart/form-data" },
+              data: formData,
+              service: "aas",
             });
             if (queueResult.success) {
               Toast.show({
@@ -231,6 +253,11 @@ const profileApi = profileSlice.injectEndpoints({
 
         try {
           await queryFulfilled;
+          Toast.show({
+            type: "success",
+            text1: "Success",
+            text2: "Profile image uploaded successfully.",
+          });
         } catch (error) {
           console.error("Profile image upload failed:", error);
           Toast.show({
@@ -241,9 +268,8 @@ const profileApi = profileSlice.injectEndpoints({
           throw error;
         }
       },
-      invalidatesTags: (result, error, { userId }) => [
-        { type: "Profile", id: userId },
-      ],
+      invalidatesTags: (result) => [{ type: "Profile", id: result?.userId }],
+      transformResponse: (response: Profile) => response,
     }),
   }),
 });

@@ -1,6 +1,6 @@
 import React from "react";
 import { View } from "react-native";
-import Svg, { Path } from "react-native-svg";
+import { LineChart } from "react-native-chart-kit";
 import { useTheme } from "@/lib/hooks/useTheme";
 
 interface MiniChartProps {
@@ -18,26 +18,41 @@ const MiniChart: React.FC<MiniChartProps> = ({
 }) => {
   const { colors, layout } = useTheme();
 
-  const generatePath = () => {
-    if (data.length < 2) return "";
+  const chartData = {
+    labels: [], // Empty labels for mini chart
+    datasets: [
+      {
+        data: data.length > 0 ? data : [0],
+        color: () => color,
+        strokeWidth: 2,
+      },
+    ],
+  };
 
-    const max = Math.max(...data);
-    const min = Math.min(...data);
-    const range = max - min || 1;
-
-    let path = "";
-    data.forEach((value, index) => {
-      const x = (index / (data.length - 1)) * width;
-      const y = height - ((value - min) / range) * height;
-
-      if (index === 0) {
-        path += `M ${x} ${y}`;
-      } else {
-        path += ` L ${x} ${y}`;
-      }
-    });
-
-    return path;
+  const chartConfig = {
+    backgroundColor: "transparent",
+    backgroundGradientFrom: "transparent",
+    backgroundGradientTo: "transparent",
+    color: () => color,
+    strokeWidth: 2,
+    propsForDots: {
+      r: "0", // Hide dots
+    },
+    propsForLabels: {
+      fontSize: 0, // Hide labels
+    },
+    propsForVerticalLabels: {
+      fontSize: 0, // Hide vertical labels
+    },
+    propsForHorizontalLabels: {
+      fontSize: 0, // Hide horizontal labels
+    },
+    withHorizontalLines: false,
+    withVerticalLines: false,
+    withInnerLines: false,
+    withOuterLines: false,
+    withHorizontalLabels: false,
+    withVerticalLabels: false,
   };
 
   return (
@@ -48,18 +63,22 @@ const MiniChart: React.FC<MiniChartProps> = ({
         padding: layout.spacing.xs,
         width,
         height,
+        overflow: "hidden",
       }}
     >
-      <Svg width={width} height={height}>
-        <Path
-          d={generatePath()}
-          stroke={color}
-          strokeWidth={2}
-          fill="none"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </Svg>
+      <LineChart
+        data={chartData}
+        width={width - layout.spacing.xs * 2}
+        height={height - layout.spacing.xs * 2}
+        chartConfig={chartConfig}
+        bezier
+        withDots={false}
+        withShadow={false}
+        style={{
+          marginLeft: -40,
+          marginTop: -10,
+        }}
+      />
     </View>
   );
 };

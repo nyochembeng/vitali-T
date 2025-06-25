@@ -11,6 +11,10 @@ import { Pressable, SafeAreaView, ScrollView, View } from "react-native";
 import { Button, Card, Dialog, Portal, Text } from "react-native-paper";
 import { useGetVitalsQuery } from "@/lib/features/vitals/vitalsService";
 import { useGetAlertsQuery } from "@/lib/features/alerts/alertService";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "@/lib/store";
+import useBLE from "@/lib/hooks/useBLE";
+import { disconnected } from "@/lib/features/ble/bleSlice";
 import Toast from "react-native-toast-message";
 
 interface QuickAction {
@@ -26,13 +30,16 @@ export default function DashboardScreen() {
   const router = useRouter();
   const { colors, typo, layout } = useTheme();
   const { user, isActionQueued } = useAuth();
+  const dispatch = useDispatch();
+  const { disconnectFromDevice, connectedDevice } = useBLE();
+  const { latestVitals } = useSelector((state: RootState) => state.ble);
   const {
     data: vitals = [],
     isLoading: isVitalsLoading,
     isFetching: isVitalsFetching,
   } = useGetVitalsQuery(user?.userId as string, {
     skip: !user?.userId,
-    pollingInterval: 1000, // Poll every 1 second for real-time updates
+    pollingInterval: 1000, // Poll every 1 second for backend updates
   });
   const {
     data: alerts = [],
@@ -97,7 +104,10 @@ export default function DashboardScreen() {
     if (isActionQueued) return;
     setIsMonitoring(false);
     setShowStopDialog(false);
-    // Disconnect device and stop monitoring (implement actual disconnection logic if needed)
+    if (connectedDevice) {
+      disconnectFromDevice();
+      dispatch(disconnected());
+    }
     Toast.show({
       type: "success",
       text1: "Monitoring Stopped",
@@ -136,6 +146,9 @@ export default function DashboardScreen() {
       (a, b) =>
         new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     )[0];
+
+  // Combine backend vitals with real-time BLE vitals
+  const displayedVitals = isMonitoring && latestVitals ? latestVitals : vitals;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
@@ -307,7 +320,7 @@ export default function DashboardScreen() {
           </Button>
         )}
 
-        {(isVitalsLoading || isVitalsFetching) && (
+        {(isVitalsLoading || isVitalsFetching) && !isMonitoring && (
           <View
             style={{
               alignItems: "center",
@@ -326,7 +339,7 @@ export default function DashboardScreen() {
           </View>
         )}
 
-        {!isVitalsLoading && !isVitalsFetching && vitals.length === 0 && (
+        {(!isVitalsLoading || isMonitoring) && displayedVitals.length === 0 && (
           <View
             style={{
               alignItems: "center",
@@ -345,7 +358,7 @@ export default function DashboardScreen() {
           </View>
         )}
 
-        {!isVitalsLoading && !isVitalsFetching && vitals.length > 0 && (
+        {(!isVitalsLoading || isMonitoring) && displayedVitals.length > 0 && (
           <View
             style={{
               flexDirection: "row",
@@ -353,7 +366,7 @@ export default function DashboardScreen() {
               marginHorizontal: -layout.spacing.xs,
             }}
           >
-            {vitals.map((vital) => (
+            {displayedVitals.map((vital) => (
               <View key={vital.vitalId} style={{ width: "50%" }}>
                 <VitalCard metric={vital} />
               </View>

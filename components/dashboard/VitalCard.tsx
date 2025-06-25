@@ -1,7 +1,7 @@
 import { useTheme } from "@/lib/hooks/useTheme";
 import { Vital } from "@/lib/schemas/vitalSchema";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View } from "react-native";
 import { Card, Text } from "react-native-paper";
 import MiniChart from "./MiniChart";
@@ -12,6 +12,7 @@ interface VitalCardProps {
 
 const VitalCard: React.FC<VitalCardProps> = ({ metric }) => {
   const { colors, typo, layout } = useTheme();
+  const [chartData, setChartData] = useState<number[]>([]);
 
   // Map vital type to display names
   const getVitalName = (type: Vital["type"]) => {
@@ -61,6 +62,17 @@ const VitalCard: React.FC<VitalCardProps> = ({ metric }) => {
     }
   };
 
+  // Simulate chart data for real-time updates
+  useEffect(() => {
+    if (metric.hasChart) {
+      const newDataPoint = typeof metric.value === "number" ? metric.value : 0;
+      setChartData((prev) => {
+        const newData = [...prev, newDataPoint].slice(-10); // Keep last 10 points
+        return newData;
+      });
+    }
+  }, [metric]);
+
   return (
     <Card
       style={{
@@ -109,7 +121,9 @@ const VitalCard: React.FC<VitalCardProps> = ({ metric }) => {
               ...typo.h5,
             }}
           >
-            {metric.value}
+            {typeof metric.value === "number"
+              ? metric.value.toFixed(1)
+              : metric.value}
           </Text>
           <Text
             style={{
@@ -122,8 +136,8 @@ const VitalCard: React.FC<VitalCardProps> = ({ metric }) => {
           </Text>
         </View>
 
-        {metric.hasChart && metric.chartData && (
-          <MiniChart data={metric.chartData} color={colors.primary} />
+        {metric.hasChart && (
+          <MiniChart data={chartData} color={colors.primary} />
         )}
       </Card.Content>
     </Card>

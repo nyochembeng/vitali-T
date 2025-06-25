@@ -1,16 +1,19 @@
 import { BaseQueryFn } from "@reduxjs/toolkit/query";
 import { AxiosRequestConfig, AxiosError, AxiosResponse } from "axios";
-import axiosInstance from "./axiosInstance";
+import {
+  aasAxios,
+  dpsAxios,
+  ansAxios,
+  aisAxios,
+  hesAxios,
+  ServiceType,
+  CustomApiError,
+} from "./axiosInstance";
 
 interface ApiErrorResponse {
   status: number;
   message: string;
   errors?: Record<string, string[]>;
-}
-
-interface CustomApiError {
-  status: number;
-  data: ApiErrorResponse | unknown;
 }
 
 interface AxiosBaseQueryArgs {
@@ -20,12 +23,26 @@ interface AxiosBaseQueryArgs {
   params?: AxiosRequestConfig["params"];
   headers?: AxiosRequestConfig["headers"];
   signal?: AbortSignal;
+  service: ServiceType;
 }
 
 const axiosBaseQuery =
   (): BaseQueryFn<AxiosBaseQueryArgs, unknown, CustomApiError> =>
-  async ({ url, method = "GET", data, params, headers, signal }) => {
+  async ({ url, method = "GET", data, params, headers, signal, service }) => {
     try {
+      // Select the appropriate Axios instance based on service
+      const instance = {
+        aas: aasAxios,
+        dps: dpsAxios,
+        ans: ansAxios,
+        ais: aisAxios,
+        hes: hesAxios,
+      }[service];
+
+      if (!instance) {
+        throw new Error(`Invalid service type: ${service}`);
+      }
+
       const config: AxiosRequestConfig = {
         url,
         method,
@@ -35,7 +52,7 @@ const axiosBaseQuery =
         signal,
       };
 
-      const response: AxiosResponse = await axiosInstance(config);
+      const response: AxiosResponse = await instance(config);
       return { data: response.data };
     } catch (error) {
       const axiosError = error as AxiosError<ApiErrorResponse>;

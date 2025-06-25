@@ -1,7 +1,14 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { format, isAfter, subHours } from "date-fns";
 import { uniqueId, merge } from "lodash";
-import axios from "axios";
+import {
+  aasAxios,
+  dpsAxios,
+  ansAxios,
+  aisAxios,
+  hesAxios,
+  ServiceType,
+} from "@/lib/api/axiosInstance";
 import NetInfo from "@react-native-community/netinfo";
 import Toast from "react-native-toast-message";
 import { serializeRequest, deserializeRequest } from "./requestSerializer";
@@ -19,6 +26,7 @@ interface QueuedRequest {
   data?: any;
   timestamp: string;
   attempts: number;
+  service: ServiceType; // Store service identifier
 }
 
 export const offlineQueue = {
@@ -51,10 +59,13 @@ export const offlineQueue = {
         return { success: false, error: "Storage limit reached" };
       }
 
-      // Deduplicate PATCH requests for the same resource
+      // Deduplicate PATCH requests for the same resource and service
       if (request.method === "PATCH") {
         const existingRequestIndex = currentQueue.findIndex(
-          (req) => req.method === "PATCH" && req.url === request.url
+          (req) =>
+            req.method === "PATCH" &&
+            req.url === request.url &&
+            req.service === request.service
         );
         if (existingRequestIndex !== -1) {
           // Merge data with existing request
@@ -115,10 +126,24 @@ export const offlineQueue = {
         isAfter(new Date(req.timestamp), expiryTime)
       );
 
+      // Map service to Axios instance
+      const instanceMap = {
+        aas: aasAxios,
+        dps: dpsAxios,
+        ans: ansAxios,
+        ais: aisAxios,
+        hes: hesAxios,
+      };
+
       for (const request of currentQueue) {
         try {
           const deserialized = deserializeRequest(JSON.stringify(request));
-          const response = await axios({
+          const instance = instanceMap[request.service];
+          if (!instance) {
+            throw new Error(`Invalid service type: ${request.service}`);
+          }
+
+          const response = await instance({
             method: deserialized.method,
             url: deserialized.url,
             headers: deserialized.headers,

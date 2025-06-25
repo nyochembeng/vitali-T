@@ -1,7 +1,7 @@
 import { useTheme } from "@/lib/hooks/useTheme";
 import { Vital } from "@/lib/schemas/vitalSchema";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View } from "react-native";
 import { Card, Text } from "react-native-paper";
 import DetailChart from "./DetailChart";
@@ -12,6 +12,7 @@ interface VitalDetailCardProps {
 
 const VitalDetailCard: React.FC<VitalDetailCardProps> = ({ vital }) => {
   const { colors, typo, layout } = useTheme();
+  const [chartData, setChartData] = useState<number[]>([]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -52,7 +53,6 @@ const VitalDetailCard: React.FC<VitalDetailCardProps> = ({ vital }) => {
     }
   };
 
-  // Map vital type to display name
   const getVitalName = (type: Vital["type"]) => {
     switch (type) {
       case "fhr":
@@ -75,6 +75,16 @@ const VitalDetailCard: React.FC<VitalDetailCardProps> = ({ vital }) => {
         return type;
     }
   };
+
+  useEffect(() => {
+    if (vital.hasChart) {
+      const newDataPoint = typeof vital.value === "number" ? vital.value : 0;
+      setChartData((prev) => {
+        const newData = [...prev, newDataPoint].slice(-10);
+        return newData;
+      });
+    }
+  }, [vital]);
 
   return (
     <Card
@@ -154,7 +164,9 @@ const VitalDetailCard: React.FC<VitalDetailCardProps> = ({ vital }) => {
               ...typo.h3,
             }}
           >
-            {vital.value}
+            {typeof vital.value === "number"
+              ? vital.value.toFixed(1)
+              : vital.value}
           </Text>
           <Text
             style={{
@@ -168,12 +180,8 @@ const VitalDetailCard: React.FC<VitalDetailCardProps> = ({ vital }) => {
           </Text>
         </View>
 
-        {vital.hasChart && vital.chartData && (
-          <DetailChart
-            data={vital.chartData}
-            color={colors.primary}
-            height={60}
-          />
+        {vital.hasChart && (
+          <DetailChart data={chartData} color={colors.primary} height={300} />
         )}
       </Card.Content>
     </Card>

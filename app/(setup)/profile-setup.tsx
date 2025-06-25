@@ -1,4 +1,10 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { Picker } from "@react-native-picker/picker";
+import * as ImagePicker from "expo-image-picker";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import {
   Alert,
   Image,
@@ -9,24 +15,17 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, TextInput } from "react-native-paper";
-import { useRouter } from "expo-router";
-import { Controller, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import { Picker } from "@react-native-picker/picker";
 import { CountryPicker } from "react-native-country-codes-picker";
-import * as ImagePicker from "expo-image-picker";
+import { Button, TextInput } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { useTheme } from "@/lib/hooks/useTheme";
-import { useAuth } from "@/lib/hooks/useAuth";
-import { Profile, profileSchema } from "@/lib/schemas/profileSchema";
 import {
   useCreateProfileMutation,
   useUploadProfileImageMutation,
 } from "@/lib/features/profile/profileService";
-import { Typo } from "@/lib/constants/Typo";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { useTheme } from "@/lib/hooks/useTheme";
+import { Profile, profileSchema } from "@/lib/schemas/profileSchema";
 
 export default function ProfileSetupScreen() {
   const router = useRouter();
@@ -84,15 +83,15 @@ export default function ProfileSetupScreen() {
     fontSize: typo.body3.fontSize,
     color: colors.text,
     marginBottom: layout.spacing.sm,
-    fontWeight: Typo.body1.fontWeight,
+    fontWeight: typo.body1.fontWeight,
     ...typo.body3,
   };
 
   const errorStyle = {
     color: colors.error,
-    fontSize: typo.body4.fontSize,
+    fontSize: typo.paragraph.fontSize,
     marginTop: layout.spacing.xs,
-    ...typo.body4,
+    ...typo.paragraph,
   };
 
   const handleImageSelection = async (type: "camera" | "library") => {
@@ -140,7 +139,11 @@ export default function ProfileSetupScreen() {
       if (data.profileImage && user?.userId) {
         const uploadImageResult = await uploadProfileImage({
           userId: user?.userId,
-          image: data.profileImage,
+          image: {
+            uri: `data:image/jpeg;base64,${data.profileImage}`,
+            type: "image/jpeg",
+            name: "profile.jpg",
+          },
         }).unwrap();
 
         if ("queued" in uploadImageResult && uploadImageResult.queued) {

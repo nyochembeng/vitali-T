@@ -8,16 +8,18 @@ import { Button, Text } from "react-native-paper";
 interface DeviceListItemProps {
   device: Device;
   onConnect: (device: Device) => void;
+  status?: Device["status"] | "connecting"; // Allow "connecting" from parent
 }
 
 const DeviceListItem: React.FC<DeviceListItemProps> = ({
   device,
   onConnect,
+  status,
 }) => {
   const { colors, typo, layout } = useTheme();
 
   const getStatusText = () => {
-    switch (device.status) {
+    switch (status || device.status) {
       case "ready":
         return "Ready to pair";
       case "connecting":
@@ -96,9 +98,7 @@ const DeviceListItem: React.FC<DeviceListItemProps> = ({
         mode="contained"
         onPress={() => onConnect(device)}
         buttonColor={colors.primary}
-        disabled={
-          device.status === "connecting" || device.status === "connected"
-        }
+        disabled={status === "connecting" || status === "connected"}
         style={{
           borderRadius: layout.borderRadius.medium,
           minWidth: layout.spacing.xl * 2,
@@ -109,7 +109,7 @@ const DeviceListItem: React.FC<DeviceListItemProps> = ({
           ...typo.button,
         }}
       >
-        {device.status === "connected" ? "Connected" : "Connect"}
+        {status === "connected" ? "Connected" : "Connect"}
       </Button>
     </View>
   );

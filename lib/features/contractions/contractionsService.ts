@@ -20,6 +20,7 @@ const contractionApi = contractionSlice.injectEndpoints({
         url: "/contractions",
         method: "POST",
         data,
+        service: "dps",
       }),
       async onQueryStarted(data, { queryFulfilled }) {
         const state = await NetInfo.fetch();
@@ -32,6 +33,7 @@ const contractionApi = contractionSlice.injectEndpoints({
               url: "/contractions",
               headers: { "Content-Type": "application/json" },
               data,
+              service: "dps",
             });
             if (queueResult.success) {
               Toast.show({
@@ -74,6 +76,7 @@ const contractionApi = contractionSlice.injectEndpoints({
       query: ({ userId, contractionId }) => ({
         url: `/contractions/${userId}/${contractionId}`,
         method: "GET",
+        service: "dps",
       }),
       providesTags: (result, error, { userId, contractionId }) => [
         { type: "Contractions", id: userId },
@@ -86,6 +89,7 @@ const contractionApi = contractionSlice.injectEndpoints({
       query: (userId) => ({
         url: `/contractions/${userId}`,
         method: "GET",
+        service: "dps",
       }),
       providesTags: (result, error, userId) =>
         result
@@ -108,6 +112,7 @@ const contractionApi = contractionSlice.injectEndpoints({
         url: `/contractions/${userId}/${contractionId}`,
         method: "PATCH",
         data,
+        service: "dps",
       }),
       async onQueryStarted(
         { userId, contractionId, data },
@@ -123,6 +128,7 @@ const contractionApi = contractionSlice.injectEndpoints({
               url: `/contractions/${userId}/${contractionId}`,
               headers: { "Content-Type": "application/json" },
               data,
+              service: "dps",
             });
             if (queueResult.success) {
               Toast.show({
@@ -166,6 +172,7 @@ const contractionApi = contractionSlice.injectEndpoints({
       query: ({ userId, contractionId }) => ({
         url: `/contractions/${userId}/${contractionId}`,
         method: "DELETE",
+        service: "dps",
       }),
       async onQueryStarted({ userId, contractionId }, { queryFulfilled }) {
         const state = await NetInfo.fetch();
@@ -178,6 +185,7 @@ const contractionApi = contractionSlice.injectEndpoints({
               url: `/contractions/${userId}/${contractionId}`,
               headers: { "Content-Type": "application/json" },
               data: {},
+              service: "dps",
             });
             if (queueResult.success) {
               Toast.show({

@@ -1,6 +1,6 @@
 import React from "react";
 import { View } from "react-native";
-import Svg, { Path, Defs, LinearGradient, Stop } from "react-native-svg";
+import { LineChart } from "react-native-chart-kit";
 import { useTheme } from "@/lib/hooks/useTheme";
 
 interface DetailChartProps {
@@ -18,35 +18,48 @@ const DetailChart: React.FC<DetailChartProps> = ({
 }) => {
   const { colors, layout } = useTheme();
 
-  const generatePath = () => {
-    if (data.length < 2) return { linePath: "", fillPath: "" };
-
-    const max = Math.max(...data);
-    const min = Math.min(...data);
-    const range = max - min || 1;
-
-    let path = "";
-    let fillPath = "";
-
-    data.forEach((value, index) => {
-      const x = (index / (data.length - 1)) * width;
-      const y = height - ((value - min) / range) * (height - 10) - 5;
-
-      if (index === 0) {
-        path += `M ${x} ${y}`;
-        fillPath += `M ${x} ${height} L ${x} ${y}`;
-      } else {
-        path += ` L ${x} ${y}`;
-        fillPath += ` L ${x} ${y}`;
-      }
-    });
-
-    fillPath += ` L ${width} ${height} Z`;
-
-    return { linePath: path, fillPath };
+  const chartData = {
+    labels: [], // Empty labels for detail chart
+    datasets: [
+      {
+        data: data.length > 0 ? data : [0],
+        color: () => color,
+        strokeWidth: 2,
+      },
+    ],
   };
 
-  const { linePath, fillPath } = generatePath();
+  const chartConfig = {
+    backgroundColor: "transparent",
+    backgroundGradientFrom: colors.card,
+    backgroundGradientTo: colors.card,
+    backgroundGradientFromOpacity: 0,
+    backgroundGradientToOpacity: 0,
+    color: () => color,
+    strokeWidth: 2,
+    fillShadowGradientFrom: color,
+    fillShadowGradientFromOpacity: 0.3,
+    fillShadowGradientTo: color,
+    fillShadowGradientToOpacity: 0.05,
+    propsForDots: {
+      r: "0", // Hide dots
+    },
+    propsForLabels: {
+      fontSize: 0, // Hide labels
+    },
+    propsForVerticalLabels: {
+      fontSize: 0, // Hide vertical labels
+    },
+    propsForHorizontalLabels: {
+      fontSize: 0, // Hide horizontal labels
+    },
+    withHorizontalLines: false,
+    withVerticalLines: false,
+    withInnerLines: false,
+    withOuterLines: false,
+    withHorizontalLabels: false,
+    withVerticalLabels: false,
+  };
 
   return (
     <View
@@ -55,25 +68,22 @@ const DetailChart: React.FC<DetailChartProps> = ({
         borderRadius: layout.borderRadius.medium,
         overflow: "hidden",
         height,
+        width,
       }}
     >
-      <Svg width="100%" height={height}>
-        <Defs>
-          <LinearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <Stop offset="0%" stopColor={color} stopOpacity="0.3" />
-            <Stop offset="100%" stopColor={color} stopOpacity="0.05" />
-          </LinearGradient>
-        </Defs>
-        <Path d={fillPath} fill="url(#gradient)" />
-        <Path
-          d={linePath}
-          stroke={color}
-          strokeWidth={2}
-          fill="none"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </Svg>
+      <LineChart
+        data={chartData}
+        width={width}
+        height={height}
+        chartConfig={chartConfig}
+        bezier
+        withDots={false}
+        withShadow={true}
+        style={{
+          marginLeft: -40,
+          marginTop: -10,
+        }}
+      />
     </View>
   );
 };

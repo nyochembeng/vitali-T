@@ -18,7 +18,7 @@ export interface DeleteProfileResponse {
 }
 
 export interface UploadProfileImageResponse {
-  imageUrl: string;
+  image: { uri: string; type?: string; name?: string };
 }
 
 export interface ApiError {
@@ -32,5 +32,5 @@ export type CreateProfileRequest = Omit<Profile, "userId">;
 export type UpdateProfileRequest = Partial<Omit<Profile, "userId">>;
 export type UploadProfileImageRequest = {
   userId: string;
-  image: string; // Base64 string or FormData
+  image: { uri: string; type?: string; name?: string }; // Base64 string or FormData
 };

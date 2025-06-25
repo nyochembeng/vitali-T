@@ -172,9 +172,9 @@ export default function LoginScreen() {
                 <Text
                   style={{
                     color: colors.error,
-                    fontSize: typo.body4.fontSize,
+                    fontSize: typo.paragraph.fontSize,
                     marginTop: layout.spacing.xs,
-                    ...typo.body4,
+                    ...typo.paragraph,
                   }}
                 >
                   {errors.email.message}
@@ -238,9 +238,9 @@ export default function LoginScreen() {
                 <Text
                   style={{
                     color: colors.error,
-                    fontSize: typo.body4.fontSize,
+                    fontSize: typo.paragraph.fontSize,
                     marginTop: layout.spacing.xs,
-                    ...typo.body4,
+                    ...typo.paragraph,
                   }}
                 >
                   {errors.password.message}

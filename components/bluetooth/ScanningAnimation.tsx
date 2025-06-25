@@ -2,18 +2,18 @@ import React, { useEffect, useRef } from "react";
 import { Animated } from "react-native";
 
 interface ScanningAnimationProps {
-  isScanning: boolean;
+  isActive: boolean;
   children: React.ReactNode;
 }
 
 const ScanningAnimation: React.FC<ScanningAnimationProps> = ({
-  isScanning,
+  isActive,
   children,
 }) => {
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    if (isScanning) {
+    if (isActive) {
       const pulse = Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, {
@@ -31,14 +31,14 @@ const ScanningAnimation: React.FC<ScanningAnimationProps> = ({
       pulse.start();
       return () => pulse.stop();
     }
-  }, [isScanning, pulseAnim]);
+  }, [isActive, pulseAnim]);
 
   return (
     <Animated.View
       style={{
         alignItems: "center",
         justifyContent: "center",
-        transform: [{ scale: isScanning ? pulseAnim : 1 }],
+        transform: [{ scale: isActive ? pulseAnim : 1 }],
       }}
     >
       {children}

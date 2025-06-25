@@ -1,3 +1,4 @@
+import { useForgotPasswordMutation } from "@/lib/features/user/userService";
 import { useTheme } from "@/lib/hooks/useTheme";
 import { ForgotPassword, forgotPasswordSchema } from "@/lib/schemas/userSchema";
 import { Ionicons } from "@expo/vector-icons";
@@ -6,17 +7,16 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
-  Alert,
 } from "react-native";
 import { Button, TextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useForgotPasswordMutation } from "@/lib/features/user/userService";
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -178,9 +178,9 @@ export default function ForgotPasswordScreen() {
                 <Text
                   style={{
                     color: colors.error,
-                    fontSize: typo.body4.fontSize,
+                    fontSize: typo.paragraph.fontSize,
                     marginTop: layout.spacing.xs,
-                    ...typo.body4,
+                    ...typo.paragraph,
                   }}
                 >
                   {errors.email.message}

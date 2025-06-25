@@ -1,17 +1,25 @@
+import { useEffect, useState } from "react";
+import { SafeAreaView, ScrollView, TouchableOpacity, View } from "react-native";
+import { Button, Text } from "react-native-paper";
+import { useDispatch, useSelector } from "react-redux";
+import { useRouter } from "expo-router";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import BluetoothIcon from "@/components/bluetooth/BluetoothIcon";
 import DeviceListItem from "@/components/bluetooth/DeviceListItem";
 import ScanningAnimation from "@/components/bluetooth/ScanningAnimation";
 import CustomAppBar from "@/components/utils/CustomAppBar";
 import { useTheme } from "@/lib/hooks/useTheme";
+import useBLE from "@/lib/hooks/useBLE";
+import { RootState } from "@/lib/store";
+import {
+  scanStarted,
+  scanStopped,
+  deviceFound,
+  connected,
+  disconnected,
+} from "@/lib/features/ble/bleSlice";
 import { Device } from "@/lib/schemas/deviceSchema";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
-import { SafeAreaView, ScrollView, TouchableOpacity, View } from "react-native";
-import { Button, Text } from "react-native-paper";
-
-// Mock auth hook for userId; replace with actual auth context
-const useAuth = () => ({ userId: "user_1234567890" }); // TODO: Implement actual auth context
+import { useAuth } from "@/lib/hooks/useAuth";
 
 type ConnectionState =
   | "scanning"
@@ -23,115 +31,119 @@ type ConnectionState =
 export default function BluetoothConnectionScreen() {
   const [connectionState, setConnectionState] =
     useState<ConnectionState>("scanning");
-  const [devices, setDevices] = useState<Device[]>([]);
-  const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
-  const [connectingDevice, setConnectingDevice] = useState<Device | null>(null);
-  const [isScanning, setIsScanning] = useState(true);
+  const [connectingDeviceId, setConnectingDeviceId] = useState<string | null>(
+    null
+  );
   const router = useRouter();
   const { colors, typo, layout } = useTheme();
-  const { userId } = useAuth();
+  const { user } = useAuth();
+  const dispatch = useDispatch();
+  const {
+    requestPermissions,
+    scanForPeripherals,
+    connectToDevice,
+    disconnectFromDevice,
+    connectedDevice,
+    allDevices,
+  } = useBLE();
+  const { isScanning, devices, connectedDeviceId } = useSelector(
+    (state: RootState) => state.ble
+  );
 
-  // Mock devices for demo, aligned with deviceSchema
-  const mockDevices: Device[] = [
-    {
-      deviceId: "VT-001",
-      model: "Vitali-T Device",
-      firmwareVersion: "1.0.0",
-      batteryLevel: 85,
-      status: "ready",
-      lastSyncTime: new Date().toISOString(),
-      pairedTo: null,
-      isConnected: false,
-      rssi: -45,
-    },
-    {
-      deviceId: "VT-002",
-      model: "Vitali-T Pro",
-      firmwareVersion: "1.1.0",
-      batteryLevel: 60,
-      status: "ready",
-      lastSyncTime: new Date().toISOString(),
-      pairedTo: null,
-      isConnected: false,
-      rssi: -60,
-    },
-  ];
-
+  // Request BLE permissions and start scanning
   useEffect(() => {
-    // Simulate scanning process
-    const scanTimer = setTimeout(() => {
-      setIsScanning(false);
-      setDevices(mockDevices);
-      setConnectionState("scanning"); // Keep as scanning to show devices
-    }, 3000);
+    const initializeBLE = async () => {
+      const granted = await requestPermissions();
+      if (granted) {
+        dispatch(scanStarted());
+        scanForPeripherals();
+      } else {
+        setConnectionState("connection-failed");
+        dispatch(scanStopped());
+      }
+    };
 
-    return () => clearTimeout(scanTimer);
-  }, []);
+    initializeBLE();
+
+    return () => {
+      dispatch(scanStopped());
+    };
+  }, [dispatch, requestPermissions, scanForPeripherals]);
+
+  // Update devices in Redux when allDevices changes
+  useEffect(() => {
+    allDevices.forEach((bleDevice) => {
+      const device: Device = {
+        deviceId: bleDevice.deviceId,
+        model: bleDevice.model || "Unknown",
+        firmwareVersion: bleDevice.firmwareVersion || "Unknown",
+        batteryLevel: bleDevice.batteryLevel || 100,
+        status: bleDevice.status,
+        lastSyncTime: bleDevice.lastSyncTime || new Date().toISOString(),
+        pairedTo: bleDevice.pairedTo || null,
+        isConnected: bleDevice.isConnected || false,
+        rssi: bleDevice.rssi ?? null,
+      };
+      dispatch(deviceFound(device));
+    });
+
+    if (!isScanning && allDevices.length === 0) {
+      setConnectionState("no-devices");
+    } else if (!isScanning && allDevices.length > 0) {
+      setConnectionState("scanning");
+    }
+  }, [allDevices, isScanning, dispatch]);
+
+  // Update connection state when connectedDevice changes
+  useEffect(() => {
+    if (connectedDevice && connectedDeviceId === connectedDevice.deviceId) {
+      setConnectionState("connected");
+      dispatch(connected(connectedDevice.deviceId));
+    }
+  }, [connectedDevice, connectedDeviceId, dispatch]);
 
   const handleConnect = async (device: Device) => {
-    // Only allow connection if device is unpaired or paired to current user
-    if (device.pairedTo && device.pairedTo !== userId) {
+    // Check if device is unpaired or paired to current user
+    if (device.pairedTo && device.pairedTo !== user?.userId) {
       setConnectionState("connection-failed");
-      setIsScanning(false);
+      dispatch(scanStopped());
       return;
     }
 
     setConnectionState("connecting");
-    setConnectingDevice(device);
-    setIsScanning(true);
+    setConnectingDeviceId(device.deviceId);
+    dispatch(scanStopped());
 
-    // Simulate connection attempt
-    setTimeout(() => {
-      // Randomly succeed or fail for demo
-      const success = Math.random() > 0.3;
-
-      if (success) {
-        const updatedDevice = {
-          ...device,
-          status: "connected" as const,
-          isConnected: true,
-          pairedTo: userId, // Pair to current user
-        };
-        setConnectedDevice(updatedDevice);
-        setConnectionState("connected");
+    try {
+      const bleDevice = allDevices.find((d) => d.deviceId === device.deviceId);
+      if (bleDevice) {
+        await connectToDevice(bleDevice);
       } else {
-        setConnectionState("connection-failed");
+        throw new Error("Device not found in BLE scan");
       }
-      setIsScanning(false);
-      setConnectingDevice(null);
-    }, 2000);
+    } catch (error) {
+      console.error("Connection failed:", error);
+      setConnectionState("connection-failed");
+      setConnectingDeviceId(null);
+    }
   };
 
-  const handleRetryConnection = () => {
+  const handleRetryConnection = async () => {
     setConnectionState("connecting");
-    setIsScanning(true);
-
-    setTimeout(() => {
-      setConnectionState("connection-failed");
-      setIsScanning(false);
-    }, 2000);
+    dispatch(scanStarted());
+    scanForPeripherals();
   };
 
   const handleScanAgain = () => {
     setConnectionState("scanning");
-    setIsScanning(true);
-    setDevices([]);
-
-    setTimeout(() => {
-      setDevices(mockDevices);
-      setIsScanning(false);
-    }, 3000);
+    dispatch(scanStarted());
+    scanForPeripherals();
   };
 
   const handleRefresh = () => {
     setConnectionState("scanning");
-    setIsScanning(true);
-    setDevices([]);
-
-    setTimeout(() => {
-      setConnectionState("no-devices");
-      setIsScanning(false);
-    }, 3000);
+    dispatch(scanStarted());
+    scanForPeripherals();
   };
 
   const handleStartMonitoring = () => {
@@ -139,16 +151,12 @@ export default function BluetoothConnectionScreen() {
   };
 
   const handleChangeDevice = () => {
+    disconnectFromDevice();
+    dispatch(disconnected());
     setConnectionState("scanning");
-    setConnectedDevice(null);
-    setConnectingDevice(null);
-    setDevices([]);
-    setIsScanning(true);
-
-    setTimeout(() => {
-      setDevices(mockDevices);
-      setIsScanning(false);
-    }, 2000);
+    setConnectingDeviceId(null);
+    dispatch(scanStarted());
+    scanForPeripherals();
   };
 
   const handleNeedHelp = () => {
@@ -163,7 +171,7 @@ export default function BluetoothConnectionScreen() {
         paddingVertical: layout.spacing.lg,
       }}
     >
-      <ScanningAnimation isScanning={isScanning}>
+      <ScanningAnimation isActive={isScanning}>
         <BluetoothIcon state="scanning" />
       </ScanningAnimation>
       <Text
@@ -184,7 +192,12 @@ export default function BluetoothConnectionScreen() {
             <DeviceListItem
               key={device.deviceId}
               device={device}
-              onConnect={handleConnect}
+              onConnect={() => handleConnect(device)}
+              status={
+                connectingDeviceId === device.deviceId
+                  ? "connecting"
+                  : device.status
+              }
             />
           ))}
         </View>
@@ -200,7 +213,7 @@ export default function BluetoothConnectionScreen() {
         paddingVertical: layout.spacing.lg,
       }}
     >
-      <ScanningAnimation isScanning={isScanning}>
+      <ScanningAnimation isActive={true}>
         <BluetoothIcon state="scanning" />
       </ScanningAnimation>
       <Text
@@ -212,7 +225,10 @@ export default function BluetoothConnectionScreen() {
           ...typo.body1,
         }}
       >
-        Connecting to {connectingDevice?.model}...
+        Connecting to{" "}
+        {devices.find((d) => d.deviceId === connectingDeviceId)?.model ||
+          "Device"}
+        ...
       </Text>
     </View>
   );
@@ -244,7 +260,6 @@ export default function BluetoothConnectionScreen() {
           color: colors.text,
           marginTop: layout.spacing.sm,
           textAlign: "center",
-          lineHeight: typo.body1.lineHeight,
           ...typo.body1,
         }}
       >

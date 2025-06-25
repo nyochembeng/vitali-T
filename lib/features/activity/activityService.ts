@@ -20,6 +20,7 @@ const activityApi = activitySlice.injectEndpoints({
         url: "/activities",
         method: "POST",
         data,
+        service: "dps",
       }),
       async onQueryStarted(data, { queryFulfilled }) {
         const state = await NetInfo.fetch();
@@ -32,6 +33,7 @@ const activityApi = activitySlice.injectEndpoints({
               url: "/activities",
               headers: { "Content-Type": "application/json" },
               data,
+              service: "dps",
             });
             if (queueResult.success) {
               Toast.show({
@@ -74,6 +76,7 @@ const activityApi = activitySlice.injectEndpoints({
       query: ({ userId, activityId }) => ({
         url: `/activities/${userId}/${activityId}`,
         method: "GET",
+        service: "dps",
       }),
       providesTags: (result, error, { userId, activityId }) => [
         { type: "Activities", id: userId },
@@ -85,6 +88,7 @@ const activityApi = activitySlice.injectEndpoints({
       query: (userId) => ({
         url: `/activities/${userId}`,
         method: "GET",
+        service: "dps",
       }),
       providesTags: (result, error, userId) =>
         result
@@ -106,6 +110,7 @@ const activityApi = activitySlice.injectEndpoints({
         url: `/activities/${userId}/${activityId}`,
         method: "PATCH",
         data,
+        service: "dps",
       }),
       async onQueryStarted({ userId, activityId, data }, { queryFulfilled }) {
         const state = await NetInfo.fetch();
@@ -118,6 +123,7 @@ const activityApi = activitySlice.injectEndpoints({
               url: `/activities/${userId}/${activityId}`,
               headers: { "Content-Type": "application/json" },
               data,
+              service: "dps",
             });
             if (queueResult.success) {
               Toast.show({
@@ -161,6 +167,7 @@ const activityApi = activitySlice.injectEndpoints({
       query: ({ userId, activityId }) => ({
         url: `/activities/${userId}/${activityId}`,
         method: "DELETE",
+        service: "dps",
       }),
       async onQueryStarted({ userId, activityId }, { queryFulfilled }) {
         const state = await NetInfo.fetch();
@@ -173,6 +180,7 @@ const activityApi = activitySlice.injectEndpoints({
               url: `/activities/${userId}/${activityId}`,
               headers: { "Content-Type": "application/json" },
               data: {},
+              service: "dps",
             });
             if (queueResult.success) {
               Toast.show({

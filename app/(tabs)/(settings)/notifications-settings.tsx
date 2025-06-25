@@ -57,9 +57,7 @@ export default function NotificationSettingsScreen() {
   const { colors, typo, layout } = useTheme();
   const router = useRouter();
   const { user, isActionQueued } = useAuth();
-  const { data: settings } = useGetSettingsQuery(user?.userId as string, {
-    skip: !user?.userId,
-  });
+  const { data: settings } = useGetSettingsQuery();
   const [updateSettings, { isLoading: isUpdating }] =
     useUpdateSettingsMutation();
 
@@ -84,7 +82,6 @@ export default function NotificationSettingsScreen() {
     if (!user?.userId) return;
     try {
       const result = await updateSettings({
-        userId: user.userId,
         data: { notificationPreferences: data },
       }).unwrap();
       if ("queued" in result && result.queued) {

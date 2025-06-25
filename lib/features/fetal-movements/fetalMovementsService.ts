@@ -23,6 +23,7 @@ const fetalMovementApi = fetalMovementSlice.injectEndpoints({
         url: "/fetal-movements",
         method: "POST",
         data,
+        service: "dps",
       }),
       async onQueryStarted(data, { queryFulfilled }) {
         const state = await NetInfo.fetch();
@@ -35,6 +36,7 @@ const fetalMovementApi = fetalMovementSlice.injectEndpoints({
               url: "/fetal-movements",
               headers: { "Content-Type": "application/json" },
               data,
+              service: "dps",
             });
             if (queueResult.success) {
               Toast.show({
@@ -77,6 +79,7 @@ const fetalMovementApi = fetalMovementSlice.injectEndpoints({
       query: ({ userId, sessionId }) => ({
         url: `/fetal-movements/${userId}/${sessionId}`,
         method: "GET",
+        service: "dps",
       }),
       providesTags: (result, error, { userId, sessionId }) => [
         { type: "FetalMovements", id: userId },
@@ -89,6 +92,7 @@ const fetalMovementApi = fetalMovementSlice.injectEndpoints({
       query: (userId) => ({
         url: `/fetal-movements/${userId}`,
         method: "GET",
+        service: "dps",
       }),
       providesTags: (result, error, userId) =>
         result
@@ -111,6 +115,7 @@ const fetalMovementApi = fetalMovementSlice.injectEndpoints({
         url: `/fetal-movements/${userId}/${sessionId}`,
         method: "PATCH",
         data,
+        service: "dps",
       }),
       async onQueryStarted({ userId, sessionId, data }, { queryFulfilled }) {
         const state = await NetInfo.fetch();
@@ -123,6 +128,7 @@ const fetalMovementApi = fetalMovementSlice.injectEndpoints({
               url: `/fetal-movements/${userId}/${sessionId}`,
               headers: { "Content-Type": "application/json" },
               data,
+              service: "dps",
             });
             if (queueResult.success) {
               Toast.show({
@@ -166,6 +172,7 @@ const fetalMovementApi = fetalMovementSlice.injectEndpoints({
       query: ({ userId, sessionId }) => ({
         url: `/fetal-movements/${userId}/${sessionId}`,
         method: "DELETE",
+        service: "dps",
       }),
       async onQueryStarted({ userId, sessionId }, { queryFulfilled }) {
         const state = await NetInfo.fetch();
@@ -178,6 +185,7 @@ const fetalMovementApi = fetalMovementSlice.injectEndpoints({
               url: `/fetal-movements/${userId}/${sessionId}`,
               headers: { "Content-Type": "application/json" },
               data: {},
+              service: "dps",
             });
             if (queueResult.success) {
               Toast.show({

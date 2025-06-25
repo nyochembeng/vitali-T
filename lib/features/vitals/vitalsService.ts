@@ -20,6 +20,7 @@ const vitalsApi = vitalsSlice.injectEndpoints({
         url: "/vitals",
         method: "POST",
         data,
+        service: "dps",
       }),
       async onQueryStarted(data, { queryFulfilled }) {
         const state = await NetInfo.fetch();
@@ -32,6 +33,7 @@ const vitalsApi = vitalsSlice.injectEndpoints({
               url: "/vitals",
               headers: { "Content-Type": "application/json" },
               data,
+              service: "dps",
             });
             if (queueResult.success) {
               Toast.show({
@@ -73,6 +75,7 @@ const vitalsApi = vitalsSlice.injectEndpoints({
       query: ({ userId, vitalId }) => ({
         url: `/vitals/${userId}/${vitalId}`,
         method: "GET",
+        service: "dps",
       }),
       providesTags: (result, error, { userId, vitalId }) => [
         { type: "Vitals", id: userId },
@@ -84,6 +87,7 @@ const vitalsApi = vitalsSlice.injectEndpoints({
       query: (userId) => ({
         url: `/vitals/${userId}`,
         method: "GET",
+        service: "dps",
       }),
       providesTags: (result, error, userId) =>
         result
@@ -105,6 +109,7 @@ const vitalsApi = vitalsSlice.injectEndpoints({
         url: `/vitals/${userId}/${vitalId}`,
         method: "PATCH",
         data,
+        service: "dps",
       }),
       async onQueryStarted({ userId, vitalId, data }, { queryFulfilled }) {
         const state = await NetInfo.fetch();
@@ -117,6 +122,7 @@ const vitalsApi = vitalsSlice.injectEndpoints({
               url: `/vitals/${userId}/${vitalId}`,
               headers: { "Content-Type": "application/json" },
               data,
+              service: "dps",
             });
             if (queueResult.success) {
               Toast.show({
@@ -162,6 +168,7 @@ const vitalsApi = vitalsSlice.injectEndpoints({
       query: ({ userId, vitalId }) => ({
         url: `/vitals/${userId}/${vitalId}`,
         method: "DELETE",
+        service: "dps",
       }),
       async onQueryStarted({ userId, vitalId }, { queryFulfilled }) {
         const state = await NetInfo.fetch();
@@ -174,6 +181,7 @@ const vitalsApi = vitalsSlice.injectEndpoints({
               url: `/vitals/${userId}/${vitalId}`,
               headers: { "Content-Type": "application/json" },
               data: {},
+              service: "dps",
             });
             if (queueResult.success) {
               Toast.show({
@@ -214,7 +222,6 @@ const vitalsApi = vitalsSlice.injectEndpoints({
   }),
 });
 
-// Export auto-generated hooks
 export const {
   useCreateVitalMutation,
   useGetVitalQuery,

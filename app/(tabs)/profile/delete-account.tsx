@@ -14,7 +14,7 @@ import { Typo } from "@/lib/constants/Typo";
 export default function DeleteAccountScreen() {
   const router = useRouter();
   const { colors, typo, layout } = useTheme();
-  const { user, isActionQueued, logout } = useAuth();
+  const { isActionQueued, logout } = useAuth();
   const [deleteProfile, { isLoading }] = useDeleteProfileMutation();
 
   const textStyle = {
@@ -59,9 +59,7 @@ export default function DeleteAccountScreen() {
           style: "destructive",
           onPress: async () => {
             try {
-              const result = await deleteProfile(
-                user?.userId as string
-              ).unwrap();
+              const result = await deleteProfile().unwrap();
               if ("queued" in result && result.queued) {
                 return; // Queued actions handled by Toast and SyncStatus
               }

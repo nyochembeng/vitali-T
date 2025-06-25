@@ -1,3 +1,4 @@
+import { useAuth } from "@/lib/hooks/useAuth";
 import { useTheme } from "@/lib/hooks/useTheme";
 import { SignUp, signUpSchema } from "@/lib/schemas/userSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -5,17 +6,16 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
-  Alert,
 } from "react-native";
 import { Button, TextInput } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth } from "@/lib/hooks/useAuth";
 
 export default function SignUpScreen() {
   const router = useRouter();
@@ -149,9 +149,9 @@ export default function SignUpScreen() {
                 <Text
                   style={{
                     color: colors.error,
-                    fontSize: typo.body4.fontSize,
+                    fontSize: typo.paragraph.fontSize,
                     marginTop: layout.spacing.xs,
-                    ...typo.body4,
+                    ...typo.paragraph,
                   }}
                 >
                   {errors.fullname.message}
@@ -207,9 +207,9 @@ export default function SignUpScreen() {
                 <Text
                   style={{
                     color: colors.error,
-                    fontSize: typo.body4.fontSize,
+                    fontSize: typo.paragraph.fontSize,
                     marginTop: layout.spacing.xs,
-                    ...typo.body4,
+                    ...typo.paragraph,
                   }}
                 >
                   {errors.email.message}
@@ -272,9 +272,9 @@ export default function SignUpScreen() {
                 <Text
                   style={{
                     color: colors.error,
-                    fontSize: typo.body4.fontSize,
+                    fontSize: typo.paragraph.fontSize,
                     marginTop: layout.spacing.xs,
-                    ...typo.body4,
+                    ...typo.paragraph,
                     maxWidth: "90%",
                   }}
                 >
@@ -340,9 +340,9 @@ export default function SignUpScreen() {
                 <Text
                   style={{
                     color: colors.error,
-                    fontSize: typo.body4.fontSize,
+                    fontSize: typo.paragraph.fontSize,
                     marginTop: layout.spacing.xs,
-                    ...typo.body4,
+                    ...typo.paragraph,
                   }}
                 >
                   {errors.confirmPassword.message}

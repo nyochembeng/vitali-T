@@ -17,6 +17,7 @@ const educationApi = educationSlice.injectEndpoints({
       query: (videoId) => ({
         url: `/education/videos/${videoId}`,
         method: "GET",
+        service: "hes",
       }),
       providesTags: (result, error, videoId) => [
         { type: "Videos", id: videoId },
@@ -44,6 +45,7 @@ const educationApi = educationSlice.injectEndpoints({
           trimester: params.trimester,
           keywords: params.keywords?.join(","),
         },
+        service: "hes",
       }),
       providesTags: (result) =>
         result
@@ -73,6 +75,7 @@ const educationApi = educationSlice.injectEndpoints({
       query: (articleId) => ({
         url: `/education/articles/${articleId}`,
         method: "GET",
+        service: "hes",
       }),
       providesTags: (result, error, articleId) => [
         { type: "Articles", id: articleId },
@@ -100,6 +103,7 @@ const educationApi = educationSlice.injectEndpoints({
           trimester: params.trimester,
           keywords: params.keywords?.join(","),
         },
+        service: "hes",
       }),
       providesTags: (result) =>
         result
@@ -129,6 +133,7 @@ const educationApi = educationSlice.injectEndpoints({
       query: (topicId) => ({
         url: `/education/topics/${topicId}`,
         method: "GET",
+        service: "hes",
       }),
       providesTags: (result, error, topicId) => [
         { type: "Topics", id: topicId },
@@ -155,6 +160,7 @@ const educationApi = educationSlice.injectEndpoints({
           category: params.category,
           keywords: params.keywords?.join(","),
         },
+        service: "hes",
       }),
       providesTags: (result) =>
         result

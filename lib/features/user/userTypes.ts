@@ -15,6 +15,11 @@ export interface ForgotPasswordResponse {
   message: string;
 }
 
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+}
+
 export interface ApiError {
   status: number;
   message: string;

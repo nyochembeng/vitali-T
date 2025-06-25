@@ -1,51 +1,87 @@
-/* eslint-disable no-bitwise */
-import { useMemo, useState } from "react";
+import { vitalsReceived } from "@/lib/features/ble/bleSlice";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { Device as AppDevice } from "@/lib/schemas/deviceSchema";
+import { Vital } from "@/lib/schemas/vitalSchema";
+import * as ExpoDevice from "expo-device";
+import { useCallback, useMemo, useState } from "react";
 import { PermissionsAndroid, Platform } from "react-native";
+import base64 from "react-native-base64";
 import {
+  Device as BleDevice,
   BleError,
   BleManager,
   Characteristic,
-  Device,
 } from "react-native-ble-plx";
+import { useDispatch } from "react-redux";
 
-import * as ExpoDevice from "expo-device";
+// BLE UUIDs for Vitali-T_Pro
+const VITALI_T_SERVICE_UUID =
+  process.env.BLE_SERVICE_UUID || "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
+const VITALI_T_VITALS_CHARACTERISTIC =
+  process.env.BLE_CHARACTERISTIC_UUID || "beb5483e-36e1-4688-b7f5-ea07361b26a8";
 
-import base64 from "react-native-base64";
+// Map BleDevice to AppDevice
+function mapBleDeviceToAppDevice(bleDevice: BleDevice): AppDevice {
+  return {
+    deviceId: bleDevice.id,
+    model: "Vitali-T_Pro",
+    firmwareVersion: "1.0.0",
+    batteryLevel: 100,
+    status: "ready",
+    lastSyncTime: new Date().toISOString(),
+    pairedTo: null,
+    isConnected: false,
+    rssi: bleDevice.rssi ?? null,
+  };
+}
 
-// service and characteristic UUIDs of sample device
-const HEART_RATE_UUID = "0000180d-0000-1000-8000-00805f9b34fb";
-const HEART_RATE_CHARACTERISTIC = "00002a37-0000-1000-8000-00805f9b34fb";
+// Interface for BLE vitals packet from ESP32
+interface VitalsPacket {
+  fhr: number; // Fetal heart rate (bpm)
+  mhr: number; // Maternal heart rate (bpm)
+  spo2: number; // SpO2 (%)
+  bt: number; // Body temperature (°C)
+  bp: string; // Blood pressure (e.g., "120/80", parsed as systolic number)
+  hrv: number; // Heart rate variability (ms)
+  si: number; // Shock index
+  rr: string; // Respiratory rate (empty, parsed as 0)
+  alert: boolean; // Alert status
+}
 
+// Interface for BLE API
 interface BluetoothLowEnergyApi {
-  requestPermissions(): Promise<boolean>;
-  scanForPeripherals(): void;
-  connectToDevice: (deviceId: Device) => Promise<void>;
+  requestPermissions: () => Promise<boolean>;
+  scanForPeripherals: () => void;
+  connectToDevice: (device: AppDevice) => Promise<void>;
   disconnectFromDevice: () => void;
-  connectedDevice: Device | null;
-  allDevices: Device[];
-  heartRate: number;
+  connectedDevice: AppDevice | null;
+  allDevices: AppDevice[];
 }
 
 function useBLE(): BluetoothLowEnergyApi {
   const bleManager = useMemo(() => new BleManager(), []);
-  const [allDevices, setAllDevices] = useState<Device[]>([]);
-  const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
-  const [heartRate, setHeartRate] = useState<number>(0);
+  const dispatch = useDispatch();
+  const [allDevices, setAllDevices] = useState<AppDevice[]>([]);
+  const [connectedDevice, setConnectedDevice] = useState<AppDevice | null>(
+    null
+  );
+  const { user } = useAuth();
 
+  // Request Android BLE permissions
   const requestAndroid31Permissions = async () => {
     const bluetoothScanPermission = await PermissionsAndroid.request(
       PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
       {
-        title: "Location Permission",
-        message: "Bluetooth Low Energy requires Location",
+        title: "Bluetooth Scan Permission",
+        message: "Vitali-T requires Bluetooth scanning to discover devices.",
         buttonPositive: "OK",
       }
     );
     const bluetoothConnectPermission = await PermissionsAndroid.request(
       PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
       {
-        title: "Location Permission",
-        message: "Bluetooth Low Energy requires Location",
+        title: "Bluetooth Connect Permission",
+        message: "Vitali-T requires Bluetooth connection to communicate.",
         buttonPositive: "OK",
       }
     );
@@ -53,7 +89,7 @@ function useBLE(): BluetoothLowEnergyApi {
       PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
       {
         title: "Location Permission",
-        message: "Bluetooth Low Energy requires Location",
+        message: "Bluetooth Low Energy requires location access.",
         buttonPositive: "OK",
       }
     );
@@ -72,108 +108,223 @@ function useBLE(): BluetoothLowEnergyApi {
           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
           {
             title: "Location Permission",
-            message: "Bluetooth Low Energy requires Location",
+            message: "Bluetooth Low Energy requires location access.",
             buttonPositive: "OK",
           }
         );
         return granted === PermissionsAndroid.RESULTS.GRANTED;
       } else {
-        const isAndroid31PermissionsGranted =
-          await requestAndroid31Permissions();
-
-        return isAndroid31PermissionsGranted;
+        return await requestAndroid31Permissions();
       }
-    } else {
-      return true;
     }
+    return true; // iOS permissions are handled implicitly
   };
 
-  const isDuplicteDevice = (devices: Device[], nextDevice: Device) =>
-    devices.findIndex((device) => nextDevice.id === device.id) > -1;
+  // Check for duplicate devices
+  const isDuplicateDevice = (devices: AppDevice[], nextDevice: AppDevice) =>
+    devices.some((device) => nextDevice.deviceId === device.deviceId);
 
-  const scanForPeripherals = () =>
+  // Scan for Vitali-T devices
+  const scanForPeripherals = () => {
     bleManager.startDeviceScan(null, null, (error, device) => {
       if (error) {
-        console.log(error);
+        console.error("BLE scan error:", error);
+        return;
       }
-      if (device && device.name?.includes("device_name")) {
-        setAllDevices((prevState: Device[]) => {
-          if (!isDuplicteDevice(prevState, device)) {
-            return [...prevState, device];
+      if (device && device.name?.includes("Vitali-T")) {
+        const appDevice = mapBleDeviceToAppDevice(device);
+        setAllDevices((prevState) => {
+          if (!isDuplicateDevice(prevState, appDevice)) {
+            return [...prevState, appDevice];
           }
           return prevState;
         });
       }
     });
+  };
 
-  const connectToDevice = async (device: Device) => {
+  // Handle vitals data updates
+  const onVitalsUpdate = useCallback(
+    (error: BleError | null, characteristic: Characteristic | null) => {
+      if (error) {
+        console.error("Vitals update error:", error);
+        return;
+      }
+      if (!characteristic?.value) {
+        console.warn("No vitals data received");
+        return;
+      }
+
+      try {
+        // Decode base64 and parse JSON
+        const rawData = base64.decode(characteristic.value);
+        const vitalsPacket: VitalsPacket = JSON.parse(rawData);
+
+        // Parse bp to extract systolic value as a number
+        const bpValue = parseInt(vitalsPacket.bp.split("/")[0], 10) || 0;
+
+        // Map to vitalSchema format
+        const timestamp = new Date().toISOString();
+        const userId = user?.userId || "user-id-placeholder";
+        const deviceId = connectedDevice?.deviceId || "device-id-placeholder";
+        const vitals: Vital[] = [
+          {
+            vitalId: `${timestamp}-fhr`,
+            userId,
+            deviceId,
+            type: "fhr",
+            value: vitalsPacket.fhr,
+            unit: "bpm",
+            status: vitalsPacket.alert ? "critical" : "normal",
+            timestamp,
+            hasChart: true,
+          },
+          {
+            vitalId: `${timestamp}-mhr`,
+            userId,
+            deviceId,
+            type: "mhr",
+            value: vitalsPacket.mhr,
+            unit: "bpm",
+            status: vitalsPacket.alert ? "critical" : "normal",
+            timestamp,
+            hasChart: true,
+          },
+          {
+            vitalId: `${timestamp}-spo2`,
+            userId,
+            deviceId,
+            type: "spo2",
+            value: vitalsPacket.spo2,
+            unit: "%",
+            status: vitalsPacket.alert ? "critical" : "normal",
+            timestamp,
+            hasChart: true,
+          },
+          {
+            vitalId: `${timestamp}-bt`,
+            userId,
+            deviceId,
+            type: "bt",
+            value: vitalsPacket.bt,
+            unit: "°C",
+            status: vitalsPacket.alert ? "critical" : "normal",
+            timestamp,
+            hasChart: true,
+          },
+          {
+            vitalId: `${timestamp}-bp`,
+            userId,
+            deviceId,
+            type: "bp",
+            value: bpValue,
+            unit: "mmHg",
+            status: vitalsPacket.alert ? "critical" : "normal",
+            timestamp,
+            hasChart: true,
+          },
+          {
+            vitalId: `${timestamp}-hrv`,
+            userId,
+            deviceId,
+            type: "hrv",
+            value: vitalsPacket.hrv,
+            unit: "ms",
+            status: vitalsPacket.alert ? "critical" : "normal",
+            timestamp,
+            hasChart: true,
+          },
+          {
+            vitalId: `${timestamp}-si`,
+            userId,
+            deviceId,
+            type: "si",
+            value: vitalsPacket.si,
+            unit: "",
+            status: vitalsPacket.alert ? "critical" : "normal",
+            timestamp,
+            hasChart: true,
+          },
+          {
+            vitalId: `${timestamp}-rr`,
+            userId,
+            deviceId,
+            type: "rr",
+            value: 0, // Force 0 for graphing
+            unit: "breaths/min",
+            status: "normal",
+            timestamp,
+            hasChart: true,
+          },
+        ];
+
+        // Dispatch to Redux for UI and backend sync
+        dispatch(vitalsReceived({ vitals, timestamp }));
+      } catch (parseError) {
+        console.error("Failed to parse vitals data:", parseError);
+      }
+    },
+    [dispatch, user, connectedDevice]
+  );
+
+  // Start streaming vitals data
+  const startStreamingData = async (bleDevice: BleDevice) => {
+    if (!bleDevice) {
+      console.warn("No device provided for streaming");
+      return;
+    }
     try {
-      const deviceConnection = await bleManager.connectToDevice(device.id);
-      setConnectedDevice(deviceConnection);
+      await bleDevice.monitorCharacteristicForService(
+        VITALI_T_SERVICE_UUID,
+        VITALI_T_VITALS_CHARACTERISTIC,
+        onVitalsUpdate
+      );
+    } catch (error) {
+      console.error("Failed to start streaming:", error);
+    }
+  };
+
+  // Connect to a device
+  const connectToDevice = async (device: AppDevice) => {
+    try {
+      // Find the BLE device by deviceId
+      const bleDevice = await bleManager
+        .devices([device.deviceId])
+        .then((devices) => devices[0]);
+      if (!bleDevice) {
+        console.error("BLE device not found for connection");
+        return;
+      }
+      const deviceConnection = await bleManager.connectToDevice(bleDevice.id);
       await deviceConnection.discoverAllServicesAndCharacteristics();
       bleManager.stopDeviceScan();
-      startStreamingData(deviceConnection);
-    } catch (e) {
-      console.log("FAILED TO CONNECT", e);
+      setConnectedDevice({
+        ...mapBleDeviceToAppDevice(deviceConnection),
+        pairedTo: user?.userId ?? null, // Set pairedTo to current user id
+        isConnected: true,
+        status: "connected",
+      });
+      await startStreamingData(deviceConnection);
+    } catch (error) {
+      console.error("Failed to connect:", error);
     }
   };
 
+  // Disconnect from the device
   const disconnectFromDevice = () => {
     if (connectedDevice) {
-      bleManager.cancelDeviceConnection(connectedDevice.id);
+      bleManager.cancelDeviceConnection(connectedDevice.deviceId);
       setConnectedDevice(null);
-      setHeartRate(0);
-    }
-  };
-
-  const onHeartRateUpdate = (
-    error: BleError | null,
-    characteristic: Characteristic | null
-  ) => {
-    if (error) {
-      console.log(error);
-      return -1;
-    } else if (!characteristic?.value) {
-      console.log("No Data was recieved");
-      return -1;
-    }
-
-    const rawData = base64.decode(characteristic.value);
-    let innerHeartRate: number = -1;
-
-    const firstBitValue: number = Number(rawData) & 0x01;
-
-    if (firstBitValue === 0) {
-      innerHeartRate = rawData[1].charCodeAt(0);
-    } else {
-      innerHeartRate =
-        Number(rawData[1].charCodeAt(0) << 8) +
-        Number(rawData[2].charCodeAt(2));
-    }
-
-    setHeartRate(innerHeartRate);
-  };
-
-  const startStreamingData = async (device: Device) => {
-    if (device) {
-      device.monitorCharacteristicForService(
-        HEART_RATE_UUID,
-        HEART_RATE_CHARACTERISTIC,
-        onHeartRateUpdate
-      );
-    } else {
-      console.log("No Device Connected");
     }
   };
 
   return {
-    scanForPeripherals,
     requestPermissions,
+    scanForPeripherals,
     connectToDevice,
-    allDevices,
-    connectedDevice,
     disconnectFromDevice,
-    heartRate,
+    connectedDevice,
+    allDevices,
   };
 }
 

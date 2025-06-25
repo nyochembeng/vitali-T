@@ -11,12 +11,12 @@ interface BluetoothIconProps {
 const BluetoothIcon: React.FC<BluetoothIconProps> = ({ state, size = 80 }) => {
   const { colors } = useTheme();
 
-  const getIconName = () => {
+  const getIconName = (): keyof typeof MaterialCommunityIcons.glyphMap => {
     switch (state) {
       case "scanning":
         return "bluetooth";
       case "connecting":
-        return "bluetooth";
+        return "bluetooth-connect";
       case "no-devices":
         return "bluetooth-off";
       case "failed":
@@ -78,7 +78,7 @@ const BluetoothIcon: React.FC<BluetoothIconProps> = ({ state, size = 80 }) => {
           }}
         >
           <MaterialCommunityIcons
-            name={getIconName() as any}
+            name={getIconName()}
             size={size * 0.4}
             color={getIconColor()}
           />

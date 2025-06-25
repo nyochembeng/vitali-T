@@ -13,6 +13,7 @@ const insightsApi = insightsSlice.injectEndpoints({
       query: ({ userId, insightId }) => ({
         url: `/users/${userId}/insights/${insightId}`,
         method: "GET",
+        service: "ais",
       }),
       providesTags: (result, error, { insightId }) => [
         { type: "Insights", id: insightId },
@@ -43,6 +44,7 @@ const insightsApi = insightsSlice.injectEndpoints({
           endDate: params?.endDate,
           category: params?.category,
         },
+        service: "ais",
       }),
       providesTags: (result) =>
         result
